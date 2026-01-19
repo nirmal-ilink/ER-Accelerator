@@ -38,11 +38,19 @@ class Bootstrapper:
         app_name = self.config['system']['spark']['app_name']
         master = self.config['system']['spark'].get('master', 'local[*]')
         
-        print(f"INFO: Initializing Spark Session '{app_name}' on master '{master}'...")
+        # Check if running in Databricks
+        is_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         
-        builder = SparkSession.builder \
-            .appName(app_name) \
-            .master(master) \
+        print(f"INFO: Initializing Spark Session '{app_name}'...")
+        
+        builder = SparkSession.builder.appName(app_name)
+        
+        # Only set master if NOT in Databricks to avoid conflicts with Spark Connect/Cluster Manager
+        if not is_databricks:
+            print(f"INFO: Setting local master: {master}")
+            builder = builder.master(master)
+            
+        builder = builder \
             .config("spark.sql.adaptive.enabled", "true") \
             .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
             .config("spark.sql.adaptive.skewJoin.enabled", "true") \
