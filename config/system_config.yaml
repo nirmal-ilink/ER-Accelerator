@@ -1,0 +1,36 @@
+# Enterprise ER Accelerator Configuration
+# Optimized for Databricks Community Edition (CE) + Local Air-Gap Testing
+
+system:
+  environment: "dev" # options: dev, prod
+  spark:
+    app_name: "ER_Accelerator_Healthcare"
+    master: "local[*]" # Use "local[*]" for local testing, "yarn" or standard Spark for Databricks
+    log_level: "INFO"
+    aqe_enabled: true
+
+paths:
+  # Base paths for Databricks DBFS (Simulation of Data Lake)
+  # In CE, these map to /dbfs/Workspace/Users/<email>/...
+  bronze: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/bronze/"
+  silver: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/silver/"
+  gold: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/gold/"
+  system: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/system/"
+  
+  # Local fallback paths for Air-Gap testing
+  local_landing: "./data/landing/"
+  local_output: "./data/output/"
+
+governance:
+  default_trust_score: 0.5
+  enable_audit_logging: true
+  human_review_threshold: 0.85 # Matches between 0.70 and 0.85 go to Steward
+  auto_merge_threshold: 0.85 # Matches > 0.85 are auto-merged
+
+sources:
+  - name: "EMR_System_A"
+    type: "csv" # Interpreted as Autoloader in Databricks
+    trust_score: 0.9
+  - name: "NPI_Registry"
+    type: "csv"
+    trust_score: 1.0 # Reference Data
