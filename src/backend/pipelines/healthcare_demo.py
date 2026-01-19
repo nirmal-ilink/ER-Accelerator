@@ -17,8 +17,8 @@ def run_healthcare_pipeline():
     try:
         # 2. Ingest Sources
         # Config would ideally come from YAML, here hardcoded for demo flow
-        emr_config = {"type": "csv", "path": bs.get_storage_path("local_landing") + "emr_data.csv", "name": "EMR_System_A"}
-        npi_config = {"type": "csv", "path": bs.get_storage_path("local_landing") + "npi_registry.csv", "name": "NPI_Registry"}
+        emr_config = {"type": "csv", "path": bs.get_storage_path("landing") + "emr_data.csv", "name": "EMR_System_A"}
+        npi_config = {"type": "csv", "path": bs.get_storage_path("landing") + "npi_registry.csv", "name": "NPI_Registry"}
         
         df_emr = ingest_source(spark, emr_config)
         df_npi = ingest_source(spark, npi_config)

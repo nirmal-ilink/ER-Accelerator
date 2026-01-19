@@ -10,8 +10,15 @@ class Bootstrapper:
     - Initializes Spark Session with Enterprise Settings (AQE)
     """
     
-    def __init__(self, config_class_path: str = "config/system_config.yaml"):
-        self.config_path = config_class_path
+    def __init__(self, config_class_path: str = None):
+        # Resolve config path relative to this script's location if not provided or if relative
+        if config_class_path is None:
+            # Default to ../../config/system_config.yaml relative to src/backend/bootstrapper.py
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            self.config_path = os.path.join(base_dir, "config", "system_config.yaml")
+        else:
+            self.config_path = config_class_path
+
         self.config: Dict[str, Any] = self._load_config()
         self.spark: SparkSession = self._init_spark()
 
@@ -64,6 +71,10 @@ class Bootstrapper:
             return self.config['paths'].get(zone, f"/tmp/{zone}/")
         else:
             # Fallback for Local Air-Gap Testing
+            # Map 'landing' to 'local_landing' automatically if running locally
+            if zone == "landing" and "local_landing" in self.config['paths']:
+                return self.config['paths']["local_landing"]
+
             # If the zone is explicitly defined in paths (e.g. 'local_landing'), use it
             if zone in self.config['paths']:
                 return self.config['paths'][zone]

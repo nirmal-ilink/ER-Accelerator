@@ -16,6 +16,7 @@ paths:
   silver: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/silver/"
   gold: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/gold/"
   system: "/Workspace/Users/user@ilink-systems.com/mdm_lakehouse/system/"
+  landing: "/Volumes/workspace/er_accelerator/er_mdm/" # Unity Catalog Volume Path
   
   # Local fallback paths for Air-Gap testing
   local_landing: "./data/landing/"
