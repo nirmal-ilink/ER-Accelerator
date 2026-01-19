@@ -92,7 +92,9 @@ class MatchingEngine:
         if not match_dfs:
              return original_df.withColumn("cluster_id", F.monotonically_increasing_id().cast("string"))
              
-        all_matches = reduce(DataFrame.unionByName, match_dfs)
+        # Use lambda to ensure we call the method on the instance (Connect-safe), 
+        # avoiding static reference to pyspark.sql.DataFrame.unionByName which expects _jdf
+        all_matches = reduce(lambda x, y: x.unionByName(y), match_dfs)
         
         # Assign Match Group ID
         # Only assign ID to records sharing the blocking key
