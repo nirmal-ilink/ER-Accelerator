@@ -90,5 +90,5 @@ class Bootstrapper:
             return os.path.join(data_root, zone, "")
 
 # Factory method for quick access
-def get_bootstrapper(path: str = "config/system_config.yaml") -> Bootstrapper:
+def get_bootstrapper(path: str = None) -> Bootstrapper:
     return Bootstrapper(path)

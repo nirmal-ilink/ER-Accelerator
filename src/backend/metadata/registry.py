@@ -17,12 +17,27 @@ class MetadataRegistry:
     Parses semantic_types.yaml and provides validation methods.
     """
     
-    def __init__(self, config_path: str = "config/semantic_types.yaml"):
-        self.config_path = config_path
+    def __init__(self, config_path: str = None):
+        if config_path is None:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            self.config_path = os.path.join(base_dir, "config", "semantic_types.yaml")
+        else:
+            self.config_path = config_path
+            
         self._types: Dict[str, SemanticType] = {}
         self._load_registry()
 
     def _load_registry(self):
+# ... (rest of class)
+
+# Singleton Instance for simulated static access
+_registry_instance = None
+
+def get_registry(path: str = None) -> MetadataRegistry:
+    global _registry_instance
+    if _registry_instance is None:
+        _registry_instance = MetadataRegistry(path)
+    return _registry_instance
         """Loads semantic definitions from YAML configuration."""
         try:
             with open(self.config_path, 'r') as f:
@@ -76,7 +91,7 @@ class MetadataRegistry:
 # Singleton Instance for simulated static access
 _registry_instance = None
 
-def get_registry(path: str = "config/semantic_types.yaml") -> MetadataRegistry:
+def get_registry(path: str = None) -> MetadataRegistry:
     global _registry_instance
     if _registry_instance is None:
         _registry_instance = MetadataRegistry(path)
