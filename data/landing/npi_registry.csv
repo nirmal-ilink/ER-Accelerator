@@ -1,0 +1,101 @@
+npi,first_name,last_name,address_line_1,city,state,zip_code,phone,specialty
+3444587960,Jennifer,Martin,4484 Cedar Ct,Los Angeles,US,25354,449-632-7536,Oncology
+3175087427,Sarah,Wilson,6940 Main St,San Antonio,US,74966,848-211-7653,Internal Medicine
+1337208964,Thomas,Martin,9832 Main St,Houston,US,38635,207-721-5001,Psychiatry
+4925771399,William,Moore,3426 Cedar Ct,Los Angeles,US,14926,806-865-2609,Anesthesiology
+8450556789,Linda,Martin,5107 Lakeview Dr,San Diego,US,69179,805-269-8241,Oncology
+8613120574,Richard,Moore,3720 Washington Blvd,Los Angeles,US,67416,810-664-1721,Psychiatry
+5147880651,Sarah,Williams,8099 Broadway,Houston,US,20730,486-806-4766,Dermatology
+9115443952,Michael,Martin,6488 Hillside Ave,San Antonio,US,88587,673-225-1460,Neurology
+7352528408,James,Smith,2650 Hillside Ave,Los Angeles,US,23731,434-646-9648,Dermatology
+4723118996,Sarah,Brown,4633 Washington Blvd,Phoenix,US,14547,264-453-5467,Psychiatry
+5661479633,Robert,Rodriguez,3588 Park Ave,San Diego,US,48138,537-888-9441,Anesthesiology
+2940691721,Robert,Taylor,6198 Lakeview Dr,Philadelphia,US,87330,201-578-5721,Internal Medicine
+6335077498,Richard,Williams,9252 Park Ave,Houston,US,41703,591-316-7857,Pediatrics
+6428463671,Charles,Taylor,9065 Main St,Houston,US,90156,388-455-1677,Psychiatry
+6831822488,Charles,Smith,6651 Oak Ln,Dallas,US,77663,904-227-1827,Family Practice
+2644259898,Joseph,Anderson,9376 Lakeview Dr,Philadelphia,US,54648,787-798-8162,Cardiology
+3110126762,Charles,Moore,2350 Cedar Ct,San Jose,US,75542,662-444-7450,Radiology
+2895160673,Thomas,Williams,5669 Maple Dr,Phoenix,US,71664,407-882-5341,Cardiology
+5094128602,William,Wilson,8955 Elm St,Los Angeles,US,75200,897-901-1560,Internal Medicine
+2531874319,Sarah,Smith,3091 Park Ave,Los Angeles,US,68011,813-633-6605,Pediatrics
+4178714530,Jennifer,Johnson,8425 Lakeview Dr,Houston,US,97094,496-405-6185,Cardiology
+7700810084,Jessica,Hernandez,7504 Hillside Ave,Dallas,US,39472,333-675-7118,Internal Medicine
+5856367109,Sarah,Johnson,341 Broadway,Phoenix,US,38676,738-587-8576,Radiology
+4588620428,Michael,Williams,4993 Cedar Ct,Los Angeles,US,68774,886-285-6048,Cardiology
+7406501759,James,Jackson,9304 Oak Ln,New York,US,84476,773-903-2941,Pediatrics
+3126711761,Karen,Anderson,1229 Park Ave,Philadelphia,US,15814,292-503-6594,Oncology
+7476647290,Richard,Gonzalez,503 Lakeview Dr,Philadelphia,US,72794,450-262-6909,Cardiology
+3047843346,Joseph,Rodriguez,3100 Elm St,New York,US,24794,377-605-8138,Family Practice
+7340177466,Joseph,Anderson,3892 Broadway,Houston,US,68826,685-753-2713,Pediatrics
+8958857340,Joseph,Rodriguez,7567 Main St,Philadelphia,US,36792,652-857-3437,Neurology
+9196634752,Charles,Jackson,3389 Lakeview Dr,Houston,US,40312,579-689-5152,Cardiology
+3504432719,Charles,Hernandez,2816 Washington Blvd,Chicago,US,95279,590-244-6867,Dermatology
+6228016629,Linda,Smith,493 Oak Ln,San Antonio,US,22662,419-628-9061,Neurology
+9950423972,Thomas,Smith,4234 Hillside Ave,Los Angeles,US,78925,343-221-9300,Internal Medicine
+4451074320,John,Anderson,8729 Lakeview Dr,San Antonio,US,20113,263-988-2260,Family Practice
+4593554907,Karen,Davis,8524 Broadway,Dallas,US,64641,612-939-4520,Pediatrics
+8524223738,Sarah,Jackson,924 Lakeview Dr,New York,US,14882,968-631-4949,Oncology
+7771624001,Elizabeth,Martinez,8900 Main St,New York,US,79741,523-730-9107,Cardiology
+6241438163,Elizabeth,Jackson,5758 Park Ave,Phoenix,US,18645,662-810-3506,Neurology
+5181050087,John,Johnson,3325 Washington Blvd,San Jose,US,88366,622-943-1944,Neurology
+3010203425,William,Jackson,4180 Main St,Los Angeles,US,77075,908-361-9964,Pediatrics
+8207687447,Barbara,Garcia,1718 Park Ave,Chicago,US,57623,842-604-6552,Anesthesiology
+7343604699,Thomas,Rodriguez,361 Broadway,San Diego,US,12067,877-997-4146,Cardiology
+1460430453,Elizabeth,Thomas,139 Park Ave,Dallas,US,65192,341-969-3953,Anesthesiology
+8015416467,John,Hernandez,5708 Broadway,Chicago,US,24229,277-721-3743,Internal Medicine
+9098689859,Jennifer,Gonzalez,3416 Park Ave,San Diego,US,16641,767-791-5249,Pediatrics
+7201318944,Jennifer,Gonzalez,1655 Cedar Ct,San Antonio,US,15761,998-989-7249,Dermatology
+8680536270,Jessica,Smith,670 Elm St,Chicago,US,19377,904-954-9821,Psychiatry
+7597186558,David,Moore,9273 Lakeview Dr,Dallas,US,59409,425-206-9717,Oncology
+4417273811,Susan,Johnson,5593 Oak Ln,Philadelphia,US,36428,229-341-7633,Dermatology
+4027676350,Barbara,Gonzalez,6574 Maple Dr,Los Angeles,US,18002,923-239-7637,Dermatology
+6405387319,John,Jackson,4358 Broadway,Dallas,US,15396,767-762-7441,Psychiatry
+3946722683,Barbara,Miller,6200 Park Ave,Houston,US,38995,908-257-2248,Cardiology
+9808220517,David,Anderson,5247 Lakeview Dr,San Diego,US,87139,465-537-4285,Oncology
+7682011705,Charles,Davis,886 Park Ave,Dallas,US,43161,992-515-2543,Anesthesiology
+7791196608,David,Hernandez,6876 Oak Ln,Los Angeles,US,79869,799-261-3771,Pediatrics
+9613155066,Elizabeth,Anderson,8899 Oak Ln,San Diego,US,45282,519-276-7023,Dermatology
+3841266866,Mary,Williams,6062 Main St,Chicago,US,88289,843-500-2496,Dermatology
+9367160878,Susan,Lopez,7511 Washington Blvd,Dallas,US,71141,452-486-4095,Internal Medicine
+4281633954,Richard,Jones,9995 Main St,San Diego,US,82312,789-828-9126,Internal Medicine
+3237674351,William,Moore,5423 Elm St,New York,US,23796,672-263-5036,Family Practice
+1564798561,Jennifer,Jones,9877 Washington Blvd,Phoenix,US,99778,855-616-2275,Internal Medicine
+4077545988,Susan,Rodriguez,1678 Lakeview Dr,Los Angeles,US,28682,798-259-3960,Family Practice
+5258957756,Sarah,Martinez,9968 Broadway,Dallas,US,51114,300-899-9616,Family Practice
+1532611343,Charles,Williams,203 Hillside Ave,New York,US,30245,664-738-7268,Neurology
+2240925153,Jennifer,Davis,9455 Park Ave,Philadelphia,US,38463,462-348-7221,Psychiatry
+6141807669,Karen,Jones,9119 Washington Blvd,San Jose,US,29442,884-496-3814,Pediatrics
+1212853612,Susan,Gonzalez,8849 Hillside Ave,Houston,US,19182,643-667-1940,Radiology
+2383950226,Robert,Williams,8069 Cedar Ct,Phoenix,US,76029,795-461-3728,Pediatrics
+6577779688,Jennifer,Garcia,3819 Lakeview Dr,Los Angeles,US,93652,506-815-6028,Radiology
+8267896271,Susan,Johnson,5069 Main St,San Jose,US,18198,303-953-8431,Psychiatry
+9258592512,James,Davis,2696 Elm St,Houston,US,59589,653-467-3211,Neurology
+7021714046,Susan,Johnson,2500 Maple Dr,Los Angeles,US,27373,269-347-6272,Anesthesiology
+2526811338,Patricia,Moore,4497 Lakeview Dr,Phoenix,US,80384,561-860-5253,Dermatology
+8660978908,James,Lopez,9907 Broadway,Phoenix,US,24469,676-267-3784,Radiology
+3613640371,Michael,Moore,1956 Main St,Chicago,US,59886,575-597-7922,Psychiatry
+9177253895,David,Williams,6710 Elm St,Chicago,US,17794,679-746-4902,Internal Medicine
+3141615892,Linda,Garcia,2420 Hillside Ave,San Diego,US,53930,744-446-8155,Radiology
+1434971050,Patricia,Taylor,5369 Broadway,Houston,US,41269,717-863-7929,Family Practice
+2501588725,John,Lopez,2650 Main St,Dallas,US,61749,200-772-1994,Dermatology
+8213515108,Jessica,Wilson,6459 Broadway,Philadelphia,US,93886,839-941-3182,Neurology
+1879625807,Sarah,Thomas,1163 Park Ave,San Jose,US,20600,854-841-4076,Dermatology
+7680210840,Susan,Brown,8812 Park Ave,Los Angeles,US,11309,394-208-4109,Neurology
+8990513448,John,Williams,4229 Broadway,Dallas,US,60208,510-768-9150,Oncology
+1190428335,Mary,Lopez,8682 Washington Blvd,Chicago,US,56991,761-443-4545,Pediatrics
+4249085947,Patricia,Davis,3830 Hillside Ave,New York,US,72504,792-550-3449,Internal Medicine
+1446430662,Jennifer,Garcia,5677 Park Ave,San Diego,US,30838,475-389-8662,Pediatrics
+5241062130,Michael,Davis,5892 Elm St,San Jose,US,80727,742-777-2246,Internal Medicine
+4912474062,Patricia,Martinez,4698 Washington Blvd,San Jose,US,73070,514-367-2347,Psychiatry
+6672260006,Patricia,Miller,3013 Hillside Ave,Dallas,US,73194,667-244-4957,Radiology
+1546556661,William,Martin,569 Hillside Ave,New York,US,11108,389-281-2353,Internal Medicine
+4023690070,Joseph,Johnson,6430 Washington Blvd,Phoenix,US,38559,773-683-3681,Anesthesiology
+3165749335,Elizabeth,Anderson,5017 Oak Ln,Houston,US,25683,396-568-4450,Psychiatry
+5308152222,Robert,Moore,5771 Elm St,San Jose,US,12513,350-635-5352,Oncology
+1159964536,Sarah,Williams,6327 Hillside Ave,Los Angeles,US,79838,232-544-8796,Family Practice
+8919297664,Sarah,Moore,6193 Hillside Ave,New York,US,86499,985-852-9876,Dermatology
+4359179558,Charles,Taylor,3796 Main St,Houston,US,37652,298-704-2333,Cardiology
+7709102138,Barbara,Martin,4753 Maple Dr,New York,US,67024,652-372-5076,Psychiatry
+8812564739,Thomas,Gonzalez,888 Washington Blvd,San Jose,US,86041,649-540-1176,Psychiatry
+7997580842,William,Gonzalez,7950 Main St,Philadelphia,US,32503,807-997-2924,Pediatrics

@@ -61,11 +61,22 @@ class Bootstrapper:
         is_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         
         if is_databricks:
-            return self.config['paths'][zone]
+            return self.config['paths'].get(zone, f"/tmp/{zone}/")
         else:
             # Fallback for Local Air-Gap Testing
+            # If the zone is explicitly defined in paths (e.g. 'local_landing'), use it
+            if zone in self.config['paths']:
+                return self.config['paths'][zone]
+            
+            # Otherwise map logical zones to local structure
             base_dir = self.config['paths'].get('local_landing', './data/')
-            return os.path.join(base_dir, zone)
+            # If base_dir is ./data/landing/, we might want just ./data/ for zones like 'system'
+            # Adjusting to standard local structure: data/bronze, data/system
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+            data_root = os.path.join(project_root, "data")
+            
+            if zone == "system": return os.path.join(data_root, "system", "")
+            return os.path.join(data_root, zone, "")
 
 # Factory method for quick access
 def get_bootstrapper(path: str = "config/system_config.yaml") -> Bootstrapper:
