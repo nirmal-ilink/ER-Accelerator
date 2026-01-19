@@ -5,6 +5,7 @@ from src.backend.engine.matching import MatchingEngine
 from src.backend.governance.survivorship import SurvivorshipEngine
 from src.backend.audit.logger import AuditLogger
 from pyspark.sql.functions import col
+import os
 
 def run_healthcare_pipeline():
     # 1. Initialize Platform
@@ -74,8 +75,9 @@ def run_healthcare_pipeline():
 
         # 6. Export for Air-Gap Frontend
         output_path = bs.get_storage_path("local_output") + "gold_export.csv"
-        # Convert to Pandas for local CSV write (Simulating the Air-Gap export)
-        # In Prod: df_gold.write.format("delta").save(...)
+        
+        # Ensure directory exists (Critical for Databricks ephemeral storage)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         print(f"INFO: Exporting Golden Records to {output_path} for Streamlit...")
         df_gold.toPandas().to_csv(output_path, index=False)
