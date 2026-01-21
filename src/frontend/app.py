@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 
 # --- CONFIGURATION ---
 logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
+# Force Reload Fix for CSS
 st.set_page_config(
     page_title="iCORE | iLink Digital",
     page_icon=logo_path,
@@ -59,13 +60,44 @@ if not is_auth:
         animation: gradientBG 12s ease infinite;
         background-attachment: fixed;
     }
+    
+    /* LOGIN BUTTON STYLES (SCOPED) */
+    .stApp > header + div > div > div > div:nth-child(2) div.stButton {
+        width: 100%;
+        margin-top: 24px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button {
+        background-color: #d11f41 !important;
+        color: white !important;
+        border: none !important;
+        height: 48px !important;
+        border-radius: 24px !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 200px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        display: block !important;
+    }
+
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button:hover {
+        background-color: #9f1239 !important;
+        box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
+        transform: translateY(-2px) scale(1.02);
+        color: white !important;
+    }
     """
     sidebar_bg = "#0f172a"  # Fallback (Login usually has no sidebar)
 else:
     # DASHBOARD MODE: Pure White Background & Light Elegant Sidebar
     main_bg_css = """
     .stApp {
-        background-color: #ffffff !important;
+        background-color: #F8FAFC !important;
         background-image: none !important;
         color: #0f172a !important; /* Force Dark Text */
     }
@@ -100,30 +132,6 @@ st.markdown(f"""
         max-width: 100% !important;
     }}
 
-    /* 2. LOGIN CARD: Premium Glassmorphism */
-    div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {{
-        background: rgba(255, 255, 255, 0.65) !important;
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
-        border-radius: 32px;
-        padding: 60px !important;
-        gap: 24px;
-        width: 100% !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        display: block !important;
-    }}
-
-    /* 5. INNER CONTENT: Constrained Width */
-    div[data-testid="stColumn"]:nth-of-type(2) .stTextInput,
-    div[data-testid="stColumn"]:nth-of-type(2) .stButton {{
-        max-width: 400px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }}
-
     /* SCROLLBAR REMOVAL ON LARGE SCREENS */
     @media (min-width: 1024px) {{
         ::-webkit-scrollbar {{
@@ -134,13 +142,6 @@ st.markdown(f"""
         }}
         section.main {{
             overflow: hidden !important;
-        }}
-    }}
-
-    @media screen and (max-width: 600px) {{
-        div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {{
-            padding: 24px !important;
-            width: 95%;
         }}
     }}
 
@@ -247,45 +248,147 @@ st.markdown(f"""
     div[data-baseweb="base-input"] button:hover svg {{
         fill: #0f172a !important;
     }}
-
-    /* 4. BUTTON: PERFECT CENTER (LOGIN ONLY) */
-    .stApp > header + div > div > div > div:nth-child(2) div.stButton {{
-        width: 100%;
-        margin-top: 24px;
-        display: flex;
-        justify-content: center;
-    }}
+    {main_bg_css}
     
-    /* More robust selector for Login Button */
-    /* More robust selector for Login Button */
-    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button {{
-        background-color: #d11f41 !important;
-        color: white !important;
-        border: none !important;
-        height: 48px !important;
-        border-radius: 24px !important;
+    @keyframes gradientBG {{
+        0% {{ background-position: 0% 50%; }}
+        50% {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
+
+    /* GLOBAL COMPACTION */
+    .block-container {{
+        padding-top: 5vh !important;
+        padding-bottom: 2rem !important;
+        max-width: 100% !important;
+    }}
+
+
+    /* 5. INNER CONTENT: Constrained Width (Moved to Login Page) */
+
+    /* 5. INNER CONTENT: Constrained Width */
+    /* Width constraints removed from global scope */
+
+    /* SCROLLBAR REMOVAL ON LARGE SCREENS */
+    @media (min-width: 1024px) {{
+        ::-webkit-scrollbar {{
+            display: none !important;
+        }}
+        .stApp {{
+            overflow: hidden !important;
+        }}
+        section.main {{
+            overflow: hidden !important;
+        }}
+    }}
+
+
+
+    /* 3. INPUTS: Enterprise Grade Labels */
+    .stTextInput label {{
+        color: #475569 !important;
+        font-size: 12px !important;
         font-weight: 600 !important;
-        font-size: 16px !important;
-        box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 200px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        text-transform: uppercase;
+        letter-spacing: 1.0px;
+        margin-bottom: 8px !important;
         display: block !important;
     }}
 
-    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button:hover {{
-        background-color: #9f1239 !important;
-        box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
-        transform: translateY(-2px) scale(1.02);
-        color: white !important;
+    /* 3. INPUTS: Premium Text Boxes */
+    .stTextInput > div > div[data-baseweb="base-input"],
+    div[data-baseweb="base-input"] {{
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+        overflow: hidden;
+        box-shadow: none !important;
+    }}
+    
+    .stTextInput > div > div[data-baseweb="base-input"]:hover,
+    div[data-baseweb="base-input"]:hover {{
+        border-color: #cbd5e1 !important;
+    }}
+    
+    .stTextInput > div > div[data-baseweb="base-input"]:focus-within,
+    div[data-baseweb="base-input"]:focus-within {{
+        border-color: #0f172a !important;
+        box-shadow: 0 0 0 1px #0f172a !important;
+        background-color: #ffffff !important;
     }}
 
-    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button:active {{
-        background-color: #881337 !important;
-        transform: translateY(1px);
-        box-shadow: 0 2px 4px -1px rgba(159, 18, 57, 0.4) !important;
+    div[data-baseweb="base-input"] > div,
+    div[data-baseweb="base-input"] * {{
+        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
     }}
+
+    .stTextInput input {{
+        color: #111827 !important;
+        caret-color: #111827 !important;
+        font-weight: 500 !important;
+        font-size: 15px !important;
+        padding: 12px 14px !important;
+        padding-right: 40px !important;
+        letter-spacing: 0.3px;
+        background: transparent !important;
+    }}
+    
+    .stTextInput input::placeholder {{
+        color: #9ca3af !important;
+        font-weight: 400 !important;
+        font-style: normal !important;
+        opacity: 1 !important;
+    }}
+
+    div[data-testid="InputInstructions"] {{ display: none !important; }}
+    
+    .stTextInput {{
+        margin-bottom: 16px !important;
+    }}
+
+    /* Eye Icon Polish */
+    div[data-baseweb="base-input"] > div:last-child {{
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin-right: 0px !important;
+        right: 0px !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+    }}
+
+    div[data-baseweb="base-input"] > div:last-child *,
+    div[data-baseweb="base-input"] button,
+    div[data-baseweb="base-input"] button * {{
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
+    div[data-baseweb="base-input"] button {{
+        padding-right: 12px !important; 
+    }}
+
+    div[data-baseweb="base-input"] button svg {{
+        fill: #64748b !important;
+    }}
+    
+    div[data-baseweb="base-input"] button:hover {{
+        background-color: transparent !important;
+        transform: scale(1.1);
+        cursor: pointer;
+    }}
+    
+    div[data-baseweb="base-input"] button:hover svg {{
+        fill: #0f172a !important;
+    }}
+
+
 
     /* Fix specific streamlit class padding */
     .st-bz {{
@@ -662,6 +765,8 @@ st.markdown(f"""
         padding-right: 0px !important;
     }}
 
+
+
     /* ---------------------------------------------------------
        SIGN OUT BUTTON - ISOLATED & RED
        --------------------------------------------------------- */
@@ -717,6 +822,80 @@ def get_img_as_base64(file_path):
 
 # --- LOGIN SCREEN ---
 def login_page():
+    # INJECT LOGIN SPECIFIC CSS HERE
+    st.markdown("""
+    <style>
+    /* 2. LOGIN CARD: Premium Glassmorphism */
+    div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+        border-radius: 32px;
+        padding: 60px !important;
+        gap: 24px;
+        width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        display: block !important;
+    }
+
+    div[data-testid="stColumn"]:nth-of-type(2) .stTextInput,
+    div[data-testid="stColumn"]:nth-of-type(2) .stButton {
+        max-width: 400px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    
+    @media screen and (max-width: 600px) {
+        div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {
+            padding: 24px !important;
+            width: 95%;
+        }
+    }
+    
+    /* 4. BUTTON: PERFECT CENTER (LOGIN ONLY) */
+    .stApp > header + div > div > div > div:nth-child(2) div.stButton {
+        width: 100%;
+        margin-top: 24px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* More robust selector for Login Button */
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button {
+        background-color: #d11f41 !important;
+        color: white !important;
+        border: none !important;
+        height: 48px !important;
+        border-radius: 24px !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 200px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        display: block !important;
+    }
+
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button:hover {
+        background-color: #9f1239 !important;
+        box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
+        transform: translateY(-2px) scale(1.02);
+        color: white !important;
+    }
+
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button:active {
+        background-color: #881337 !important;
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px -1px rgba(159, 18, 57, 0.4) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
     ilink_logo_path = os.path.join(os.path.dirname(__file__), "assets/ilink_logo.png")
     
@@ -848,7 +1027,15 @@ else:
         match_review.render()
     elif page == "Dashboard":
         from src.frontend.views import dashboard
+        import importlib
+        importlib.reload(dashboard)
         dashboard.render()
+    elif page == "Audit Logs":
+        from src.frontend.views import audit
+        audit.render()
+    elif page == "Connectors":
+        from src.frontend.views import connectors
+        connectors.render()
     else:
         st.title(page)
         st.info(f"{page} module is currently under development or maintenance.")
