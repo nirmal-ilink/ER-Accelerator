@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 import os
 import time
+import time
 import textwrap
+from src.backend.audit.logger import AuditLogger
+
+# Initialize Audit Log
+audit_log = AuditLogger()
 
 # =============================================================================
 # CONSTANTS & CONFIG
@@ -635,7 +640,7 @@ def render():
         c1, c2, c3 = st.columns([1,1.5,1])
         with c2:
             st.markdown('<span class="btn-marker-restart"></span>', unsafe_allow_html=True)
-            if st.button("Restart Review Session", use_container_width=True):
+            if st.button("Restart Review Session", width="stretch"):
                 st.session_state.match_index = 0
                 st.rerun()
         return
@@ -710,17 +715,41 @@ def render():
 
     with ac2:
         st.markdown('<span class="btn-marker-approve"></span>', unsafe_allow_html=True)
-        if st.button("Approve Match", use_container_width=True):
+        if st.button("Approve Match", width="stretch"):
+            user = st.session_state.get('user_name', 'Steward')
+            audit_log.log_event(
+                module="Match Review",
+                action="Match Approved",
+                status="Success",
+                details=f"Cluster {curr_id} resolved by {user}",
+                user=user
+            )
             st.toast("Match Resolved: Approved")
             advance()
     with ac3:
         st.markdown('<span class="btn-marker-reject"></span>', unsafe_allow_html=True)
-        if st.button("Reject Match", use_container_width=True):
+        if st.button("Reject Match", width="stretch"):
+            user = st.session_state.get('user_name', 'Steward')
+            audit_log.log_event(
+                module="Match Review",
+                action="Match Rejected",
+                status="Success",
+                details=f"Cluster {curr_id} rejected by {user}",
+                user=user
+            )
             st.toast("Match Resolved: Rejected")
             advance()
     with ac4:
         st.markdown('<span class="btn-marker-defer"></span>', unsafe_allow_html=True)
-        if st.button("Defer Resolution", use_container_width=True):
+        if st.button("Defer Resolution", width="stretch"):
+            user = st.session_state.get('user_name', 'Steward')
+            audit_log.log_event(
+                module="Match Review",
+                action="Process Deferred",
+                status="Warning",
+                details=f"Cluster {curr_id} skipped by {user}",
+                user=user
+            )
             advance()
     
     st.write("<br><br>", unsafe_allow_html=True)

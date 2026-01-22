@@ -403,7 +403,7 @@ def render():
         _, b1, b2, b3 = st.columns([4, 1.5, 1.3, 0.8])
         
         with b1:
-            test_clicked = st.button("Test Connection", type="secondary", use_container_width=True, key=f"test_{conn_key}")
+            test_clicked = st.button("Test Connection", type="secondary", width="stretch", key=f"test_{conn_key}")
             if test_clicked:
                 with st.spinner("Testing..."):
                     time.sleep(1)
@@ -411,13 +411,13 @@ def render():
         
         with b2:
             label = "Disconnect" if is_active else "Connect"
-            toggle_clicked = st.button(label, type="secondary", use_container_width=True, key=f"toggle_{conn_key}")
+            toggle_clicked = st.button(label, type="secondary", width="stretch", key=f"toggle_{conn_key}")
             if toggle_clicked:
                 time.sleep(0.5)
                 st.toast("Done")
         
         with b3:
-            save_clicked = st.button("Save", type="primary", use_container_width=True, key=f"save_{conn_key}")
+            save_clicked = st.button("Save", type="primary", width="stretch", key=f"save_{conn_key}")
             if save_clicked:
                 time.sleep(0.5)
                 st.toast("Saved")

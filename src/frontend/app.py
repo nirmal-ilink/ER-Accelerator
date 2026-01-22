@@ -9,6 +9,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 
 # Placeholder imports for views (we will create these next)
 # from src.frontend.views import match_review, dashboard, connectors, inspector, audit, users
+from src.backend.audit.logger import AuditLogger
+
+# Initialize Logger
+audit_log = AuditLogger()
 
 # --- CONFIGURATION ---
 logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
@@ -928,6 +932,13 @@ def login_page():
         # Custom CSS forces full width and layout
         if st.button("Sign In", use_container_width=True):
             if username in USERS and USERS[username]["pass"] == password:
+                audit_log.log_event(
+                    module="Auth", 
+                    action="User Login", 
+                    status="Success", 
+                    details=f"Session started for {username}",
+                    user=username
+                )
                 st.session_state['authenticated'] = True
                 st.session_state['user_role'] = USERS[username]["role"]
                 st.session_state['user_name'] = USERS[username]["name"]
@@ -1010,6 +1021,17 @@ def sidebar_nav():
         
         # Sign Out
         if st.button("Sign Out", type="secondary", use_container_width=True):
+             # Log Logout
+             user = st.session_state.get('user_name', 'User')
+             role = st.session_state.get('user_role', 'Guest')
+             audit_log.log_event(
+                module="Auth",
+                action="User Logout",
+                status="Success",
+                details="User signed out manually",
+                user=user
+             )
+             
              st.session_state['authenticated'] = False
              st.session_state['user_role'] = None
              st.rerun()

@@ -10,7 +10,7 @@ def generate_enterprise_data():
     np.random.seed(42)
     
     # 1. Trend Data (Last 12 Months)
-    dates = pd.date_range(end=datetime.today(), periods=12, freq='M')
+    dates = pd.date_range(end=datetime.today(), periods=12, freq='ME')
     
     # Trust Index (Calculated composite score)
     trust_base = np.linspace(72, 88, 12) + np.random.normal(0, 1, 12)
@@ -252,7 +252,7 @@ def render():
             titleFont='Inter'
         )
         
-        st.altair_chart(chart_trust, use_container_width=True)
+        st.altair_chart(chart_trust, width="stretch")
         st.markdown('</div>', unsafe_allow_html=True)
         
     with c2:
@@ -269,7 +269,7 @@ def render():
             tooltip=['Bucket', 'Count']
         ).properties(height=240, background='transparent').configure_view(strokeWidth=0)
         
-        st.altair_chart(chart_conf, use_container_width=True)
+        st.altair_chart(chart_conf, width="stretch")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # --- 3. RESOLUTION EFFECTIVENESS ---
@@ -288,7 +288,7 @@ def render():
             tooltip=['Date', 'Type', 'Records']
         ).properties(height=240, background='transparent').configure_view(strokeWidth=0)
         
-        st.altair_chart(chart_res, use_container_width=True)
+        st.altair_chart(chart_res, width="stretch")
         st.markdown('</div>', unsafe_allow_html=True)
         
     with c4:
@@ -339,7 +339,7 @@ def render():
         ).properties(height=140, background='transparent').configure_view(strokeWidth=0)
         
         st.markdown('<div class="board-card" style="padding: 16px;">', unsafe_allow_html=True)
-        st.altair_chart(chart_risk, use_container_width=True)
+        st.altair_chart(chart_risk, width="stretch")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # --- 5. ENTERPRISE COVERAGE ---
@@ -353,5 +353,5 @@ def render():
         tooltip=['System', 'Records', 'TrustLevel']
     ).properties(height=300, background='transparent').configure_view(strokeWidth=0)
     
-    st.altair_chart(chart_source, use_container_width=True)
+    st.altair_chart(chart_source, width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)

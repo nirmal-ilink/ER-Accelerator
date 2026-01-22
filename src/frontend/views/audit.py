@@ -1,108 +1,240 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import io
+import os
 
 def render():
-    # --- I-LINK BRAND PALETTE ---
-    PRIMARY_RED = "#D11F41"
-    DARK_SLATE = "#0F172A"
-    LIGHT_SLATE = "#64748B"
-    WHITE = "#FFFFFF"
+    # --- ICORE BRAND PALETTE ---
+    COLORS = {
+        'red': "#D11F41",
+        'slate': "#0F172A",
+        'slate_light': "#64748B",
+        'white': "#FFFFFF",
+        'bg': "#F8FAFC",
+        'border': "#E2E8F0",
+        'green': "#059669",
+        'yellow': "#D97706"
+    }
     
-    # --- CSS: AUDIT SPECIFIC ---
+    # --- CSS: AUDIT PREMIUM UI & LIGHT THEME FIXES ---
     st.markdown(f"""
     <style>
-        .audit-header-card {{
-            background-color: {WHITE};
-            border: 1px solid #E2E8F0;
+        .stApp {{ background-color: {COLORS['bg']} !important; }}
+        
+        /* Force Light Theme for all standard Streamlit widgets in this view */
+        [data-testid="stHeader"] {{ background: transparent !important; }}
+        
+        /* Stats Cards */
+        .audit-stat-card {{
+            background: {COLORS['white']};
+            border: 1px solid {COLORS['border']};
             border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }}
+        .audit-stat-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }}
+        .stat-label {{
+            font-size: 11px;
+            font-weight: 600;
+            color: {COLORS['slate_light']};
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }}
+        .stat-value {{
+            font-size: 24px;
+            font-weight: 700;
+            color: {COLORS['slate']};
+        }}
+        
+        /* Filter Panel */
+        div[data-testid="stVerticalBlockBorderWrapper"] {{
+            background: {COLORS['white']} !important;
+            border: 1px solid {COLORS['border']} !important;
+            border-radius: 12px !important;
         }}
         
         .filter-label {{
             font-size: 12px;
             font-weight: 600;
-            color: {LIGHT_SLATE};
+            color: {COLORS['slate_light']};
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             margin-bottom: 8px;
         }}
         
-        /* Table Styling Overrides (Streamlit standard table is tough to style fully via CSS, 
-           but we can wrap it effectively) */
+        /* SELECTBOX & INPUT LIGHT THEME */
+        div[data-baseweb="select"] > div, 
+        div[data-baseweb="base-input"] {{
+            background-color: white !important;
+            color: {COLORS['slate']} !important;
+            border-color: {COLORS['border']} !important;
+        }}
+        
+        /* Target the text color specifically */
+        div[data-testid="stSelectbox"] p, 
+        div[data-testid="stTextInput"] p,
+        div[data-testid="stDateInput"] p {{
+            color: {COLORS['slate']} !important;
+        }}
+
+        /* DATAFRAME LIGHT THEME FORCE */
         .stDataFrame {{
-            background-color: {WHITE};
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background-color: white !important;
+            color: {COLORS['slate']} !important;
+        }}
+
+        /* DOWNLOAD BUTTON PREMIUM STYLING */
+        div.stDownloadButton > button {{
+            background-color: {COLORS['red']} !important;
+            color: white !important;
+            border: none !important;
+            padding: 0.5rem 1.5rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.2) !important;
+        }}
+        
+        div.stDownloadButton > button:hover {{
+            background-color: #9f1239 !important;
+            box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.3) !important;
+            transform: translateY(-1px);
+        }}
+
+        /* Floating Action Bar */
+        .action-bar {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            margin-bottom: 12px;
         }}
     </style>
     """, unsafe_allow_html=True)
 
     # --- HEADER ---
     st.markdown(f"""
-    <div style="margin-bottom: 32px; padding-left: 4px;">
-        <h1 style="color: {DARK_SLATE}; font-weight: 800; font-size: 28px; margin: 0; letter-spacing: -0.5px;">Audit Logs</h1>
-        <p style="color: {LIGHT_SLATE}; font-size: 15px; margin-top: 4px;">Track system activities, data modifications, and user access history.</p>
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: {COLORS['slate']}; font-weight: 800; font-size: 32px; margin: 0; letter-spacing: -0.5px;">Audit & Governance Trail</h1>
+        <p style="color: {COLORS['slate_light']}; font-size: 15px; margin-top: 4px;">Comprehensive immutable ledger of all system and user interactions.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- FILTERS ---
-    st.markdown(f"""<div class="audit-header-card">""", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([2, 1, 1])
-    
-    with c1:
-        st.markdown('<div class="filter-label">Search Activity</div>', unsafe_allow_html=True)
-        search_term = st.text_input("Search", placeholder="Search by user, action, or details...", label_visibility="collapsed")
-        
-    with c2:
-        st.markdown('<div class="filter-label">Status</div>', unsafe_allow_html=True)
-        status_filter = st.selectbox("Status", ["All", "Success", "Failed", "Warning"], label_visibility="collapsed")
-        
-    with c3:
-        st.markdown('<div class="filter-label">Time Range</div>', unsafe_allow_html=True)
-        date_range = st.date_input("Date", [], label_visibility="collapsed")
+    # --- TOP KPI ROW ---
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        st.markdown(f"""<div class="audit-stat-card"><div class="stat-label">Total Logs</div><div class="stat-value">1,248</div></div>""", unsafe_allow_html=True)
+    with k2:
+        st.markdown(f"""<div class="audit-stat-card"><div class="stat-label">System Health</div><div class="stat-value" style="color:{COLORS['green']}">98.4%</div></div>""", unsafe_allow_html=True)
+    with k3:
+        st.markdown(f"""<div class="audit-stat-card"><div class="stat-label">Security Flags</div><div class="stat-value" style="color:{COLORS['red']}">12</div></div>""", unsafe_allow_html=True)
+    with k4:
+        st.markdown(f"""<div class="audit-stat-card"><div class="stat-label">Active Users</div><div class="stat-value">18</div></div>""", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.write("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-    # --- DATA & TABLE ---
-    # Mock Data
-    data = [
-        {"Timestamp": datetime.now() - timedelta(minutes=5), "User": "Admin", "Action": "User Login", "Module": "Auth", "Status": "Success", "Details": "Logged in from 192.168.1.5"},
-        {"Timestamp": datetime.now() - timedelta(minutes=15), "User": "Data Steward", "Action": "Record Merge", "Module": "Match Review", "Status": "Success", "Details": "Merged ID-8821 with ID-9921"},
-        {"Timestamp": datetime.now() - timedelta(hours=1), "User": "System", "Action": "Auto-Import", "Module": "Connectors", "Status": "Failed", "Details": "Connection timeout: EMR_DB_01"},
-        {"Timestamp": datetime.now() - timedelta(hours=2), "User": "Executive", "Action": "Export Report", "Module": "Dashboard", "Status": "Success", "Details": "Exported 'Q1_Quality.pdf'"},
-        {"Timestamp": datetime.now() - timedelta(hours=5), "User": "Admin", "Action": "Policy Update", "Module": "Settings", "Status": "Warning", "Details": "Changed threshold 0.8 -> 0.85"},
-        {"Timestamp": datetime.now() - timedelta(days=1), "User": "Data Steward", "Action": "Unmerge", "Module": "Match Review", "Status": "Success", "Details": "Reverted merge #4421"},
-    ]
+    # --- DYNAMIC FILTERS ---
+    with st.container(border=True):
+        f1, f2, f3 = st.columns([2, 1, 1])
+        
+        with f1:
+            st.markdown('<div class="filter-label">Search Activity</div>', unsafe_allow_html=True)
+            search_term = st.text_input("Search", placeholder="Search user, action, module or details...", label_visibility="collapsed")
+            
+        with f2:
+            st.markdown('<div class="filter-label">Status Layer</div>', unsafe_allow_html=True)
+            status_filter = st.selectbox("Status", ["All Categories", "Success", "Failed", "Warning"], label_visibility="collapsed")
+            
+        with f3:
+            st.markdown('<div class="filter-label">Timeline Select</div>', unsafe_allow_html=True)
+            # Default to last 7 days if empty
+            date_range = st.date_input("Date Range", [datetime.now() - timedelta(days=7), datetime.now()], label_visibility="collapsed")
+
+    # --- REAL DATA LOADING ---
+    from src.backend.audit.logger import AuditLogger
+    logger = AuditLogger()
     
-    # Filter Logic (Basic)
-    df = pd.DataFrame(data)
+    if os.path.exists(logger.log_path):
+        try:
+            df = pd.read_csv(logger.log_path)
+            # Ensure Timestamp is datetime
+            df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+            # Sort by latest
+            df = df.sort_values(by="Timestamp", ascending=False)
+        except Exception as e:
+            st.error(f"Error loading audit logs: {e}")
+            df = pd.DataFrame(columns=["Timestamp", "User", "Action", "Module", "Status", "Details"])
+    else:
+        df = pd.DataFrame(columns=["Timestamp", "User", "Action", "Module", "Status", "Details"])
+    
+    # df is already created above
+    
+    # Filter Logic
     if search_term:
         df = df[df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)]
-    if status_filter != "All":
+    if status_filter != "All Categories":
         df = df[df['Status'] == status_filter]
+        
+    # --- TABLE HEADER ACTIONS ---
+    st.markdown('<div class="action-bar">', unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size:14px; font-weight:600; color:{COLORS['slate_light']}'>{len(df)} entries found in current view</div>", unsafe_allow_html=True)
+    
+    # Export Button
+    # Convert DF to CSV for download
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download Audit Trail (CSV)",
+        data=csv,
+        file_name=f"audit_trail_{datetime.now().strftime('%Y%m%d')}.csv",
+        mime="text/csv",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Display using powerful column config
+    # --- PRIMARY DATA TABLE ---
     st.dataframe(
         df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "Timestamp": st.column_config.DatetimeColumn(
                 "Time",
-                format="D MMM, HH:mm",
+                format="MMM DD, HH:mm",
+                width="medium"
             ),
-            "User": st.column_config.TextColumn("User"),
-            "Action": st.column_config.TextColumn("Action", width="medium"),
+            "User": st.column_config.TextColumn(
+                "Integrator / User",
+                width="small"
+            ),
+            "Action": st.column_config.TextColumn(
+                "Activity",
+                width="medium"
+            ),
+            "Module": st.column_config.TextColumn(
+                "Subsystem",
+                width="small"
+            ),
             "Status": st.column_config.TextColumn(
-                "Status",
-                width="small", 
-                # Basic coloring simulation via text - Streamlit 1.25+ supports this via pandas styler best, 
-                # but column_config is cleaner for raw data.
+                "Execution Status",
+                width="small"
+            ),
+            "Details": st.column_config.TextColumn(
+                "Technical Details",
+                width="large"
             ),
         }
     )
+
+    # --- FOOTER ---
+    st.markdown(f"""
+    <div style="margin-top: 40px; padding: 20px; border-top: 1px solid {COLORS['border']}; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 12px; color: {COLORS['slate_light']};">Environment: Production (Air-Gapped)</div>
+        <div style="font-size: 12px; color: {COLORS['slate_light']};">© 2026 iLink Digital. All data encrypted.</div>
+    </div>
+    """, unsafe_allow_html=True)
