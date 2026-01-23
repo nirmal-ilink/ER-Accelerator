@@ -1,0 +1,34 @@
+{
+    "admin": {
+        "pass": "admin123",
+        "role": "Admin",
+        "name": "Administrator",
+        "email": "admin@icore.io",
+        "status": "Active",
+        "last_login": "2 mins ago"
+    },
+    "exec": {
+        "pass": "exec123",
+        "role": "Executive",
+        "name": "C-Suite User",
+        "email": "exec@icore.io",
+        "status": "Active",
+        "last_login": "1 hour ago"
+    },
+    "steward": {
+        "pass": "steward123",
+        "role": "Steward",
+        "name": "Data Steward",
+        "email": "steward@icore.io",
+        "status": "Active",
+        "last_login": "Just now"
+    },
+    "dev": {
+        "pass": "dev123",
+        "role": "Developer",
+        "name": "Tech Lead",
+        "email": "dev@icore.io",
+        "status": "Active",
+        "last_login": "15 mins ago"
+    }
+}

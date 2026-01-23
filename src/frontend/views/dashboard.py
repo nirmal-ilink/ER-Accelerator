@@ -186,6 +186,7 @@ def render():
     
     # --- HEADER ---
     st.markdown("""
+<div class="main-content">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; gap: 16px;">
     <div style="min-width: 280px;">
         <h1 style="font-size: 32px; font-weight: 800; color: #0F172A; margin: 0;">Operational Command</h1>
@@ -354,4 +355,4 @@ def render():
     ).properties(height=300, background='transparent').configure_view(strokeWidth=0)
     
     st.altair_chart(chart_source, width="stretch")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div></div>', unsafe_allow_html=True)

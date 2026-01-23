@@ -71,10 +71,27 @@ def render():
         
         /* SELECTBOX & INPUT LIGHT THEME */
         div[data-baseweb="select"] > div, 
-        div[data-baseweb="base-input"] {{
+        div[data-baseweb="base-input"],
+        div[data-testid="stDateInput"] > div[data-baseweb="base-input"] {{
             background-color: white !important;
             color: {COLORS['slate']} !important;
-            border-color: {COLORS['border']} !important;
+            border: 1px solid {COLORS['border']} !important;
+            border-radius: 8px !important;
+            transition: all 0.2s ease !important;
+        }}
+
+        /* Focus & Hover states */
+        div[data-baseweb="select"] > div:hover,
+        div[data-baseweb="base-input"]:hover,
+        div[data-testid="stDateInput"] > div[data-baseweb="base-input"]:hover {{
+            border-color: {COLORS['slate_light']} !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        }}
+
+        div[data-baseweb="select"]:focus-within > div,
+        div[data-baseweb="base-input"]:focus-within {{
+            border-color: {COLORS['red']} !important;
+            box-shadow: 0 0 0 1px {COLORS['red']} !important;
         }}
         
         /* Target the text color specifically */
@@ -82,6 +99,63 @@ def render():
         div[data-testid="stTextInput"] p,
         div[data-testid="stDateInput"] p {{
             color: {COLORS['slate']} !important;
+        }}
+
+        /* CALENDAR POPOVER: FORCE LIGHT THEME & PREMIUM STYLE */
+        div[data-baseweb="popover"], 
+        div[role="listbox"],
+        div[data-baseweb="calendar"] {{
+            background-color: white !important;
+            color: {COLORS['slate']} !important;
+            border: 1px solid {COLORS['border']} !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        }}
+
+        /* Calendar Internal Elements */
+        div[data-baseweb="calendar"] * {{
+            color: {COLORS['slate']} !important;
+            background-color: transparent !important;
+        }}
+
+        /* Day names & Month/Year headers */
+        div[role="gridcell"] {{
+            font-weight: 500 !important;
+        }}
+
+        /* Selected Range Highlight */
+        div[aria-selected="true"] {{
+            background-color: rgba(209, 31, 65, 0.1) !important; /* Brand red very light */
+            color: {COLORS['red']} !important;
+            font-weight: 700 !important;
+            border-radius: 4px !important;
+        }}
+
+        /* Selected Start/End Circles */
+        div[aria-selected="true"]:first-of-type,
+        div[aria-selected="true"]:last-of-type {{
+            background-color: {COLORS['red']} !important;
+            color: white !important;
+            border-radius: 50% !important;
+        }}
+
+        /* Hover on days */
+        div[role="gridcell"]:hover {{
+            background-color: #F1F5F9 !important;
+            border-radius: 4px !important;
+        }}
+
+        /* PREPEND CALENDAR ICON TO DATE INPUT */
+        div[data-testid="stDateInput"] > div[data-baseweb="base-input"]::before {{
+            content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+            margin-left: 12px;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+        }}
+
+        div[data-testid="stDateInput"] input {{
+            padding-left: 8px !important;
         }}
 
         /* DATAFRAME LIGHT THEME FORCE */

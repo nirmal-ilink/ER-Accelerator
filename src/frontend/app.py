@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 # Placeholder imports for views (we will create these next)
 # from src.frontend.views import match_review, dashboard, connectors, inspector, audit, users
 from src.backend.audit.logger import AuditLogger
+from src.backend.auth.user_manager import UserManager
 
 # Initialize Logger
 audit_log = AuditLogger()
@@ -25,12 +26,13 @@ st.set_page_config(
 )
 
 # --- AUTHENTICATION & PERMISSIONS ---
-USERS = {
-    "admin": {"pass": "admin123", "role": "Admin", "name": "Administrator"},
-    "exec": {"pass": "exec123", "role": "Executive", "name": "C-Suite User"},
-    "steward": {"pass": "steward123", "role": "Steward", "name": "Data Steward"},
-    "dev": {"pass": "dev123", "role": "Developer", "name": "Tech Lead"}
-}
+if 'user_manager' not in st.session_state:
+    st.session_state['user_manager'] = UserManager()
+
+if 'PLATFORM_USERS' not in st.session_state:
+    st.session_state['PLATFORM_USERS'] = st.session_state['user_manager'].get_users()
+
+USERS = st.session_state['PLATFORM_USERS']
 
 # Permission Matrix
 PERMISSIONS = {
@@ -123,143 +125,6 @@ st.markdown(f"""
     /* 1. BACKGROUND: Dynamic or White based on State */
     {main_bg_css}
     
-    @keyframes gradientBG {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
-    }}
-
-    /* GLOBAL COMPACTION */
-    .block-container {{
-        padding-top: 5vh !important;
-        padding-bottom: 2rem !important;
-        max-width: 100% !important;
-    }}
-
-    /* SCROLLBAR REMOVAL ON LARGE SCREENS */
-    @media (min-width: 1024px) {{
-        ::-webkit-scrollbar {{
-            display: none !important;
-        }}
-        .stApp {{
-            overflow: hidden !important;
-        }}
-        section.main {{
-            overflow: hidden !important;
-        }}
-    }}
-
-    /* 3. INPUTS: Enterprise Grade Labels */
-    .stTextInput label {{
-        color: #475569 !important;
-        font-size: 12px !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 1.0px;
-        margin-bottom: 8px !important;
-        display: block !important;
-    }}
-
-    /* 3. INPUTS: Premium Text Boxes */
-    .stTextInput > div > div[data-baseweb="base-input"],
-    div[data-baseweb="base-input"] {{
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
-        overflow: hidden;
-        box-shadow: none !important;
-    }}
-    
-    .stTextInput > div > div[data-baseweb="base-input"]:hover,
-    div[data-baseweb="base-input"]:hover {{
-        border-color: #cbd5e1 !important;
-    }}
-    
-    .stTextInput > div > div[data-baseweb="base-input"]:focus-within,
-    div[data-baseweb="base-input"]:focus-within {{
-        border-color: #0f172a !important;
-        box-shadow: 0 0 0 1px #0f172a !important;
-        background-color: #ffffff !important;
-    }}
-
-    div[data-baseweb="base-input"] > div,
-    div[data-baseweb="base-input"] * {{
-        background-color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-        outline: none !important;
-    }}
-
-    .stTextInput input {{
-        color: #111827 !important;
-        caret-color: #111827 !important;
-        font-weight: 500 !important;
-        font-size: 15px !important;
-        padding: 12px 14px !important;
-        padding-right: 40px !important;
-        letter-spacing: 0.3px;
-        background: transparent !important;
-    }}
-    
-    .stTextInput input::placeholder {{
-        color: #9ca3af !important;
-        font-weight: 400 !important;
-        font-style: normal !important;
-        opacity: 1 !important;
-    }}
-
-    div[data-testid="InputInstructions"] {{ display: none !important; }}
-    
-    .stTextInput {{
-        margin-bottom: 16px !important;
-    }}
-
-    /* Eye Icon Polish */
-    div[data-baseweb="base-input"] > div:last-child {{
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        margin-right: 0px !important;
-        right: 0px !important;
-        height: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-    }}
-
-    div[data-baseweb="base-input"] > div:last-child *,
-    div[data-baseweb="base-input"] button,
-    div[data-baseweb="base-input"] button * {{
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }}
-    
-    div[data-baseweb="base-input"] button {{
-        padding-right: 12px !important; 
-    }}
-
-    div[data-baseweb="base-input"] button svg {{
-        fill: #64748b !important;
-    }}
-    
-    div[data-baseweb="base-input"] button:hover {{
-        background-color: transparent !important;
-        transform: scale(1.1);
-        cursor: pointer;
-    }}
-    
-    div[data-baseweb="base-input"] button:hover svg {{
-        fill: #0f172a !important;
-    }}
-    {main_bg_css}
-    
-    @keyframes gradientBG {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
-    }}
-
     /* GLOBAL COMPACTION */
     .block-container {{
         padding-top: 5vh !important;
@@ -566,7 +431,8 @@ st.markdown(f"""
     }}
 
     /* Active State (Primary Buttons in Sidebar) - ELEGANT HIGHLIGHT */
-    section[data-testid="stSidebar"] .stButton > button[kind="primary"] {{
+    section[data-testid="stSidebar"] .stButton > button[kind="primary"],
+    section[data-testid="stSidebar"] .stButton > button[data-testid*="primary"] {{
         background-color: #ffffff !important;
         color: #d11f41 !important; /* Brand Red */
         font-weight: 600 !important;
@@ -575,7 +441,8 @@ st.markdown(f"""
         border: none !important;
     }}
     
-    section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {{
+    section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover,
+    section[data-testid="stSidebar"] .stButton > button[data-testid*="primary"]:hover {{
         box-shadow: 0 4px 12px rgba(209, 31, 65, 0.18), 
                     0 0 0 1px rgba(209, 31, 65, 0.2) !important;
         transform: scale(1.02) !important;
@@ -1049,8 +916,6 @@ else:
         match_review.render()
     elif page == "Dashboard":
         from src.frontend.views import dashboard
-        import importlib
-        importlib.reload(dashboard)
         dashboard.render()
     elif page == "Audit Logs":
         from src.frontend.views import audit
@@ -1058,6 +923,9 @@ else:
     elif page == "Connectors":
         from src.frontend.views import connectors
         connectors.render()
+    elif page == "User Management":
+        from src.frontend.views import users
+        users.render()
     else:
         st.title(page)
         st.info(f"{page} module is currently under development or maintenance.")

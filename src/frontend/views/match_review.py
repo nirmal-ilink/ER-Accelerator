@@ -7,7 +7,12 @@ import textwrap
 from src.backend.audit.logger import AuditLogger
 
 # Initialize Audit Log
+from src.backend.audit.logger import AuditLogger
+from src.backend.engine.resolution_manager import ResolutionManager
+
+# Initialize Managers
 audit_log = AuditLogger()
+resolution_manager = ResolutionManager()
 
 # =============================================================================
 # CONSTANTS & CONFIG
@@ -624,6 +629,12 @@ def render():
         st.session_state.match_index = 0
         
     df = load_data()
+    
+    # Filter out already resolved clusters
+    resolved_ids = resolution_manager.get_resolved_ids()
+    if not df.empty:
+        df = df[~df['cluster_id'].isin(resolved_ids)]
+        
     # Filter for clusters that have more than 1 record (actual matches to review)
     clusters = df.groupby('cluster_id').filter(lambda x: len(x) > 1)
     unique_ids = clusters['cluster_id'].unique()
@@ -717,6 +728,7 @@ def render():
         st.markdown('<span class="btn-marker-approve"></span>', unsafe_allow_html=True)
         if st.button("Approve Match", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')
+            resolution_manager.log_resolution(curr_id, "Match Approved", user)
             audit_log.log_event(
                 module="Match Review",
                 action="Match Approved",
@@ -730,6 +742,7 @@ def render():
         st.markdown('<span class="btn-marker-reject"></span>', unsafe_allow_html=True)
         if st.button("Reject Match", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')
+            resolution_manager.log_resolution(curr_id, "Match Rejected", user)
             audit_log.log_event(
                 module="Match Review",
                 action="Match Rejected",
@@ -743,6 +756,9 @@ def render():
         st.markdown('<span class="btn-marker-defer"></span>', unsafe_allow_html=True)
         if st.button("Defer Resolution", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')
+            # Defer doesn't necessarily log as resolved in the persistence layer so it comes back, 
+            # but we audit it. Or we can log it with a different action if we want to track it.
+            # For now, we won't add it to resolution_manager so it reappears next load (or we could skip in session)
             audit_log.log_event(
                 module="Match Review",
                 action="Process Deferred",
