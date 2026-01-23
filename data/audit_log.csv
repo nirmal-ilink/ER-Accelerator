@@ -34,3 +34,5 @@ Timestamp,User,Action,Module,Status,Details
 2026-01-23 15:48:30,Administrator,User Logout,Auth,Success,User signed out manually
 2026-01-23 15:48:37,admin,User Login,Auth,Success,Session started for admin
 2026-01-23 15:50:02,admin,User Login,Auth,Success,Session started for admin
+2026-01-23 15:57:25,admin,User Login,Auth,Success,Session started for admin
+2026-01-23 18:23:05,admin,User Login,Auth,Success,Session started for admin

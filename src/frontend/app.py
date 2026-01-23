@@ -926,6 +926,9 @@ else:
     elif page == "User Management":
         from src.frontend.views import users
         users.render()
+    elif page == "Pipeline Inspector":
+        from src.frontend.views import inspector
+        inspector.render()
     else:
         st.title(page)
         st.info(f"{page} module is currently under development or maintenance.")
