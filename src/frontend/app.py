@@ -838,10 +838,10 @@ def sidebar_nav():
             
         st.markdown(f"""
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 8px; padding-top: 10px;">
-            <img src="data:image/png;base64,{logo_b64}" width="85" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+            <img src="data:image/png;base64,{logo_b64}" width="100" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
             <div style="display: flex; flex-direction: column;">
-                <h3 style="margin: 0; font-size: 30px; color: #0f172a; font-weight: 800; letter-spacing: -0.5px; line-height: 1.0;">iCORE</h3>
-                <p style="margin: 0; font-size: 13px; color: #64748b; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;">iLINK DIGITAL</p>
+                <h3 style="margin: 0; font-size: 28px; color: #0f172a; font-weight: 800; letter-spacing: -0.5px; line-height: 1.0;">iCORE</h3>
+                <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;">iLINK DIGITAL</p>
             </div>
         </div>
         """, unsafe_allow_html=True)

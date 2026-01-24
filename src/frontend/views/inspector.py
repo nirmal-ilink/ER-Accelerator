@@ -118,8 +118,8 @@ def render():
         @keyframes pulse-red {{ 0% {{ box-shadow: 0 0 0 0 rgba(209, 31, 65, 0.4); }} 70% {{ box-shadow: 0 0 0 10px rgba(209, 31, 65, 0); }} 100% {{ box-shadow: 0 0 0 0 rgba(0,0,0,0); }} }}
 
         /* --- PREMIUM BUTTON DESIGN --- */
-        /* Secondary Buttons (Nav & Pagination) */
-        div.stButton > button[kind="secondary"] {{
+        /* Stage Navigation Buttons in Left Column (Not sidebar) */
+        [data-testid="stMain"] div.stButton > button[kind="secondary"] {{
             background-color: #FFFFFF !important;
             color: #475569 !important;
             border: 1px solid #E2E8F0 !important;
@@ -135,7 +135,7 @@ def render():
             font-weight: 600 !important;
             letter-spacing: -0.2px !important;
         }}
-        div.stButton > button[kind="secondary"]:hover {{
+        [data-testid="stMain"] div.stButton > button[kind="secondary"]:hover {{
             background-color: #FFFFFF !important;
             border-color: {COLORS['brand']}30 !important;
             color: {COLORS['brand']} !important;
@@ -143,8 +143,8 @@ def render():
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05) !important;
         }}
 
-        /* Primary Button (Active Nav) */
-        div.stButton > button[kind="primary"] {{
+        /* Primary Button (Active Stage) in Main Area */
+        [data-testid="stMain"] div.stButton > button[kind="primary"] {{
             background-color: {COLORS['brand']} !important;
             border: 1px solid {COLORS['brand']} !important;
             color: white !important;
@@ -160,7 +160,7 @@ def render():
         }}
         
         /* Active Indicator Line */
-        div.stButton > button[kind="primary"]::before {{
+        [data-testid="stMain"] div.stButton > button[kind="primary"]::before {{
             content: '';
             position: absolute;
             left: 0;
@@ -171,11 +171,53 @@ def render():
             border-radius: 0 4px 4px 0;
         }}
 
-        div.stButton > button[kind="primary"]:hover {{
+        [data-testid="stMain"] div.stButton > button[kind="primary"]:hover {{
             background-color: #B91C41 !important;
             border-color: #B91C41 !important;
             transform: translateY(-2px) !important;
             box-shadow: 0 12px 24px -6px rgba(209, 31, 65, 0.4) !important;
+        }}
+        
+        /* --- PAGINATION NAVIGATION BUTTONS (Previous/Next at bottom) --- */
+        .st-key-prev_btn_foot div.stButton > button,
+        .st-key-next_btn_foot div.stButton > button {{
+            padding: 12px 24px !important;
+            justify-content: center !important;
+            text-align: center !important;
+            border-radius: 10px !important;
+            font-size: 14px !important;
+        }}
+        
+        .st-key-prev_btn_foot div.stButton > button {{
+            background-color: #FFFFFF !important;
+            color: #475569 !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
+        }}
+        
+        .st-key-prev_btn_foot div.stButton > button:hover {{
+            background-color: #F8FAFC !important;
+            border-color: #CBD5E1 !important;
+            color: #334155 !important;
+            transform: translateY(-1px) !important;
+        }}
+        
+        .st-key-next_btn_foot div.stButton > button {{
+            background-color: {COLORS['brand']} !important;
+            color: white !important;
+            border: 1px solid {COLORS['brand']} !important;
+            box-shadow: 0 4px 12px rgba(209, 31, 65, 0.25) !important;
+        }}
+        
+        .st-key-next_btn_foot div.stButton > button:hover {{
+            background-color: #B91C41 !important;
+            border-color: #B91C41 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 16px rgba(209, 31, 65, 0.35) !important;
+        }}
+        
+        .st-key-next_btn_foot div.stButton > button::before {{
+            display: none !important;
         }}
         
         button:focus {{ outline: none !important; box-shadow: none !important; }}
@@ -346,7 +388,7 @@ def render():
         c_prev, c_gap, c_next = st.columns([1, 1.8, 1])
         with c_prev:
             if current_idx > 0:
-                if st.button("Previous Step", use_container_width=True, key="prev_btn_foot"):
+                if st.button("Previous Step", use_container_width=True, key="prev_btn_foot", type="secondary"):
                     st.session_state['inspector_active_stage'] -= 1
                     st.rerun()
         with c_next:

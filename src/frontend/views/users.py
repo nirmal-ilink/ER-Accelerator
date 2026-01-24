@@ -105,9 +105,9 @@ def render():
         .badge-active {{ background: {COLORS['green_light']}; color: {COLORS['green']}; }}
         .badge-inactive {{ background: #F1F5F9; color: {COLORS['slate_light']}; }}
         
-        /* Add User Button (Specifically this one, standard st.button) */
-        .main-content div.stButton > button[kind="primary"],
-        button[data-testid="stBaseButton-primary"] {{
+        /* Add User Button (Specifically this one, standard st.button) - SCOPED TO MAIN */
+        [data-testid="stMain"] div.stButton > button[kind="primary"],
+        [data-testid="stMain"] button[data-testid="stBaseButton-primary"] {{
             background: {COLORS['red']} !important; /* Brand Red */
             color: white !important;
             border: none !important;
@@ -118,17 +118,17 @@ def render():
             transition: all 0.3s ease !important;
         }}
         
-        .main-content div.stButton > button[kind="primary"]:hover,
-        button[data-testid="stBaseButton-primary"]:hover {{
+        [data-testid="stMain"] div.stButton > button[kind="primary"]:hover,
+        [data-testid="stMain"] button[data-testid="stBaseButton-primary"]:hover {{
             background: #9f1239 !important;
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
         }}
         
-        /* Create Identity Button (Form Submit - Keep rectangular/rounded) */
-        .main-content div.stButton > button[kind="primaryFormSubmit"],
-        button[kind="primaryFormSubmit"],
-        button[data-testid="stBaseButton-primaryFormSubmit"] {{
+        /* Create Identity Button (Form Submit - Keep rectangular/rounded) - SCOPED TO MAIN */
+        [data-testid="stMain"] div.stButton > button[kind="primaryFormSubmit"],
+        [data-testid="stMain"] button[kind="primaryFormSubmit"],
+        [data-testid="stMain"] button[data-testid="stBaseButton-primaryFormSubmit"] {{
             background: {COLORS['red']} !important;
             color: white !important;
             border: none !important;
@@ -139,18 +139,18 @@ def render():
             transition: all 0.3s ease !important;
         }}
         
-        button[kind="primaryFormSubmit"]:hover,
-        button[data-testid="stBaseButton-primaryFormSubmit"]:hover {{
+        [data-testid="stMain"] button[kind="primaryFormSubmit"]:hover,
+        [data-testid="stMain"] button[data-testid="stBaseButton-primaryFormSubmit"]:hover {{
              background: #9f1239 !important;
              transform: translateY(-2px);
              box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
         }}
         
-        /* Secondary Button - Explicit "Back/Cancel" styling */
-        .main-content div.stButton > button[kind="secondary"],
-        .main-content div.stButton > button[kind="secondaryFormSubmit"],
-        button[kind="secondaryFormSubmit"],
-        button[data-testid="stBaseButton-secondaryFormSubmit"] {{
+        /* Secondary Button - Explicit "Back/Cancel" styling - SCOPED TO MAIN */
+        [data-testid="stMain"] div.stButton > button[kind="secondary"],
+        [data-testid="stMain"] div.stButton > button[kind="secondaryFormSubmit"],
+        [data-testid="stMain"] button[kind="secondaryFormSubmit"],
+        [data-testid="stMain"] button[data-testid="stBaseButton-secondaryFormSubmit"] {{
             background-color: {COLORS['white']} !important;
             color: #475569 !important;
             border: 1px solid {COLORS['border']} !important;
@@ -161,10 +161,10 @@ def render():
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }}
         
-        .main-content div.stButton > button[kind="secondary"]:hover,
-        .main-content div.stButton > button[kind="secondaryFormSubmit"]:hover,
-        button[kind="secondaryFormSubmit"]:hover,
-        button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {{
+        [data-testid="stMain"] div.stButton > button[kind="secondary"]:hover,
+        [data-testid="stMain"] div.stButton > button[kind="secondaryFormSubmit"]:hover,
+        [data-testid="stMain"] button[kind="secondaryFormSubmit"]:hover,
+        [data-testid="stMain"] button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {{
             border-color: #CBD5E1 !important;
             background-color: #F8FAFC !important;
             color: #0F172A !important;
@@ -358,11 +358,11 @@ def render():
             font-weight: 600 !important;
         }}
         
-        /* Override Streamlit Dark Mode Button Defaults if persistent */
-        .main-content div.stButton > button {{
+        /* Override Streamlit Dark Mode Button Defaults if persistent - SCOPED TO MAIN */
+        [data-testid="stMain"] div.stButton > button {{
              color: #0f172a !important;
         }}
-        .main-content div.stButton > button[kind="primary"] {{
+        [data-testid="stMain"] div.stButton > button[kind="primary"] {{
              color: #ffffff !important; /* Keep Primary White Text */
         }}
     </style>

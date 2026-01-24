@@ -106,7 +106,6 @@ def inject_premium_styles():
         .block-container {{ 
             padding-top: 1.5rem !important; 
             padding-bottom: 2rem !important; 
-            max-width: 1240px !important; 
         }}
         div[data-testid="stDecoration"] {{ display: none; }}
         
@@ -343,8 +342,8 @@ def inject_premium_styles():
             font-weight: 600;
         }}
 
-        /* PREMIUM COMMAND BUTTONS - ROBUST TARGETING */
-        div.stButton > button {{
+        /* PREMIUM COMMAND BUTTONS - SCOPED TO MAIN CONTENT ONLY */
+        [data-testid="stMain"] div.stButton > button {{
             border-radius: 10px;
             padding: 0.75rem 2.5rem;
             font-weight: 600;
@@ -359,7 +358,7 @@ def inject_premium_styles():
             width: 100%;
         }}
         
-        div.stButton > button:hover {{
+        [data-testid="stMain"] div.stButton > button:hover {{
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
             border-color: #cbd5e1 !important;

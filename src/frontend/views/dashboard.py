@@ -76,8 +76,8 @@ def render():
     <style>
         .stApp {{ background-color: {COLORS['bg_main']} !important; }}
         
-        /* Typography */
-        h1, h2, h3, h4, .stMarkdown {{ font-family: 'Inter', sans-serif !important; letter-spacing: -0.2px; }}
+        /* Typography - Scoped to Main Content Only */
+        [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3, [data-testid="stMain"] h4, [data-testid="stMain"] .stMarkdown {{ font-family: 'Inter', sans-serif !important; letter-spacing: -0.2px; }}
         
         /* RESPONSIVE GRID SYSTEM FOR KPIS */
         .kpi-grid {{
