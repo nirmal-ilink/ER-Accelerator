@@ -58,13 +58,152 @@ is_auth = st.session_state.get('authenticated', False)
 
 # Dynamic CSS Variables
 if not is_auth:
-    # LOGIN MODE: Pearlescent Gradient Background
+    # LOGIN MODE: Premium Red & Grey Dynamic Background
     main_bg_css = """
+    /* Base liquid gradient background - premium deep slate & silver */
     .stApp {
-        background: linear-gradient(-45deg, #ffffff, #f1f5f9, #fee2e2, #e2e8f0, #dbeafe, #ffffff);
+        background: linear-gradient(-45deg, #e2e8f0, #cbd5e1, #f8fafc, #ccd6e0);
         background-size: 400% 400%;
-        animation: gradientBG 12s ease infinite;
+        animation: liquidFlow 8s ease infinite;
         background-attachment: fixed;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    @keyframes liquidFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Primary background layer - Orbs, Enterprise Grid Pattern, and Vignette */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        z-index: 0;
+        background: 
+            /* 1. Lush Ruby Red orbs */
+            radial-gradient(circle 650px at 80% 25%, rgba(209, 31, 65, 0.18) 0%, transparent 80%),
+            radial-gradient(circle 450px at 15% 35%, rgba(209, 31, 65, 0.12) 0%, transparent 70%),
+            /* 2. Deep Antarctic Slate orbs */
+            radial-gradient(circle 550px at 20% 85%, rgba(30, 41, 59, 0.15) 0%, transparent 75%),
+            /* 3. MILD PATTERN: Dotted Enterprise Grid */
+            radial-gradient(rgba(209, 31, 65, 0.05) 1px, transparent 1px),
+            radial-gradient(rgba(71, 85, 105, 0.05) 1px, transparent 1px),
+            /* 4. VIGNETTE for centering focus */
+            radial-gradient(circle at center, transparent 0%, rgba(15, 23, 42, 0.06) 100%);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px, 100% 100%;
+        background-position: 0 0, 0 0, 0 0, 0 0, 20px 20px, 0 0;
+        animation: lushFloat 12s ease-in-out infinite alternate;
+        filter: blur(1px); /* Soften the grid pattern for a premium feel */
+    }
+    
+    /* Secondary orb layer - Pulsing Deep Contrast */
+    .stApp::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 0;
+        background: 
+            /* Pulsing Garnet Center */
+            radial-gradient(circle 350px at 50% 50%, rgba(159, 18, 57, 0.1) 0%, transparent 60%),
+            /* Silver Chrome edge */
+            radial-gradient(circle 450px at 90% 90%, rgba(148, 163, 184, 0.12) 0%, transparent 70%);
+        animation: lushFloatAlt 14s ease-in-out infinite alternate-reverse;
+        filter: blur(60px);
+    }
+
+    @keyframes lushFloat {
+        0% { transform: translate(0, 0) scale(1.0); }
+        100% { transform: translate(50px, -50px) scale(1.1); }
+    }
+
+    @keyframes lushFloatAlt {
+        0% { transform: translate(0, 0) scale(1.1); }
+        100% { transform: translate(-40px, 40px) scale(0.9); }
+    }
+
+    /* Magical micro-particles */
+    [data-testid="stAppViewContainer"]::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            radial-gradient(circle 1.5px at 15% 25%, rgba(209, 31, 65, 0.4), transparent),
+            radial-gradient(circle 1px at 85% 65%, rgba(255, 255, 255, 0.6), transparent),
+            radial-gradient(circle 2px at 30% 85%, rgba(71, 85, 105, 0.3), transparent),
+            radial-gradient(circle 1.5px at 70% 15%, rgba(209, 31, 65, 0.3), transparent);
+        pointer-events: none;
+        z-index: 1;
+        animation: particleTwinkle 6s ease-in-out infinite;
+    }
+
+    @keyframes particleTwinkle {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.5); }
+    }
+    
+    /* (Removed redundant stApp::before definition) */
+
+    /* Entrance Animation for Login Card */
+    div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {
+        animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+        opacity: 0;
+    }
+
+    @keyframes cardEntrance {
+        from { opacity: 0; transform: translateY(20px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Pulsing Sign In Button to guide user */
+    div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stButton"] button {
+        animation: buttonPulse 3s ease-in-out infinite !important;
+    }
+
+    @keyframes buttonPulse {
+        0% { box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25); }
+        50% { box-shadow: 0 0 0 4px rgba(209, 31, 65, 0.15), 0 10px 15px -3px rgba(209, 31, 65, 0.3); }
+        100% { box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25); }
+    }
+
+    /* Directional flow for background */
+    @keyframes floatOrbs {
+        0%, 100% { transform: translate(0, 0) scale(1.0); }
+        50% { transform: translate(15px, -15px) scale(1.05); }
+    }
+    
+    /* Ensure main content stays above background */
+    .stApp > header,
+    .stApp > header + div,
+    .main .block-container,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Subtle noise texture overlay for premium feel */
+    [data-testid="stAppViewContainer"]::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        opacity: 0.015;
+        pointer-events: none;
+        z-index: 0;
     }
     
     /* LOGIN BUTTON STYLES (SCOPED) */
@@ -696,20 +835,26 @@ def login_page():
     # INJECT LOGIN SPECIFIC CSS HERE
     st.markdown("""
     <style>
-    /* 2. LOGIN CARD: Premium Glassmorphism */
+    /* 2. LOGIN CARD: Ultra-Premium Glassmorphism & Depth */
     div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {
-        background: rgba(255, 255, 255, 0.65) !important;
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
-        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(255, 255, 255, 0.3) inset,
+            0 4px 24px -1px rgba(209, 31, 65, 0.05) !important;
+        border-radius: 40px;
         padding: 60px !important;
         gap: 24px;
         width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
         display: block !important;
+        position: relative;
+        z-index: 10;
+        animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
     }
 
     div[data-testid="stColumn"]:nth-of-type(2) .stTextInput,
