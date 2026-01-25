@@ -13,6 +13,7 @@ def render():
         'white': "#FFFFFF",
         'bg': "#F8FAFC",
         'border': "#E2E8F0",
+        'border_premium': "#CBD5E1",  # Slightly darker border for consistency
         'green': "#059669",
         'yellow': "#D97706"
     }
@@ -61,44 +62,80 @@ def render():
             border-radius: 12px !important;
         }}
         
-        .filter-label {{
-            font-size: 12px;
-            font-weight: 600;
-            color: {COLORS['slate_light']};
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }}
+        /* CONSISTENT FILTER HEIGHT STYLING */
         
-        /* SELECTBOX & INPUT LIGHT THEME */
-        div[data-baseweb="select"] > div, 
-        div[data-baseweb="base-input"],
-        div[data-testid="stDateInput"] > div[data-baseweb="base-input"] {{
-            background-color: white !important;
-            color: {COLORS['slate']} !important;
-            border: 1px solid {COLORS['border']} !important;
-            border-radius: 8px !important;
-            transition: all 0.2s ease !important;
+        /* Force all outer containers to same height */
+        div[data-testid="stTextInput"],
+        div[data-testid="stSelectbox"],
+        div[data-testid="stDateInput"] {{
+            margin-bottom: 0 !important;
         }}
 
-        /* Focus & Hover states */
-        div[data-baseweb="select"] > div:hover,
-        div[data-baseweb="base-input"]:hover,
-        div[data-testid="stDateInput"] > div[data-baseweb="base-input"]:hover {{
-            border-color: {COLORS['slate_light']} !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        /* All filter input boxes: identical 42px height */
+        div[data-testid="stTextInput"] [data-baseweb="base-input"],
+        div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+        div[data-testid="stDateInput"] [data-baseweb="input"] > div {{
+            background: white !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 6px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            max-height: 42px !important;
+            box-shadow: none !important;
+            display: flex !important;
+            align-items: center !important;
         }}
 
-        div[data-baseweb="select"]:focus-within > div,
-        div[data-baseweb="base-input"]:focus-within {{
-            border-color: {COLORS['red']} !important;
-            box-shadow: 0 0 0 1px {COLORS['red']} !important;
+        /* Remove any inner borders/shadows */
+        div[data-testid="stTextInput"] [data-baseweb="input"],
+        div[data-testid="stSelectbox"] [data-baseweb="select"],
+        div[data-testid="stDateInput"] [data-baseweb="input"] {{
+            border: none !important;
+            box-shadow: none !important;
+        }}
+
+        /* Input text styling - all same height */
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stDateInput"] input {{
+            font-size: 14px !important;
+            color: #1E293B !important;
+            padding: 0 12px !important;
+            height: 42px !important;
+            line-height: 42px !important;
+            background: transparent !important;
+        }}
+
+        /* Selectbox container and value height */
+        div[data-testid="stSelectbox"] [data-baseweb="select"] {{
+            height: 42px !important;
         }}
         
-        /* Target the text color specifically */
-        div[data-testid="stSelectbox"] p, 
-        div[data-testid="stTextInput"] p,
-        div[data-testid="stDateInput"] p {{
-            color: {COLORS['slate']} !important;
+        div[data-testid="stSelectbox"] [data-baseweb="select"] div[value] {{
+            font-size: 14px !important;
+            color: #1E293B !important;
+            padding: 0 12px !important;
+            height: 42px !important;
+            line-height: 42px !important;
+            display: flex !important;
+            align-items: center !important;
+        }}
+
+        /* Widget labels - consistent styling */
+        div[data-testid="stWidgetLabel"] p,
+        label[data-testid="stWidgetLabel"] p {{
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            color: #64748B !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            margin-bottom: 4px !important;
+        }}
+
+        /* Focus state */
+        div[data-testid="stTextInput"] [data-baseweb="base-input"]:focus-within,
+        div[data-testid="stSelectbox"] [data-baseweb="select"]:focus-within > div,
+        div[data-testid="stDateInput"] [data-baseweb="input"]:focus-within > div {{
+            border-color: #94A3B8 !important;
         }}
 
         /* CALENDAR POPOVER: FORCE LIGHT THEME & PREMIUM STYLE */
@@ -145,18 +182,7 @@ def render():
             border-radius: 4px !important;
         }}
 
-        /* PREPEND CALENDAR ICON TO DATE INPUT */
-        div[data-testid="stDateInput"] > div[data-baseweb="base-input"]::before {{
-            content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
-            margin-left: 12px;
-            margin-top: 2px;
-            display: flex;
-            align-items: center;
-        }}
-
-        div[data-testid="stDateInput"] input {{
-            padding-left: 8px !important;
-        }}
+        /* DATAFRAME LIGHT THEME FORCE */
 
         /* DATAFRAME LIGHT THEME FORCE */
         .stDataFrame {{
@@ -215,21 +241,18 @@ def render():
     st.write("<div style='height:24px'></div>", unsafe_allow_html=True)
 
     # --- DYNAMIC FILTERS ---
-    with st.container(border=True):
-        f1, f2, f3 = st.columns([2, 1, 1])
+    f1, f2, f3 = st.columns([2, 1, 1.5], gap="medium")
+    
+    with f1:
+        search_term = st.text_input("Search", placeholder="Search by user, action, or module...")
         
-        with f1:
-            st.markdown('<div class="filter-label">Search Activity</div>', unsafe_allow_html=True)
-            search_term = st.text_input("Search", placeholder="Search user, action, module or details...", label_visibility="collapsed")
-            
-        with f2:
-            st.markdown('<div class="filter-label">Status Layer</div>', unsafe_allow_html=True)
-            status_filter = st.selectbox("Status", ["All Categories", "Success", "Failed", "Warning"], label_visibility="collapsed")
-            
-        with f3:
-            st.markdown('<div class="filter-label">Timeline Select</div>', unsafe_allow_html=True)
-            # Default to last 7 days if empty
-            date_range = st.date_input("Date Range", [datetime.now() - timedelta(days=7), datetime.now()], label_visibility="collapsed")
+    with f2:
+        status_filter = st.selectbox("Status", ["All Categories", "Success", "Failed", "Warning"])
+        
+    with f3:
+        date_range = st.date_input("Date Range", [datetime.now() - timedelta(days=7), datetime.now()])
+
+    st.write("")
 
     # --- REAL DATA LOADING ---
     from src.backend.audit.logger import AuditLogger
