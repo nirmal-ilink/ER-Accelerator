@@ -59,34 +59,9 @@ mkdir -p "${BUILD_DIR}"
 cp -r "${APP_DIR}/src" "${BUILD_DIR}/"
 cp -r "${APP_DIR}/config" "${BUILD_DIR}/"
 cp -r "${APP_DIR}/data" "${BUILD_DIR}/" 2>/dev/null || mkdir -p "${BUILD_DIR}/data"
+cp -r "${APP_DIR}/assets" "${BUILD_DIR}/"
 cp "${APP_DIR}/requirements.txt" "${BUILD_DIR}/"
-
-# Create app.yaml for Databricks Apps
-cat > "${BUILD_DIR}/app.yaml" << EOF
-# Databricks App Configuration
-name: ${APP_NAME}
-description: "iCORE - Enterprise Entity Resolution Accelerator"
-
-# Entry point
-command: "streamlit run src/frontend/app.py --server.port=\${port} --server.address=0.0.0.0"
-
-# Environment variables (secrets should be referenced, not hardcoded)
-env:
-  - name: DATABRICKS_HOST
-    valueFrom:
-      secretRef: er-accelerator/databricks-host
-  - name: DATABRICKS_TOKEN
-    valueFrom:
-      secretRef: er-accelerator/databricks-token
-  - name: DATABRICKS_CLUSTER_ID
-    valueFrom:
-      secretRef: er-accelerator/cluster-id
-
-# Resources
-resources:
-  num_cpus: 2
-  memory_mb: 4096
-EOF
+cp "${APP_DIR}/app.yaml" "${BUILD_DIR}/"
 
 echo -e "${GREEN}✓ Build directory prepared${NC}"
 
