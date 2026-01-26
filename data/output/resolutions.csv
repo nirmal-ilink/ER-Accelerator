@@ -1,2 +1,4 @@
-timestamp,cluster_id,action,user,comments
-2026-01-26 00:44:17,CL001,Match Rejected,Administrator,
+timestamp,cluster_id,action,user,comments,golden_record
+2026-01-26 13:00:51,CL001,Match Approved,Administrator,,"{""npi"": ""3444587960"", ""first_name"": ""Jennifer"", ""last_name"": ""Martin"", ""address_line_1"": ""4484 Cedar Ct"", ""city"": ""Los Angeles"", ""state"": ""CA"", ""zip_code"": ""25354"", ""phone"": ""449-632-7536"", ""specialty"": ""Oncology""}"
+2026-01-26 13:45:52,CL002,Match Approved,Administrator,,"{""npi"": ""3175087427"", ""first_name"": ""Sarah"", ""last_name"": ""Wilson"", ""address_line_1"": ""6940 Main Street"", ""city"": ""San Antonio"", ""state"": ""TX"", ""zip_code"": ""74966"", ""phone"": ""848-211-7653"", ""specialty"": ""Internal Medicine""}"
+2026-01-26 13:46:13,CL003,Match Approved,Administrator,,"{""npi"": ""4125896321"", ""first_name"": ""Nirmal"", ""last_name"": ""Pukazhen"", ""address_line_1"": ""123 iLink Way"", ""city"": ""Houston"", ""state"": ""TX"", ""zip_code"": ""77001"", ""phone"": ""713-555-0101"", ""specialty"": ""General Practice""}"

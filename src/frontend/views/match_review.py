@@ -12,7 +12,6 @@ from src.backend.engine.resolution_manager import ResolutionManager
 
 # Initialize Managers
 audit_log = AuditLogger()
-resolution_manager = ResolutionManager()
 
 # =============================================================================
 # CONSTANTS & CONFIG
@@ -56,19 +55,110 @@ def load_data():
         pass
         
     return pd.DataFrame({
-        "unique_id": ["EMR001", "NPI001", "EMR002", "NPI002", "CLM002", "EMR003", "SNOW_01", "DL_01", "SAP_01"],
-        "npi": ["3444587960", "3444587960", "3175087427", "3175087427", "3175087427", "4125896321", "4125896321", "4125896321", "4125890000"],
-        "first_name": ["Jennifer", "Jennifer", "Sarah", "Sara", "Sarah", "Nirmal", "Nirmal", "Nirmal Kumar", "Nirmal"],
-        "last_name": ["Martin", "Martin", "Wilson", "Wilson", "Willson", "Pukazhen", "Pukazhen", "Pukazhen", "Pukazhen"],
-        "address_line_1": ["4484 Cedar Ct", "4484 Cedar Ct", "6940 Main Street", "6940 Main St", "6940 Main St", "123 iLink Way", "123 iLink Way", "123 iLink Way", "123 iLink Way"],
-        "city": ["Los Angeles", "Los Angeles", "San Antonio", "San Antonio", "San Antonio", "Houston", "Houston", "Houston", "Houston"],
-        "state": ["CA", "CA", "TX", "TX", "TX", "TX", "TX", "TX", "TX"],
-        "zip_code": ["25354", "25354", "74966", "74966", "74966", "77001", "77001", "77001", "77001"],
-        "phone": ["449-632-7536", "449-632-7536", "848-211-7653", "848-211-7653", None, "713-555-0101", "713-555-0101", "713-555-0101", "713-555-0000"],
-        "specialty": ["Oncology", "Oncology", "Internal Medicine", "Internal Medicine", "Internal Med", "General Practice", "GP", "General Practice", "GP"],
-        "_source_system": ["EMR", "NPI_Registry", "EMR", "NPI_Registry", "Claims_DB", "EMR", "Snowflake", "Delta Lake", "SAP"],
-        "cluster_id": ["CL001", "CL001", "CL002", "CL002", "CL002", "CL003", "CL003", "CL003", "CL003"],
-        "confidence_score": [0.95, 0.95, 0.87, 0.87, 0.87, 0.98, 0.70, 0.88, 0.90]
+        "unique_id": [
+            "EMR001", "NPI001", 
+            "EMR002", "NPI002", "CLM002", 
+            "EMR003", "SNOW_01", "DL_01", "SAP_01",
+            "EMR004", "NPI004",
+            "EMR005", "CLM005", "NPI005",
+            "EMR006", "NPI006"
+        ],
+        "npi": [
+            "3444587960", "3444587960", 
+            "3175087427", "3175087427", "3175087427", 
+            "4125896321", "4125896321", "4125896321", "4125890000",
+            "5151515001", "5151515001",
+            "6007008000", "6007008000", "6007008001",
+            "7474747474", "7474747474"
+        ],
+        "first_name": [
+            "Jennifer", "Jennifer", 
+            "Sarah", "Sara", "Sarah", 
+            "Nirmal", "Nirmal", "Nirmal Kumar", "Nirmal",
+            "Robert", "Rob",
+            "Michael", "Mike", "Michael",
+            "Samantha", "Sam"
+        ],
+        "last_name": [
+            "Martin", "Martin", 
+            "Wilson", "Wilson", "Willson", 
+            "Pukazhen", "Pukazhen", "Pukazhen", "Pukazhen",
+            "Chen", "Chen",
+            "Rodriguez", "Rodriges", "Rodriguez",
+            "Smith", "Smith-Jones"
+        ],
+        "address_line_1": [
+            "4484 Cedar Ct", "4484 Cedar Ct", 
+            "6940 Main Street", "6940 Main St", "6940 Main St", 
+            "123 iLink Way", "123 iLink Way", "123 iLink Way", "123 iLink Way",
+            "101 Tech Blvd", "101 Technology Boulevard",
+            "555 Oak Ave", "555 Oak St", "555 Oak Ave",
+            "888 Pine Rd", "888 Pine Road"
+        ],
+        "city": [
+            "Los Angeles", "Los Angeles", 
+            "San Antonio", "San Antonio", "San Antonio", 
+            "Houston", "Houston", "Houston", "Houston",
+            "Seattle", "Seattle",
+            "Miami", "Miami", "Miami",
+            "Chicago", "Chicago"
+        ],
+        "state": [
+            "CA", "CA", 
+            "TX", "TX", "TX", 
+            "TX", "TX", "TX", "TX",
+            "WA", "WA",
+            "FL", "FL", "FL",
+            "IL", "IL"
+        ],
+        "zip_code": [
+            "25354", "25354", 
+            "74966", "74966", "74966", 
+            "77001", "77001", "77001", "77001",
+            "98101", "98101",
+            "33101", "33101", "33101",
+            "60601", "60601"
+        ],
+        "phone": [
+            "449-632-7536", "449-632-7536", 
+            "848-211-7653", "848-211-7653", None, 
+            "713-555-0101", "713-555-0101", "713-555-0101", "713-555-0000",
+            "206-555-1234", "206-555-1234",
+            "305-555-9000", None, "305-555-9000",
+            "312-555-7777", "312-555-7777"
+        ],
+        "specialty": [
+            "Oncology", "Oncology", 
+            "Internal Medicine", "Internal Medicine", "Internal Med", 
+            "General Practice", "GP", "General Practice", "GP",
+            "Cardiology", "Cardiology",
+            "Pediatrics", "Pediatrics", "Pediatrics",
+            "Family Med", "Family Medicine"
+        ],
+        "_source_system": [
+            "EMR", "NPI_Registry", 
+            "EMR", "NPI_Registry", "Claims_DB", 
+            "EMR", "Snowflake", "Delta Lake", "SAP",
+            "EMR", "NPI_Registry",
+            "EMR", "Claims_DB", "NPI_Registry",
+            "EMR", "NPI_Registry"
+        ],
+        "cluster_id": [
+            "CL001", "CL001", 
+            "CL002", "CL002", "CL002", 
+            "CL003", "CL003", "CL003", "CL003",
+            "CL004", "CL004",
+            "CL005", "CL005", "CL005",
+            "CL006", "CL006"
+        ],
+        "confidence_score": [
+            0.95, 0.95, 
+            0.87, 0.87, 0.87, 
+            0.98, 0.70, 0.88, 0.90,
+            0.92, 0.92,
+            0.85, 0.85, 0.85,
+            0.88, 0.88
+        ]
     })
 
 def detect_discrepancies(records: pd.DataFrame, field_key: str) -> bool:
@@ -365,23 +455,31 @@ def inject_premium_styles():
         }}
 
         /* Targeting via markers (simplified) */
+        div:has(.btn-marker-back) + div button:hover,
+        div:has(.btn-marker-back) + div button:active {{
+            background-color: #F1F5F9 !important; /* Mild Grey */
+            color: #334155 !important;
+            border-color: #E2E8F0 !important;
+        }}
+
         div:has(.btn-marker-approve) + div button:hover,
         div:has(.btn-marker-approve) + div button:active {{
-            background-color: #D1FAE5 !important; /* Visible Mild Green */
-            color: #065F46 !important;
-            border-color: #A7F3D0 !important;
+            background-color: #ecfdf5 !important; /* Mild Green (Emerald 50) */
+            color: #065f46 !important; /* Dark Green (Emerald 800) */
+            border-color: #6ee7b7 !important; /* Green Border (Emerald 300) */
+            box-shadow: 0 4px 12px rgba(6, 95, 70, 0.1) !important;
         }}
 
         div:has(.btn-marker-reject) + div button:hover,
         div:has(.btn-marker-reject) + div button:active {{
-            background-color: #FEE2E2 !important; /* Visible Mild Red */
+            background-color: #FEE2E2 !important; /* Mild Red */
             color: #991B1B !important;
             border-color: #FECACA !important;
         }}
 
         div:has(.btn-marker-defer) + div button:hover,
         div:has(.btn-marker-defer) + div button:active {{
-            background-color: #F1F5F9 !important; /* Visible Mild Grey */
+            background-color: #F1F5F9 !important; /* Mild Grey */
             color: #334155 !important;
             border-color: #E2E8F0 !important;
         }}
@@ -618,26 +716,99 @@ def render_matrix(records):
     html += "</tbody></table></div></div>"
     render_safe_html(html)
 
+def render_golden_config(records, cluster_id):
+    """Render a UI to select specific values from different sources for the final Golden Record."""
+    st.markdown("""
+        <div style="margin: 2rem 0 1rem 0;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Build Golden Record</h3>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem;">Select the authoritative source for each attribute to compose the master record.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if f"golden_{cluster_id}" not in st.session_state:
+        # Default to first source for all
+        st.session_state[f"golden_{cluster_id}"] = {key: records.iloc[0]['_source_system'] for _, key in HEALTHCARE_FIELDS}
+
+    resolved_values = {}
+    
+    # Header for the selection table
+    cols = st.columns([1.5, 3])
+    with cols[0]: st.markdown("**Attribute**")
+    with cols[1]: st.markdown("**Authoritative Source Selection**")
+    
+    st.markdown('<div style="border-bottom: 1px solid #e2e8f0; margin: 0.5rem 0 1rem 0;"></div>', unsafe_allow_html=True)
+
+    for label, key in HEALTHCARE_FIELDS:
+        c1, c2 = st.columns([1.5, 3])
+        with c1:
+            st.markdown(f"**{label}**")
+        with c2:
+            options = []
+            source_labels = []
+            for _, rec in records.iterrows():
+                src = rec['_source_system']
+                val = str(rec.get(key, '—'))
+                if val.lower() == 'nan' or not val.strip(): val = '—'
+                
+                label_text = f"{src}: {val}"
+                source_labels.append(label_text)
+                options.append(src)
+            
+            # Find current index for default
+            current_src = st.session_state[f"golden_{cluster_id}"].get(key)
+            try:
+                default_idx = options.index(current_src)
+            except ValueError:
+                default_idx = 0
+                
+            selected_src = st.radio(
+                f"Source for {label}",
+                options=options,
+                format_func=lambda x: f"{x}: {str(records[records['_source_system'] == x][key].values[0]) if not pd.isna(records[records['_source_system'] == x][key].values[0]) else '—'}",
+                index=default_idx,
+                key=f"attr_{cluster_id}_{key}",
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+            st.session_state[f"golden_{cluster_id}"][key] = selected_src
+            
+            # Store the actual value selected
+            val = str(records[records['_source_system'] == selected_src][key].values[0])
+            resolved_values[key] = val if val.lower() != 'nan' else None
+
+    return resolved_values
+
 # =============================================================================
 # MAIN RENDER LOOP
 # =============================================================================
 def render():
     inject_premium_styles()
     
-    if 'match_index' not in st.session_state:
-        st.session_state.match_index = 0
-        
+    # Force reload of the module to ensure we have the latest ResolutionManager during hot-reloads
+    import importlib
+    import src.backend.engine.resolution_manager as rm
+    importlib.reload(rm)
+    from src.backend.engine.resolution_manager import ResolutionManager
+    
+    resolution_manager = ResolutionManager()
+    
     df = load_data()
     
-    # Filter out already resolved clusters
-    resolved_ids = resolution_manager.get_resolved_ids()
-    if not df.empty:
-        df = df[~df['cluster_id'].isin(resolved_ids)]
+    # Initialize stable review queue in session state
+    if 'review_queue' not in st.session_state:
+        # Filter out already resolved clusters once at the start of the session
+        resolved_ids = resolution_manager.get_resolved_ids()
+        temp_df = df
+        if not df.empty:
+            temp_df = df[~df['cluster_id'].isin(resolved_ids)]
         
-    # Filter for clusters that have more than 1 record (actual matches to review)
-    clusters = df.groupby('cluster_id').filter(lambda x: len(x) > 1)
-    unique_ids = clusters['cluster_id'].unique()
-    total = len(unique_ids)
+        # Filter for clusters that have more than 1 record
+        clusters_pot = temp_df.groupby('cluster_id').filter(lambda x: len(x) > 1)
+        st.session_state.review_queue = list(clusters_pot['cluster_id'].unique())
+        st.session_state.match_index = 0
+
+    queue = st.session_state.review_queue
+    total = len(queue)
     
     if st.session_state.match_index >= total:
         st.markdown(f"""
@@ -651,12 +822,13 @@ def render():
         with c2:
             st.markdown('<span class="btn-marker-restart"></span>', unsafe_allow_html=True)
             if st.button("Restart Review Session", width="stretch"):
+                del st.session_state.review_queue
                 st.session_state.match_index = 0
                 st.rerun()
         return
 
-    curr_id = unique_ids[st.session_state.match_index]
-    records = clusters[clusters['cluster_id'] == curr_id]
+    curr_id = queue[st.session_state.match_index]
+    records = df[df['cluster_id'] == curr_id]
     
     # Calculate Score
     score = int(float(records.iloc[0].get('confidence_score', 0.90)) * 100)
@@ -711,23 +883,38 @@ def render():
         
         st.write("<br>", unsafe_allow_html=True)
         render_matrix(records)
+
+    # 4. Golden Record Selection Section
+    st.divider()
+    resolved_data = render_golden_config(records, curr_id)
         
     # 3. Actions - Professional Command Bar
     st.write("")
     st.write("")
     
-    ac1, ac2, ac3, ac4, ac5 = st.columns([0.5, 1, 1, 1, 0.5])
+    ac1, ac2, ac3, ac4, ac5, ac6 = st.columns([0.4, 1, 1, 1, 1, 0.4])
     
     def advance():
         st.session_state.match_index += 1
         time.sleep(0.1)
         st.rerun()
 
+    def go_back():
+        if st.session_state.match_index > 0:
+            st.session_state.match_index -= 1
+            st.rerun()
+
     with ac2:
+        st.markdown('<span class="btn-marker-back"></span>', unsafe_allow_html=True)
+        is_back_disabled = st.session_state.match_index == 0
+        if st.button("← Previous", width="stretch", disabled=is_back_disabled):
+            go_back()
+
+    with ac3:
         st.markdown('<span class="btn-marker-approve"></span>', unsafe_allow_html=True)
         if st.button("Approve Match", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')
-            resolution_manager.log_resolution(curr_id, "Match Approved", user)
+            resolution_manager.log_resolution(curr_id, "Match Approved", user, resolved_data=resolved_data)
             audit_log.log_event(
                 module="Match Review",
                 action="Match Approved",
@@ -737,7 +924,7 @@ def render():
             )
             st.toast("Match Resolved: Approved")
             advance()
-    with ac3:
+    with ac4:
         st.markdown('<span class="btn-marker-reject"></span>', unsafe_allow_html=True)
         if st.button("Reject Match", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')
@@ -751,7 +938,7 @@ def render():
             )
             st.toast("Match Resolved: Rejected")
             advance()
-    with ac4:
+    with ac5:
         st.markdown('<span class="btn-marker-defer"></span>', unsafe_allow_html=True)
         if st.button("Defer Resolution", width="stretch"):
             user = st.session_state.get('user_name', 'Steward')

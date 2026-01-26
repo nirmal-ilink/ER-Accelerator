@@ -14,15 +14,17 @@ class ResolutionManager:
         if not os.path.exists(self.output_path):
             with open(self.output_path, 'w', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(["timestamp", "cluster_id", "action", "user", "comments"])
+                writer.writerow(["timestamp", "cluster_id", "action", "user", "comments", "resolved_data"])
 
-    def log_resolution(self, cluster_id, action, user, comments=""):
+    def log_resolution(self, cluster_id, action, user, comments="", resolved_data=None):
         """Append a resolution decision to the CSV."""
         try:
+            import json
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            resolved_json = json.dumps(resolved_data) if resolved_data else ""
             with open(self.output_path, 'a', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow([timestamp, cluster_id, action, user, comments])
+                writer.writerow([timestamp, cluster_id, action, user, comments, resolved_json])
             return True
         except Exception as e:
             print(f"Error logging resolution: {e}")
