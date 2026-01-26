@@ -1,1 +1,2 @@
-command: streamlit run src/frontend/app.py
+# Databricks App Configuration
+command: "streamlit run src/frontend/app.py --server.port=${port} --server.address=0.0.0.0"
