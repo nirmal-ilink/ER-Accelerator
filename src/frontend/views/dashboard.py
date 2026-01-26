@@ -55,304 +55,378 @@ def generate_enterprise_data():
     }
 
 def render():
+    # --- 1. SESSION STATE & LIVE DATA ---
+    if 'dash_v2_filter' not in st.session_state:
+        st.session_state['dash_v2_filter'] = "Operational"
+    if 'dash_v2_horizon' not in st.session_state:
+        st.session_state['dash_v2_horizon'] = "30 Days"
+
     data = generate_enterprise_data()
     
-    # --- BRAND CONSTANTS ---
-    # Enterprise Colors - Refined
-    COLORS = {
-        'red': "#D11F41",      # Core Brand Red
-        'slate': "#0F172A",    # Dark Slate (Text/Headers)
-        'slate_light': "#64748B", # Muted Text
-        'bg_card': "#FFFFFF",  # Pure White Cards
-        'bg_main': "#F8FAFC",  # Light Slate Background (for App)
-        'green': "#059669",    # Success Green
-        'green_light': "#ECFDF5", # Light Green bg
-        'red_light': "#FFF1F2",   # Light Red bg
-        'border': "#E2E8F0"    # Subtle Borders
+    # --- 2. PREMIUM DESIGN SYSTEM (Glassmorphism v2) ---
+    # Using HSL for more precise control over luminance and alpha
+    DESIGN = {
+        "bg_main": "hsl(215, 25%, 98%)",
+        "bg_glass": "#ffffff",
+        "accent": "hsl(348, 83%, 47%)",      
+        "emerald": "hsl(158, 64%, 52%)",     
+        "slate_900": "hsl(222, 47%, 11%)",
+        "slate_700": "hsl(222, 10%, 30%)",
+        "slate_500": "hsl(215, 16%, 47%)",
+        "slate_100": "hsla(215, 20%, 90%, 0.4)",
+        "border_subtle": "rgba(15, 23, 42, 0.08)",
+        "shadow_card": "0 1px 3px rgba(0,0,0,0.02), 0 10px 15px -3px rgba(0,0,0,0.03)",
+        "glow_accent": "0 0 20px rgba(209, 31, 65, 0.15)"
     }
-    
-    # --- CSS: RESPONSIVE BOARDROOM STYLE ---
+
+    # Atomic CSS Payload
     st.markdown(f"""
     <style>
-        .stApp {{ background-color: {COLORS['bg_main']} !important; }}
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         
-        /* Typography - Scoped to Main Content Only */
-        [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3, [data-testid="stMain"] h4, [data-testid="stMain"] .stMarkdown {{ font-family: 'Inter', sans-serif !important; letter-spacing: -0.2px; }}
+        /* Layout & Surface Texture */
+        .stApp {{ 
+            background: {DESIGN['bg_main']} !important; 
+            background-image: radial-gradient({DESIGN['slate_100']} 1px, transparent 1px) !important;
+            background-size: 24px 24px !important;
+        }}
+        .block-container {{ padding-top: 2rem !important; padding-bottom: 2rem !important; }}
         
-        /* RESPONSIVE GRID SYSTEM FOR KPIS */
-        .kpi-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-            width: 100%;
+        /* Typography */
+        [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3, 
+        [data-testid="stMain"] .stMarkdown {{ 
+            font-family: 'Outfit', sans-serif !important; 
+            letter-spacing: -0.02em; 
         }}
         
-        /* CARD SYSTEM */
-        .board-card {{
-            background: {COLORS['bg_card']};
-            border: 1px solid {COLORS['border']};
+        /* Card System - MATHEMATICAL SYMMETRY */
+        .v2-card {{
+            background: {DESIGN['bg_glass']};
+            border: 1px solid {DESIGN['border_subtle']};
             border-radius: 12px;
-            padding: 20px 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
+            padding: 24px;
+            box-shadow: {DESIGN['shadow_card']};
+            margin-bottom: 0px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-        }}
-        .board-card:hover {{
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); /* Softer shadow */
-            transform: translateY(-2px);
-            border-color: #CBD5E1;
+            transition: all 0.3s ease;
         }}
         
-        /* KPI STYLING */
-        .kpi-label {{
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: {COLORS['slate_light']};
-            font-weight: 600;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        /* --- COMMAND STRIP UNIFICATION --- */
+        
+        /* --- COMMAND STRIP UNIFICATION --- */
+        /* Unified height and foundation for all controls in the top row */
+        div[data-testid="stHorizontalBlock"] div.stSelectbox [data-baseweb="select"] > div,
+        div[data-testid="stHorizontalBlock"] div.stButton button {{
+            height: 42px !important;
+            min-height: 42px !important;
+            border-radius: 12px !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 14px !important;
+            font-weight: 500 !important; /* Reduced from 600 */
+            display: flex !important;
+            align-items: center !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
         }}
-        
-        .kpi-value {{
-            font-size: clamp(24px, 2.5vw, 32px); /* Responsive font */
-            font-weight: 700;
-            color: {COLORS['slate']};
-            line-height: 1.1;
-            margin-bottom: 8px;
+
+        /* Secondary/Default Button Styling */
+        div[data-testid="stHorizontalBlock"] div.stButton button {{
+            background: white !important;
+            border: 1px solid rgba(15, 23, 42, 0.2) !important;
+            color: {DESIGN['slate_900']} !important;
+            justify-content: center !important;
+            width: 100% !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
         }}
-        
-        .kpi-trend {{
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 8px;
-            border-radius: 99px;
-            width: fit-content;
+
+        /* Primary Button Styling (Execute Global Linkage) - DEFAULT WHITE */
+        div[data-testid="stHorizontalBlock"] div.stButton button[kind="primary"] {{
+            background: white !important;
+            border: 1px solid rgba(15, 23, 42, 0.2) !important;
+            color: {DESIGN['slate_900']} !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
         }}
+
+        /* Selectbox specific foundation */
+        div[data-testid="stHorizontalBlock"] div.stSelectbox [data-baseweb="select"] > div {{
+            background: white !important;
+            border: 1px solid rgba(15, 23, 42, 0.2) !important; /* Slightly darker border for visibility */
+        }}
+
+        /* Unified Hover State for ALL Buttons */
+        div[data-testid="stHorizontalBlock"] div.stButton button:hover,
+        div[data-testid="stHorizontalBlock"] div.stButton button[kind="primary"]:hover {{
+            background: {DESIGN['accent']} !important;
+            border-color: {DESIGN['accent']} !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 20px -5px rgba(209, 31, 65, 0.4), {DESIGN['glow_accent']} !important;
+        }}
+
+        div[data-testid="stHorizontalBlock"] div.stSelectbox [data-baseweb="select"]:hover > div {{
+            border-color: {DESIGN['slate_900']} !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }}
+
+        /* Tactile Click (Active) State for ALL Buttons */
+        div[data-testid="stHorizontalBlock"] div.stButton button:active {{
+            transform: scale(0.98) translateY(0) !important;
+            transition: transform 0.1s !important;
+            background: {DESIGN['accent']} !important; /* Ensure it stays red on click */
+            filter: brightness(0.9);
+        }}
+
+        /* Selectbox value text visibility - FORCE ELEGANT TEXT */
+        div[data-testid="stHorizontalBlock"] div.stSelectbox [data-baseweb="select"] div,
+        div[data-testid="stHorizontalBlock"] div.stSelectbox [data-baseweb="select"] span {{
+            color: {DESIGN['slate_900']} !important;
+            font-weight: 500 !important; /* Reduced from 600 */
+        }}
+
+        /* KPI System */
+        .stat-group {{ display: flex; flex-direction: column; gap: 4px; }}
+        .stat-label {{ font-size: 11px; font-weight: 500; color: {DESIGN['slate_500']}; text-transform: uppercase; letter-spacing: 0.05em; }}
+        .stat-value {{ font-size: 28px; font-weight: 500; color: {DESIGN['slate_900']}; line-height: 1; }}
+        .stat-trend {{ font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px; }}
         
-        .trend-up {{ color: {COLORS['green']}; background: {COLORS['green_light']}; }}
-        .trend-down {{ color: {COLORS['red']}; background: {COLORS['red_light']}; }}
-        .trend-neutral {{ color: {COLORS['slate_light']}; background: #F1F5F9; }}
-        
-        /* SECTIONS */
-        .section-header {{
-            font-size: 18px;
-            font-weight: 700;
-            color: {COLORS['slate']};
-            margin-top: 32px;
-            margin-bottom: 20px;
+        /* Live Signal */
+        .live-signal {{
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            background: hsla(215, 25%, 90%, 0.5);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 500;
+            color: {DESIGN['slate_900']};
         }}
-        .section-header::before {{
-            content: "";
-            display: block;
-            width: 4px;
-            height: 20px;
-            background: {COLORS['red']};
-            border-radius: 2px;
+        .signal-dot {{
+            width: 8px;
+            height: 8px;
+            background: {DESIGN['emerald']};
+            border-radius: 50%;
+            box-shadow: 0 0 10px {DESIGN['emerald']};
+            animation: pulse 2s infinite;
+        }}
+        @keyframes pulse {{
+            0% {{ transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 0 0 hsla(158, 64%, 52%, 0.4); }}
+            50% {{ transform: scale(1); opacity: 1; box-shadow: 0 0 0 12px hsla(158, 64%, 52%, 0); }}
+            100% {{ transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 0 0 hsla(158, 64%, 52%, 0); }}
+        }}
+
+        /* --- DROPDOWN & POPOVER MENU STYLING (MATCH REFERENCE) --- */
+        [data-baseweb="popover"],
+        [data-baseweb="popover"] > div {{
+            background: white !important;
+            background-color: white !important;
+            border: none !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
         }}
         
-        /* IMPACT TYPOGRAPHY */
-        .impact-number {{
-            font-size: clamp(32px, 3vw, 42px);
-            font-weight: 800;
-            color: {COLORS['red']};
-            letter-spacing: -1px;
-            line-height: 1.2;
-        }}
-        .impact-desc {{
-            font-size: 13px;
-            color: {COLORS['slate_light']};
-            line-height: 1.5;
-            margin-top: 4px;
+        ul[data-testid="stSelectboxVirtualDropdown"],
+        [data-baseweb="menu"],
+        ul[role="listbox"] {{
+            background: white !important;
+            padding: 6px !important;
+            border: none !important;
         }}
         
-        /* UTILS */
-        .flex-center {{ display: flex; align-items: center; justify-content: center; height: 100%; }}
-        .text-center {{ text-align: center; }}
+        li[role="option"] {{
+            background: white !important;
+            color: {DESIGN['slate_900']} !important;
+            border-radius: 8px !important;
+            margin: 2px 4px !important;
+            padding: 10px 14px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }}
+        
+        /* Selection Highlight (Light Red) */
+        li[role="option"][aria-selected="true"] {{
+            background: #fef2f2 !important;
+            color: {DESIGN['accent']} !important;
+            font-weight: 500 !important;
+        }}
+        
+        li[role="option"]:hover {{
+            background: #f8fafc !important;
+        }}
+
+        /* Progress Bar */
+        div[data-testid="stProgress"] > div > div > div > div {{
+            background: linear-gradient(90deg, {DESIGN['accent']}, #f43f5e) !important;
+            border-radius: 10px !important;
+        }}
         
     </style>
     """, unsafe_allow_html=True)
     
-    # --- HEADER ---
-    st.markdown("""
-<div class="main-content">
-<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; gap: 16px;">
-    <div style="min-width: 280px;">
-        <h1 style="font-size: 32px; font-weight: 800; color: #0F172A; margin: 0;">Operational Command</h1>
-        <p style="color: #64748B; font-size: 14px; margin-top: 6px;">Executive Enterprise Visibility & Governance Console</p>
+    # --- 3. COMMAND CENTER HEADER ---
+    st.markdown(f"""
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px;">
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                <div style="width: 32px; height: 4px; background: {DESIGN['accent']}; border-radius: 2px;"></div>
+                <span style="font-size: 11px; font-weight: 500; color: {DESIGN['accent']}; text-transform: uppercase; letter-spacing: 0.1em;">Enterprise Intelligence</span>
+            </div>
+            <h1 style="font-size: 38px; font-weight: 500; color: {DESIGN['slate_900']}; margin: 0; line-height: 1;">Operational Command</h1>
+        </div>
+        <div class="live-signal">
+            <div class="signal-dot"></div>
+            SIGNAL: LIVE ENTERPRISE FEED
+        </div>
     </div>
-    <div style="text-align: right; flex-grow: 1;">
-            <span style="background: #E2E8F0; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap;">Live Feed: Connected</span>
-    </div>
-</div>
     """, unsafe_allow_html=True)
-    
-    # --- 1. KPI COMMAND STRIP (CSS Grid implementation) ---
-    kpis = data['kpis']
-    
-    metrics = [
-        ("Records Governed", kpis['records_gov'], "+2.4% MoM", "trend-up"),
-        ("Golden Records", kpis['golden_records'], "+5.1% MoM", "trend-up"),
-        ("Duplicate Exposure", kpis['dup_exposure'], "-0.8% MoM", "trend-up"), 
-        ("Auto-Res Rate", kpis['auto_res_rate'], "+1.2% MoM", "trend-up"),
-        ("Intervention Rate", kpis['intervention'], "-0.5% MoM", "trend-up"),
-        ("Trust Index", kpis['trust_index'], "Static", "trend-neutral")
-    ]
-    
-    # Construct Grid HTML WITHOUT INDENTATION to avoid raw code blocks
-    kpi_html = '<div class="kpi-grid">'
-    for label, value, trend, trend_class in metrics:
-        kpi_html += f"""
-<div class="board-card">
-    <div>
-        <div class="kpi-label">{label}</div>
-        <div class="kpi-value">{value}</div>
-    </div>
-    <div class="kpi-trend {trend_class}">
-        {trend}
-    </div>
-</div>"""
-    kpi_html += '</div>'
-    
-    st.markdown(kpi_html, unsafe_allow_html=True)
-            
-    # --- 2. DATA HEALTH & TRUST ---
-    st.markdown('<div class="section-header">Enterprise Data Health & Trust</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns([2, 1])
-    
+
+    # --- 4. COMMAND STRIP ---
+    c1, c2, c3, c4 = st.columns([1.5, 1.5, 1.2, 1.2])
     with c1:
-        st.markdown('<div class="board-card">', unsafe_allow_html=True)
-        st.markdown("**Enterprise Trust Index Trend**")
-        st.markdown("<p style='font-size: 12px; color: #64748B; margin-bottom: 16px;'>Composite score of accuracy, completeness, and consistency over time.</p>", unsafe_allow_html=True)
-        
-        chart_trust = alt.Chart(data['trust_trend']).mark_area(
-            line={'color': COLORS['red']},
+        st.session_state['dash_v2_horizon'] = st.selectbox("Time Window", ["Last 7 Days", "Last 30 Days", "Fiscal Q1", "Full Year"], label_visibility="collapsed")
+    with c2:
+        st.session_state['dash_v2_filter'] = st.selectbox("Operational Focus", ["All Platforms", "Clinical Core", "Financial Access", "Customer CRM"], label_visibility="collapsed")
+    with c3:
+        if st.button("Execute Global Linkage", use_container_width=True, type="primary"):
+            st.toast("Syncing distributed vectors...")
+    with c4:
+        st.button("Advanced Pipeline", use_container_width=True)
+    st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
+
+    # --- 5. KPI HUB ---
+    k1, k2, k3, k4 = st.columns(4)
+    
+    def render_stat(col, label, value, trend, is_good=True):
+        t_color = DESIGN['emerald'] if is_good else DESIGN['accent']
+        col.markdown(f"""
+        <div class="v2-card" style="padding: 20px;">
+            <div style="font-size: 11px; font-weight: 500; color: {DESIGN['slate_500']}; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em;">{label}</div>
+            <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                <div style="font-size: 28px; font-weight: 600; color: {DESIGN['slate_900']}; line-height: 1;">{value}</div>
+                <div style="font-size: 12px; font-weight: 600; color: {t_color}; display: flex; align-items: center; gap: 4px;">
+                    {'↑' if is_good else '↓'} {trend}
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    render_stat(k1, "Records Governed", "14.2M", "4.2%", True)
+    render_stat(k2, "Golden Consistency", "96.4%", "1.8%", True)
+    render_stat(k3, "Duplicate Risk", "0.42%", "12%", False)
+    render_stat(k4, "Throughput / HR", "84.2K", "9.1%", True)
+
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+
+    # --- 6. CORE INTELLIGENCE GRID ---
+    g1, g2 = st.columns([2.2, 1])
+
+    with g1:
+        # 1. Define the Chart
+        trust_chart = alt.Chart(data['trust_trend']).mark_area(
             color=alt.Gradient(
                 gradient='linear',
-                stops=[alt.GradientStop(color=COLORS['red'], offset=0),
+                stops=[alt.GradientStop(color=DESIGN['accent'], offset=0),
                        alt.GradientStop(color='white', offset=1)],
-                x1=1, x2=1, y1=1, y2=0
-            )
+            ),
+            opacity=0.12,
+            line={'color': DESIGN['accent'], 'strokeWidth': 2}
         ).encode(
-            x=alt.X('Date', axis=alt.Axis(format='%b %Y', grid=False, tickCount=6, domain=False, labelColor=COLORS['slate_light'])),
-            y=alt.Y('TrustScore', scale=alt.Scale(domain=[60, 100]), axis=alt.Axis(grid=True, gridColor='#F1F5F9', domain=False, labelColor=COLORS['slate_light'])),
+            x=alt.X('Date:T', axis=alt.Axis(format='%b', grid=False, domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None, tickCount=12)),
+            y=alt.Y('TrustScore:Q', scale=alt.Scale(domain=[60, 100]), axis=alt.Axis(grid=True, gridColor=DESIGN['slate_100'], domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None)),
             tooltip=['Date', 'TrustScore']
-        ).properties(height=240, background='transparent').configure_view(strokeWidth=0).configure_axis(
-            labelFont='Inter',
-            titleFont='Inter'
         )
         
-        st.altair_chart(chart_trust, width="stretch")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c2:
-        st.markdown('<div class="board-card">', unsafe_allow_html=True)
-        st.markdown("**Confidence Distribution**")
-        st.markdown("<p style='font-size: 12px; color: #64748B; margin-bottom: 16px;'>Match score distribution.</p>", unsafe_allow_html=True)
-        
-        conf_data = pd.DataFrame({'Bucket': ['90-100%', '80-90%', '70-80%', '<70%'], 'Count': [65, 20, 10, 5]})
-        
-        chart_conf = alt.Chart(conf_data).mark_bar(cornerRadius=4).encode(
-            x=alt.X('Count', axis=None),
-            y=alt.Y('Bucket', sort=None, axis=alt.Axis(domain=False, tickSize=0, labelFontWeight='bold', labelColor=COLORS['slate_light'])),
-            color=alt.Color('Bucket', scale=alt.Scale(range=[COLORS['green'], '#34D399', '#FBBF24', COLORS['red']]), legend=None),
-            tooltip=['Bucket', 'Count']
-        ).properties(height=240, background='transparent').configure_view(strokeWidth=0)
-        
-        st.altair_chart(chart_conf, width="stretch")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # 2. Add Interactive Points
+        points = alt.Chart(data['trust_trend']).mark_point(
+            size=80, color=DESIGN['accent'], fill='white', strokeWidth=2
+        ).encode(
+            x='Date:T',
+            y='TrustScore:Q',
+            opacity=alt.condition(alt.selection_point(on='mouseover', nearest=True, empty=False), alt.value(1), alt.value(0))
+        ).add_selection(alt.selection_point(on='mouseover', nearest=True, empty=False))
 
-    # --- 3. RESOLUTION EFFECTIVENESS ---
-    st.markdown('<div class="section-header">Resolution Effectiveness</div>', unsafe_allow_html=True)
-    c3, c4 = st.columns([2, 1])
-    
-    with c3:
-        st.markdown('<div class="board-card">', unsafe_allow_html=True)
-        st.markdown("**Auto-Resolution vs Manual Intervention**")
-        st.markdown("<p style='font-size: 12px; color: #64748B; margin-bottom: 16px;'>Monthly resolution volume by type.</p>", unsafe_allow_html=True)
+        final_chart = (trust_chart + points).properties(height=300).configure_view(stroke="transparent").configure(background='white')
         
-        chart_res = alt.Chart(data['resolution_trend']).mark_bar().encode(
-            x=alt.X('Date', axis=alt.Axis(format='%b', title=None, domain=False, labelColor=COLORS['slate_light'])),
-            y=alt.Y('Records', axis=alt.Axis(title=None, grid=True, gridColor='#F1F5F9', format='~s', domain=False, labelColor=COLORS['slate_light'])),
-            color=alt.Color('Type', scale=alt.Scale(domain=['Auto', 'Manual'], range=[COLORS['slate'], COLORS['red']])),
-            tooltip=['Date', 'Type', 'Records']
-        ).properties(height=240, background='transparent').configure_view(strokeWidth=0)
-        
-        st.altair_chart(chart_res, width="stretch")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c4:
+        # 3. Render Card Wrapper
         st.markdown(f"""
-        <div class="board-card text-center">
-            <div style="font-weight: 600; color: {COLORS['slate']}; margin-bottom: 24px;">Throughput Velocity</div>
-            <div style="font-size: clamp(32px, 3vw, 42px); font-weight: 800; color: {COLORS['slate']};">12,450</div>
-            <div style="font-size: 12px; color: {COLORS['slate_light']}; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Records / Hour</div>
-             <div style="margin-top: 24px; width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
-                <div style="width: 85%; height: 100%; background: {COLORS['green']};"></div>
+        <div class="v2-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN['slate_900']}; margin: 0;">Enterprise Trust Trajectory</h3>
+                    <p style="font-size: 12px; color: {DESIGN['slate_500']}; margin: 2px 0 0 0;">Synthesized data health index over 12 months</p>
+                </div>
+                <div style="font-size: 9px; font-weight: 600; color: {DESIGN['slate_500']}; background: {DESIGN['bg_main']}; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.05em;">VECTOR: GLOBAL RECONCILIATION</div>
             </div>
-            <div style="margin-top: 8px; font-size: 11px; color: {COLORS['slate_light']};">85% of Peak Capacity (15k/hr)</div>
-        </div>
         """, unsafe_allow_html=True)
+        
+        # 4. Render Chart inside the open div
+        st.altair_chart(final_chart, use_container_width=True)
+        
+        # 5. Close Card Wrapper
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with g2:
+        risks_data = [
+            ("SLA BREACH: EPIC-01", "High Severity", DESIGN['accent'], "LATE"),
+            ("DUPLICATE CLUSTER: PHX", "Review Req", "#F59E0B", "PEND"),
+            ("SYSTEM SYNC DELAY", "Delta Lake", "#3B82F6", "SYNC"),
+            ("INCONSISTENT PROVIDER ID", "Manual Resolve", DESIGN['accent'], "ERR")
+        ]
+        
+        risks_html = "".join([f"""<div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: {('1px solid ' + DESIGN['slate_100']) if i < len(risks_data)-1 else 'none'};"><div style="width: 32px; height: 32px; border-radius: 8px; background: {color}15; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: {color};">{status}</div><div style="flex: 1;"><div style="font-size: 13px; font-weight: 500; color: {DESIGN['slate_900']};">{title}</div><div style="font-size: 11px; color: {DESIGN['slate_500']};">{subtitle}</div></div><div style="font-size: 14px; color: {DESIGN['slate_500']}; opacity: 0.5;">→</div></div>""" for i, (title, subtitle, color, status) in enumerate(risks_data)])
 
-    # --- 4. DATA IMPACT & RISK ---
-    c5, c6 = st.columns([1, 1])
+        st.markdown(f"""<div class="v2-card"><h3 style="font-size: 16px; font-weight: 500; color: {DESIGN['slate_900']}; margin: 0;">High Risk Vectors</h3><p style="font-size: 12px; color: {DESIGN['slate_500']}; margin: 2px 0 16px 0;">Urgent items requiring intervention</p>{risks_html}<div style="margin-top: 20px;"></div></div>""", unsafe_allow_html=True)
+        
+        if st.button("Open Operational Review", use_container_width=True, type="primary"):
+            st.session_state['current_page'] = "Match Review"
+            st.rerun()
+
+    st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
+
+    # --- 7. PLATFORM EFFICIENCY ---
+    c5, c6 = st.columns([1, 1.2])
     
     with c5:
-        st.markdown('<div class="section-header">Business Impact</div>', unsafe_allow_html=True)
         st.markdown(f"""
-        <div class="board-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 140px;">
-                    <div class="kpi-label">Operational Cost Avoidance</div>
-                    <div class="impact-number">$4.2M</div>
-                    <div class="impact-desc">YTD savings from automation.</div>
-                </div>
-                <div style="width: 1px; height: 60px; background: #E2E8F0; display: block;"></div>
-                <div style="flex: 1; min-width: 140px; padding-left: 12px;">
-                     <div class="kpi-label">Reliability Uplift</div>
-                     <div class="impact-number" style="color: {COLORS['green']};">+18%</div>
-                     <div class="impact-desc">Downstream accuracy.</div>
-                </div>
+        <div class="v2-card">
+            <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN["slate_900"]}; margin: 0 0 4px 0;">Resolution Effectiveness</h3>
+            <p style="font-size: 12px; color: {DESIGN['slate_500']}; margin-bottom: 24px;">Automatic vs Manual performance</p>
+        """, unsafe_allow_html=True)
+        
+        chart_res = alt.Chart(data['resolution_trend']).mark_bar(size=14, cornerRadius=2).encode(
+            x=alt.X('Date', axis=alt.Axis(format='%b', title=None, grid=False, domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
+            y=alt.Y('Records', axis=alt.Axis(title=None, format='~s', grid=True, gridColor=DESIGN['slate_100'], domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
+            color=alt.Color('Type', scale=alt.Scale(domain=['Auto', 'Manual'], range=[DESIGN['slate_900'], DESIGN['accent']]), legend=alt.Legend(orient='top-right', title=None, symbolType='circle', labelFont='Outfit', labelColor=DESIGN['slate_500'])),
+        ).properties(height=180).configure_view(stroke="transparent").configure(background='white')
+        
+        st.altair_chart(chart_res, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+            
+    with c6:
+        st.markdown(f"""
+        <div class="v2-card">
+            <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN["slate_900"]}; margin: 0 0 16px 0;">Platform Health Distribution</h3>
+            <div style="display: flex; align-items: center; justify-content: center; flex: 1; padding: 10px 0;">
+        """, unsafe_allow_html=True)
+        
+        chart_source = alt.Chart(data['source_data']).mark_arc(innerRadius=60, cornerRadius=4).encode(
+            theta=alt.Theta(field="Records", type="quantitative"),
+            color=alt.Color(field="System", scale=alt.Scale(range=[DESIGN['slate_900'], DESIGN['accent'], DESIGN['emerald'], '#3B82F6', '#F59E0B']), legend=alt.Legend(orient='right', labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
+            tooltip=['System', 'Records']
+        ).properties(height=180).configure_view(stroke="transparent").configure(background='white')
+        
+        st.altair_chart(chart_source, use_container_width=True)
+        
+        st.markdown(f"""
+            </div>
+            <div style="text-align: center; border-top: 1px solid {DESIGN['slate_100']}; padding-top: 16px; margin-top: 10px;">
+                <div style="font-size: 11px; font-weight: 500; color: {DESIGN['slate_500']}; text-transform: uppercase;">Confidence Index</div>
+                <div style="font-size: 32px; font-weight: 600; color: {DESIGN['emerald']};">94<span style="font-size: 16px;">%</span></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-    with c6:
-        st.markdown('<div class="section-header">Risk & Governance</div>', unsafe_allow_html=True)
-        
-        # Risk chart
-        chart_risk = alt.Chart(data['risk_data']).mark_bar().encode(
-            x=alt.X('Count', axis=alt.Axis(grid=True, gridColor='#F1F5F9', domain=False, labelColor=COLORS['slate_light'])),
-            y=alt.Y('Category', sort='-x', axis=alt.Axis(title=None, labelLimit=120, domain=False, labelColor=COLORS['slate_light'])),
-            color=alt.Color('Severity', scale=alt.Scale(domain=['High', 'Medium', 'Low'], range=[COLORS['red'], '#F59E0B', '#10B981']), legend=None),
-            tooltip=['Category', 'Count', 'Severity']
-        ).properties(height=140, background='transparent').configure_view(strokeWidth=0)
-        
-        st.markdown('<div class="board-card" style="padding: 16px;">', unsafe_allow_html=True)
-        st.altair_chart(chart_risk, width="stretch")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- 5. ENTERPRISE COVERAGE ---
-    st.markdown('<div class="section-header">Enterprise Coverage</div>', unsafe_allow_html=True)
-    st.markdown('<div class="board-card">', unsafe_allow_html=True)
-    
-    chart_source = alt.Chart(data['source_data']).mark_arc(innerRadius=70).encode(
-        theta=alt.Theta(field="Records", type="quantitative"),
-        color=alt.Color(field="System", legend=alt.Legend(orient="bottom", title=None, columns=5, labelLimit=200, labelColor=COLORS['slate_light'])),
-        order=alt.Order("Records", sort="descending"),
-        tooltip=['System', 'Records', 'TrustLevel']
-    ).properties(height=300, background='transparent').configure_view(strokeWidth=0)
-    
-    st.altair_chart(chart_source, width="stretch")
-    st.markdown('</div></div>', unsafe_allow_html=True)

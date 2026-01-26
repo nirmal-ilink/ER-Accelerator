@@ -47,3 +47,6 @@ Timestamp,User,Action,Module,Status,Details
 2026-01-26 13:00:51,Administrator,Match Approved,Match Review,Success,Cluster CL001 resolved by Administrator
 2026-01-26 13:45:52,Administrator,Match Approved,Match Review,Success,Cluster CL002 resolved by Administrator
 2026-01-26 13:46:13,Administrator,Match Approved,Match Review,Success,Cluster CL003 resolved by Administrator
+2026-01-26 13:47:11,Administrator,User Logout,Auth,Success,User signed out manually
+2026-01-26 13:47:24,admin,User Login,Auth,Success,Session started for admin
+2026-01-26 22:51:50,Administrator,User Logout,Auth,Success,User signed out manually

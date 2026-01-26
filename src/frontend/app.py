@@ -16,7 +16,7 @@ from src.backend.auth.user_manager import UserManager
 audit_log = AuditLogger()
 
 # --- CONFIGURATION ---
-logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
+logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
 # Force Reload Fix for CSS
 st.set_page_config(
     page_title="iCORE | iLink Digital",
@@ -912,8 +912,8 @@ def login_page():
     </style>
     """, unsafe_allow_html=True)
 
-    logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
-    ilink_logo_path = os.path.join(os.path.dirname(__file__), "assets/ilink_logo.png")
+    logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
+    ilink_logo_path = os.path.join(os.path.dirname(__file__), "../../assets/ilink_logo.png")
     
     logo_b64 = get_img_as_base64(logo_path)
     ilink_logo_b64 = get_img_as_base64(ilink_logo_path)
@@ -976,7 +976,7 @@ def sidebar_nav():
     with st.sidebar:
         # 1. Logo Section
         try:
-            logo_path = os.path.join(os.path.dirname(__file__), "assets/app_logo.png")
+            logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
             logo_b64 = get_img_as_base64(logo_path)
         except:
             logo_b64 = ""

@@ -12,7 +12,7 @@ def get_img_as_base64(file_path):
         return ""
 
 def render():
-    assets_dir = os.path.join(os.path.dirname(__file__), "../assets")
+    assets_dir = os.path.join(os.path.dirname(__file__), "../../../assets")
 
     CONNECTORS = {
         "snowflake": { "name": "Snowflake", "logo": "snowflake_logo.png", "status": "Active", "desc": "Data Warehouse", "fields": ["Account", "User", "Password", "Warehouse", "Database", "Schema"] },
