@@ -1,23 +1,29 @@
-# Databricks App Configuration
-name: er-accelerator
-description: "iCORE - Enterprise Entity Resolution Accelerator"
 
-# Entry point
-command: "streamlit run src/frontend/app.py --server.port=${port} --server.address=0.0.0.0"
+command:
+  - streamlit
+  - run
+  - src/frontend/app.py
 
-# Environment variables (secrets should be referenced, not hardcoded)
-env:
-  - name: DATABRICKS_HOST
-    valueFrom:
-      secretRef: er-accelerator/databricks-host
-  - name: DATABRICKS_TOKEN
-    valueFrom:
-      secretRef: er-accelerator/databricks-token
-  - name: DATABRICKS_CLUSTER_ID
-    valueFrom:
-      secretRef: er-accelerator/cluster-id
+# # Databricks App Configuration
+# name: er-accelerator
+# description: "iCORE - Enterprise Entity Resolution Accelerator"
 
-# Resources
-resources:
-  num_cpus: 2
-  memory_mb: 4096
+# # Entry point
+# command: "streamlit run src/frontend/app.py --server.port=${port} --server.address=0.0.0.0"
+
+# # Environment variables (secrets should be referenced, not hardcoded)
+# env:
+#   - name: DATABRICKS_HOST
+#     valueFrom:
+#       secretRef: er-accelerator/databricks-host
+#   - name: DATABRICKS_TOKEN
+#     valueFrom:
+#       secretRef: er-accelerator/databricks-token
+#   - name: DATABRICKS_CLUSTER_ID
+#     valueFrom:
+#       secretRef: er-accelerator/cluster-id
+
+# # Resources
+# resources:
+#   num_cpus: 2
+#   memory_mb: 4096
