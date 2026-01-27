@@ -1,57 +1,53 @@
 Timestamp,User,Action,Module,Status,Details
-2026-01-22 13:09:17,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 13:09:43,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 13:12:53,Administrator,Match Approved,Match Review,Success,Cluster CL001 resolved by Administrator
-2026-01-22 13:13:27,Administrator,Match Approved,Match Review,Success,Cluster CL002 resolved by Administrator
-2026-01-22 13:13:37,Administrator,Match Approved,Match Review,Success,Cluster CL003 resolved by Administrator
-2026-01-22 13:14:45,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 13:16:02,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 13:28:54,Administrator,Match Approved,Match Review,Success,Cluster CL001 resolved by Administrator
-2026-01-22 13:29:06,Administrator,Process Deferred,Match Review,Warning,Cluster CL002 skipped by Administrator
-2026-01-22 13:29:08,Administrator,Match Rejected,Match Review,Success,Cluster CL003 rejected by Administrator
-2026-01-22 16:12:24,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 16:27:16,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 16:27:27,dev,User Login,Auth,Success,Session started for dev
-2026-01-22 16:27:36,Tech Lead,User Logout,Auth,Success,User signed out manually
-2026-01-22 16:27:45,exec,User Login,Auth,Success,Session started for exec
-2026-01-22 16:27:52,C-Suite User,User Logout,Auth,Success,User signed out manually
-2026-01-22 16:28:04,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 16:56:20,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 16:56:28,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 17:34:22,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 17:45:13,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 17:47:04,admin,User Login,Auth,Success,Session started for admin
-2026-01-22 17:50:14,Administrator,Match Approved,Match Review,Success,Cluster CL001 resolved by Administrator
-2026-01-22 17:56:38,Administrator,Match Approved,Match Review,Success,Cluster CL002 resolved by Administrator
-2026-01-22 17:58:07,Administrator,Match Approved,Match Review,Success,Cluster CL003 resolved by Administrator
-2026-01-22 18:02:30,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-22 18:02:43,exec,User Login,Auth,Success,Session started for exec
-2026-01-22 18:03:00,C-Suite User,User Logout,Auth,Success,User signed out manually
-2026-01-22 18:03:14,dev,User Login,Auth,Success,Session started for dev
-2026-01-22 18:06:36,Tech Lead,User Logout,Auth,Success,User signed out manually
-2026-01-22 18:08:20,admin,User Login,Auth,Success,Session started for admin
-2026-01-23 12:41:18,admin,User Login,Auth,Success,Session started for admin
-2026-01-23 15:48:30,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-23 15:48:37,admin,User Login,Auth,Success,Session started for admin
-2026-01-23 15:50:02,admin,User Login,Auth,Success,Session started for admin
-2026-01-23 15:57:25,admin,User Login,Auth,Success,Session started for admin
-2026-01-23 18:23:05,admin,User Login,Auth,Success,Session started for admin
-2026-01-25 01:05:49,admin,User Login,Auth,Success,Session started for admin
-2026-01-25 02:22:14,admin,User Login,Auth,Success,Session started for admin
-2026-01-25 02:38:55,admin,User Login,Auth,Success,Session started for admin
-2026-01-25 20:28:34,admin,User Login,Auth,Success,Session started for admin
-2026-01-25 21:53:36,admin,User Login,Auth,Success,Session started for admin
-2026-01-26 00:31:43,admin,User Login,Auth,Success,Session started for admin
-2026-01-26 00:44:17,Administrator,Match Rejected,Match Review,Success,Cluster CL001 rejected by Administrator
-2026-01-26 12:54:53,admin,User Login,Auth,Success,Session started for admin
-2026-01-26 13:00:51,Administrator,Match Approved,Match Review,Success,Cluster CL001 resolved by Administrator
-2026-01-26 13:45:52,Administrator,Match Approved,Match Review,Success,Cluster CL002 resolved by Administrator
-2026-01-26 13:46:13,Administrator,Match Approved,Match Review,Success,Cluster CL003 resolved by Administrator
-2026-01-26 13:47:11,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-26 13:47:24,admin,User Login,Auth,Success,Session started for admin
-2026-01-26 22:51:50,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-27 13:56:05,admin,User Login,Auth,Success,Session started for admin
-2026-01-27 14:09:49,admin,User Login,Auth,Success,Session started for admin
-2026-01-27 14:09:53,Administrator,User Logout,Auth,Success,User signed out manually
-2026-01-27 14:53:26,admin,User Login,Auth,Success,Session started for admin
-2026-01-27 15:49:58,Administrator,User Logout,Auth,Success,User signed out manually
+2026-01-27 16:52:05,admin@icore.com,Access Control Review,Governance,Success,Updated schema definition for AWS Redshift.Inventory
+2026-01-27 05:25:10,j.doe@client.com,Compliance Check,Inspector,Failed,Null pointer exception during Compliance Check
+2026-01-26 22:36:59,data_steward_1,Rule validation,Quality,Success,Lineage graph refreshed for Google BigQuery pipeline
+2026-01-26 15:04:25,etl_service_account,Data Quality Check,Profiler,Success,Updated schema definition for Databricks.Inventory
+2026-01-26 09:32:59,System,Description Update,Catalogue,Success,Updated schema definition for SAP.Inventory
+2026-01-26 09:07:07,etl_service_account,Rule validation,Quality,Success,Successfully processed 152 objects from Google BigQuery
+2026-01-25 14:03:35,j.doe@client.com,Glossary Link,Catalogue,Failed,Null pointer exception during Glossary Link
+2026-01-25 11:55:39,admin@icore.com,Metadata Sync,Connector,Success,Validated 50 data quality rules
+2026-01-25 02:59:34,System,Connection Test,Connector,Warning,High latency observed during Connection Test
+2026-01-23 03:49:12,admin@icore.com,Glossary Link,Catalogue,Failed,API rate limit exceeded for Azure Synapse
+2026-01-22 14:10:58,j.doe@client.com,Anomaly Detection,Quality,Failed,Schema mismatch detected in Google BigQuery source
+2026-01-22 09:47:41,etl_service_account,Description Update,Catalogue,Success,Lineage graph refreshed for AWS Redshift pipeline
+2026-01-22 05:42:23,etl_service_account,Dependency Check,Lineage,Success,Metadata sync completed in 1.53s
+2026-01-22 03:58:00,etl_service_account,Metadata Sync,Connector,Success,Updated schema definition for Salesforce.Inventory
+2026-01-21 21:41:38,j.doe@client.com,Connection Test,Connector,Success,Metadata sync completed in 4.89s
+2026-01-21 03:45:14,etl_service_account,Anomaly Detection,Quality,Success,Lineage graph refreshed for Snowflake pipeline
+2026-01-19 17:02:03,m.smith@icore.com,PII Detection,Inspector,Warning,Partial data load: 5 records skipped
+2026-01-19 04:23:20,j.doe@client.com,Graph Build,Lineage,Success,Lineage graph refreshed for AWS Redshift pipeline
+2026-01-18 07:01:35,System,Rule validation,Quality,Success,Successfully processed 494 objects from Salesforce
+2026-01-17 15:35:58,j.doe@client.com,Pattern Analysis,Profiler,Success,Successfully processed 217 objects from AWS Redshift
+2026-01-17 10:50:13,admin@icore.com,Policy Update,Governance,Success,Successfully processed 398 objects from Snowflake
+2026-01-16 21:40:35,j.doe@client.com,Policy Update,Governance,Warning,Partial data load: 5 records skipped
+2026-01-16 04:04:23,etl_service_account,Compliance Check,Inspector,Warning,Scan completed with 3 warnings on Databricks tables
+2026-01-15 09:57:11,System,Null Check,Profiler,Success,Updated schema definition for Databricks.Inventory
+2026-01-15 05:50:27,System,Connection Test,Connector,Warning,Deprecated API version usage detected for Oracle
+2026-01-14 09:42:34,m.smith@icore.com,Anomaly Detection,Quality,Failed,Connection timeout to Oracle instance (Error 504)
+2026-01-14 04:38:06,data_steward_1,Tag Assignment,Governance,Warning,PII potential match found in unencrypted field
+2026-01-14 04:23:23,data_steward_1,Incremental Load,Connector,Warning,Deprecated API version usage detected for AWS Redshift
+2026-01-14 02:02:33,data_steward_1,Pattern Analysis,Profiler,Success,Validated 26 data quality rules
+2026-01-13 16:45:12,m.smith@icore.com,Policy Update,Governance,Success,Successfully processed 47 objects from Salesforce
+2026-01-12 07:20:53,etl_service_account,Policy Update,Governance,Success,Metadata sync completed in 2.40s
+2026-01-11 09:31:48,etl_service_account,Pattern Analysis,Profiler,Failed,Connection timeout to SAP instance (Error 504)
+2026-01-11 06:32:26,data_steward_1,Dependency Check,Lineage,Failed,Authentication failed for user data_steward_1
+2026-01-10 04:02:06,admin@icore.com,Graph Build,Lineage,Warning,High latency observed during Graph Build
+2026-01-09 05:42:29,admin@icore.com,Metadata Sync,Connector,Failed,Authentication failed for user admin@icore.com
+2026-01-08 18:12:26,etl_service_account,Incremental Load,Connector,Success,Successfully processed 292 objects from Google BigQuery
+2026-01-08 14:34:14,System,Policy Update,Governance,Success,Metadata sync completed in 1.64s
+2026-01-08 10:35:40,data_steward_1,Incremental Load,Connector,Success,Lineage graph refreshed for Azure Synapse pipeline
+2026-01-07 01:06:15,System,Access Control Review,Governance,Success,Metadata sync completed in 0.67s
+2026-01-05 18:49:51,data_steward_1,Anomaly Detection,Quality,Success,Validated 22 data quality rules
+2026-01-05 01:18:26,data_steward_1,Sensitive Data Scan,Inspector,Failed,API rate limit exceeded for AWS Redshift
+2026-01-04 10:02:26,admin@icore.com,Tag Assignment,Governance,Warning,PII potential match found in unencrypted field
+2026-01-04 09:06:10,etl_service_account,Graph Build,Lineage,Warning,High latency observed during Graph Build
+2026-01-04 00:19:30,etl_service_account,Graph Build,Lineage,Success,Successfully processed 30 objects from Snowflake
+2026-01-03 23:53:12,j.doe@client.com,Metadata Sync,Connector,Success,Updated schema definition for Salesforce.Inventory
+2026-01-03 15:17:36,j.doe@client.com,Anomaly Detection,Quality,Success,Validated 6 data quality rules
+2026-01-02 04:36:08,m.smith@icore.com,Pattern Analysis,Profiler,Success,Successfully processed 249 objects from SAP
+2026-01-01 23:38:53,admin@icore.com,Rule validation,Quality,Success,Lineage graph refreshed for Oracle pipeline
+2025-12-30 01:15:39,admin@icore.com,Sensitive Data Scan,Inspector,Warning,PII potential match found in unencrypted field
+2025-12-29 00:46:11,j.doe@client.com,Null Check,Profiler,Success,Lineage graph refreshed for Oracle pipeline
+2026-01-27 21:56:33,admin,User Login,Auth,Success,Session started for admin
+2026-01-27 22:01:41,admin,User Login,Auth,Success,Session started for admin
