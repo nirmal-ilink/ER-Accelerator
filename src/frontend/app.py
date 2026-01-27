@@ -6,7 +6,14 @@ import time
 
 # Ensure project root is in path
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))) #fix 1
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))) #fix 1
+
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
+)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 
 # Placeholder imports for views (we will create these next)
 # from src.frontend.views import match_review, dashboard, connectors, inspector, audit, users
