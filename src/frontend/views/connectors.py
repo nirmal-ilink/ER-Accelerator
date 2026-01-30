@@ -17,7 +17,7 @@ def render():
     CONNECTORS = {
         "snowflake": { "name": "Snowflake", "logo": "snowflake_logo.png", "status": "Active", "desc": "Data Warehouse", "fields": ["Account", "User", "Password", "Warehouse", "Database", "Schema"] },
         "databricks": { "name": "Databricks", "logo": "databricks_logo.png", "status": "Inactive", "desc": "Lakehouse Platform", "fields": ["Host", "HTTP Path", "Token"] },
-        "sqlserver": { "name": "SQL Server", "logo": "sqlserver_logo.png", "status": "Inactive", "desc": "RDBMS", "fields": ["Server", "Database", "User", "Password", "Port"] },
+        "sqlserver": { "name": "SQL Server", "logo": "sqlserver_logo.png", "status": "Inactive", "desc": "RDBMS", "fields": ["Server", "Database", "Table", "User", "Password"] },
         "oracle": { "name": "Oracle DB", "logo": "oracle_logo.png", "status": "Inactive", "desc": "RDBMS", "fields": ["Host", "Port", "Service", "User", "Password"] },
         "sap": { "name": "SAP HANA", "logo": "sap_logo.png", "status": "Inactive", "desc": "In-Memory DB", "fields": ["Host", "Instance", "User", "Password"] },
         "deltalake": { "name": "Delta Lake", "logo": "deltalake_logo.png", "status": "Inactive", "desc": "Storage Layer", "fields": ["Account", "Container", "Key"] }
@@ -419,5 +419,146 @@ def render():
         with b3:
             save_clicked = st.button("Save", type="primary", width="stretch", key=f"save_{conn_key}")
             if save_clicked:
-                time.sleep(0.5)
-                st.toast("Saved")
+                try:
+                    status_placeholder = st.empty()
+                    with st.status("Initialization...", expanded=True) as status:
+                        # Windows Compatibility Patch for Spark/Databricks Connect
+                        import socketserver
+                        if not hasattr(socketserver, "UnixStreamServer"):
+                            class UnixStreamServer:
+                                pass
+                            socketserver.UnixStreamServer = UnixStreamServer
+
+                        # Import Bootstrapper here to avoid circular imports or top-level failures
+                        try:
+                            from src.backend.bootstrapper import get_bootstrapper
+                            from src.backend.tools.secret_manager import get_secret_manager
+                            from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+                            from pyspark.sql.functions import current_timestamp, lit
+                        except ImportError:
+                            # Fallback for relative import if running as module
+                            import sys
+                            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
+                            from src.backend.bootstrapper import get_bootstrapper
+                            from src.backend.tools.secret_manager import get_secret_manager
+                            from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+                            from pyspark.sql.functions import current_timestamp, lit
+                        
+                        status.update(label="Connecting to Databricks...")
+                        bs = get_bootstrapper()
+                        spark = bs.spark
+                        sm = get_secret_manager()
+                        
+                        # Collect Data
+                        status.update(label="Processing configuration...")
+                        config_data = {}
+                        for field in active_data["fields"]:
+                            key = f"{conn_key}_{field}"
+                            val = st.session_state.get(key, "")
+                            
+                            is_secret = any(s in field.lower() for s in ["password", "token", "key"])
+                            if is_secret and val:
+                                status.update(label=f"Storing secure {field.lower()}...")
+                                secret_key = f"{conn_key}_{field.lower().replace(' ', '_')}"
+                                sm.put_secret(secret_key, val)
+                                # Store pointer instead of raw value
+                                config_data[field.lower()] = sm.get_secret_metadata_pointer(secret_key)
+                            else:
+                                config_data[field.lower()] = val
+                            
+                        # Write to Databricks
+                        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+                        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+                        target_table = f"{target_catalog}.{target_schema}.ingestion_connectors"
+                        
+                        # --- FLEXIBLE JSON-BASED STORAGE ---
+                        import json
+                        status.update(label=f"Preparing configuration for {target_table}...")
+                        print(f"DEBUG: Preparing JSON config for {conn_key}")
+                        
+                        # Serialize config_data to JSON string
+                        config_json_str = json.dumps(config_data).replace("'", "''")  # Escape for SQL
+                        connector_name = active_data.get("name", conn_key)
+                        
+                        def escape(v):
+                            if v is None: return "NULL"
+                            val = str(v).replace("'", "''")
+                            return f"'{val}'"
+
+                        sql_insert = f"""
+                            INSERT INTO {target_table} 
+                            (connector_type, connector_name, config_json, updated_at)
+                            VALUES (
+                                {escape(conn_key)},
+                                {escape(connector_name)},
+                                '{config_json_str}',
+                                CURRENT_TIMESTAMP()
+                            )
+                        """
+
+                        try:
+                            # Try the insert directly first
+                            status.update(label=f"Sending to Databricks (this may take a moment if the cluster is starting)...")
+                            print(f"DEBUG: Executing direct INSERT into {target_table}")
+                            spark.sql(sql_insert).collect()
+                            print(f"DEBUG: Direct INSERT successful.")
+                        except Exception as e:
+                            err_msg = str(e)
+                            print(f"DEBUG: Direct insert failed: {err_msg}")
+                            
+                            # If table doesn't exist, try to create it and then retry insert
+                            if "TABLE_OR_VIEW_NOT_FOUND" in err_msg or "does not exist" in err_msg.lower():
+                                status.update(label=f"Table not found. Attempting to create {target_table}...")
+                                try:
+                                    print(f"DEBUG: Creating schema and table...")
+                                    spark.sql(f"CREATE SCHEMA IF NOT EXISTS {target_catalog}.{target_schema}")
+                                    spark.sql(f"""
+                                        CREATE TABLE IF NOT EXISTS {target_table} (
+                                            connector_type STRING COMMENT 'Key identifier for the connector (e.g., snowflake, sqlserver)',
+                                            connector_name STRING COMMENT 'Human-readable name of the connector',
+                                            config_json STRING COMMENT 'JSON object containing all configuration fields (secrets stored as pointers)',
+                                            updated_at TIMESTAMP COMMENT 'Last modification timestamp'
+                                        ) USING DELTA
+                                        COMMENT 'Stores connector configurations for the MDM Ingestion Engine'
+                                    """)
+                                    
+                                    # Retry the insert
+                                    status.update(label=f"Table created. Retrying save...")
+                                    print(f"DEBUG: Retrying INSERT...")
+                                    spark.sql(sql_insert).collect()
+                                    print(f"DEBUG: Retry INSERT successful.")
+                                except Exception as schema_err:
+                                    schema_err_msg = str(schema_err)
+                                    print(f"DEBUG: Multi-stage failure: {schema_err_msg}")
+                                    if "PERMISSION_DENIED" in schema_err_msg:
+                                        st.error(f"Permission Denied: Cannot create table `{target_table}` automatically.")
+                                        st.info(f"""
+                                        **Manual Setup Required:**
+                                        The table was not found and automatic creation failed due to permissions. 
+                                        Please ask your administrator to run this SQL in Databricks:
+                                        ```sql
+                                        CREATE SCHEMA IF NOT EXISTS {target_catalog}.{target_schema};
+                                        CREATE TABLE IF NOT EXISTS {target_table} (
+                                            connector_type STRING COMMENT 'Key identifier for the connector',
+                                            connector_name STRING COMMENT 'Human-readable name',
+                                            config_json STRING COMMENT 'JSON config with secret pointers',
+                                            updated_at TIMESTAMP
+                                        ) USING DELTA;
+                                        GRANT USE CATALOG ON CATALOG {target_catalog} TO `your_email`;
+                                        GRANT USE SCHEMA ON SCHEMA {target_catalog}.{target_schema} TO `your_email`;
+                                        GRANT MODIFY, SELECT ON TABLE {target_table} TO `your_email`;
+                                        ```
+                                        """)
+                                        return 
+                                    else:
+                                        raise schema_err
+                            else:
+                                # Not a "table not found" error, so we re-raise for general error handling
+                                raise e
+                        
+                        status.update(label="Configuration Saved Successfully!", state="complete", expanded=False)
+                        st.success(f"Connection '{connector_name}' saved to Databricks!")
+                        st.toast("Configuration Saved Successfully!", icon="✅")
+                except Exception as e:
+                    st.error(f"Failed to save configuration: {str(e)}")
+

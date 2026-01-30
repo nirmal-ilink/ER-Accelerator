@@ -815,6 +815,64 @@ st.markdown(f"""
         box-shadow: 0 2px 4px -1px rgba(159, 18, 57, 0.4) !important;
     }}
 
+    /* ---------------------------------------------------------
+       STATUS (st.status) POLISH - AGGRESSIVE LIGHT THEME
+       --------------------------------------------------------- */
+    /* Target the main container and all its states */
+    [data-testid="stStatusReport"],
+    [data-testid="stStatusReport"] > details,
+    [data-testid="stStatusReport"] summary,
+    [data-testid="stStatusReport"] [data-testid="stExpanderDetails"],
+    [data-testid="stStatusReport"] .st-emotion-cache-11ofl8m,
+    [data-testid="stStatusReport"] .st-emotion-cache-nwb5ao,
+    [data-testid="stStatusReport"] .st-emotion-cache-11fa8fd {{
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border-color: #e2e8f0 !important;
+    }}
+
+    /* Force background for the entire widget block */
+    [data-testid="stStatusReport"] {{
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }}
+
+    /* Target the summary (the header part with the spinner) */
+    [data-testid="stStatusReport"] summary {{
+        padding: 12px 16px !important;
+        list-style: none !important;
+        display: flex !important;
+        align-items: center !important;
+        border-bottom: none !important; /* Keep it clean when collapsed */
+    }}
+
+    /* Force text visibility inside header and content */
+    [data-testid="stStatusReport"] summary span,
+    [data-testid="stStatusReport"] summary div p,
+    [data-testid="stStatusReport"] [data-testid="stMarkdownContainer"] p {{
+        color: #1e293b !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        margin: 0 !important;
+    }}
+
+    /* Fix the spinner and icons */
+    [data-testid="stStatusReport"] svg,
+    [data-testid="stStatusReport"] [data-testid="stExpanderIconSpinner"],
+    [data-testid="stStatusReport"] [data-testid="stExpanderIcon"] {{
+        fill: #d11f41 !important;
+        color: #d11f41 !important;
+    }}
+
+    /* Hover state refinement */
+    [data-testid="stStatusReport"] summary:hover {{
+        background-color: #f8fafc !important;
+    }}
+
 </style>
 
 
