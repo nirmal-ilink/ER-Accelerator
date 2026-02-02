@@ -152,6 +152,15 @@ class Bootstrapper:
         """Returns True if connected to Databricks (either Runtime or Connect)."""
         return self._is_databricks_connected
 
+    def reset_spark(self):
+        """
+        Forces re-initialization of the Spark session.
+        Useful when Databricks Connect session becomes invalid/stale.
+        """
+        print("INFO: Resetting Spark session...")
+        self.spark = self._init_spark()
+        return self.spark
+
     def get_storage_path(self, zone: str) -> str:
         """
         Resolves storage path based on environment.
@@ -177,11 +186,12 @@ class Bootstrapper:
 
 
 # Factory method for quick access
+_bootstrapper_instance = None
 def get_bootstrapper(path: str = None) -> Bootstrapper:
     """
-    Returns a Bootstrapper instance.
-    
-    The Bootstrapper will automatically connect to Databricks if credentials
-    are configured in secrets.toml or environment variables.
+    Returns a singleton Bootstrapper instance.
     """
-    return Bootstrapper(path)
+    global _bootstrapper_instance
+    if _bootstrapper_instance is None:
+        _bootstrapper_instance = Bootstrapper(path)
+    return _bootstrapper_instance

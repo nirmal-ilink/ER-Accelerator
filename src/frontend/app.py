@@ -25,6 +25,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Force Reload Trigger (Internal)
+
 # --- AUTHENTICATION & PERMISSIONS ---
 if 'user_manager' not in st.session_state:
     st.session_state['user_manager'] = UserManager()

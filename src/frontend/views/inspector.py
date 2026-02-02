@@ -3,6 +3,7 @@ import re
 import random
 import datetime
 import textwrap
+from src.backend.connectors.connector_service import get_connector_service
 
 # --- UTILS ---
 def clean_html(html_str):
@@ -338,7 +339,158 @@ def render():
             </div>
             
             <p style="color: #64748B; font-size: 15px; margin-bottom: 32px; line-height: 1.6;">{active_stage['desc']}</p>
+        """), unsafe_allow_html=True)
+        
+        # Check if this is the Ingestion stage - show Load Configuration
+        if active_stage['name'] == "Ingestion":
+            # Initialize load config state
+            if "ingestion_load_type" not in st.session_state:
+                st.session_state["ingestion_load_type"] = "full"
+            if "ingestion_schedule_enabled" not in st.session_state:
+                st.session_state["ingestion_schedule_enabled"] = False
             
+            st.markdown("""
+            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
+                Load Configuration
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Load Type Selection
+            load_col1, load_col2 = st.columns(2)
+            
+            with load_col1:
+                st.markdown("""
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
+                    <div style="font-weight:600; color:#1e293b; margin-bottom:8px;">Full Load</div>
+                    <p style="color:#64748b; font-size:13px; margin:0;">
+                        Replaces all existing data with fresh data from source.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with load_col2:
+                st.markdown("""
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px;">
+                    <div style="font-weight:600; color:#166534; margin-bottom:8px;">Incremental Load</div>
+                    <p style="color:#64748b; font-size:13px; margin:0;">
+                        Appends only new/updated records since last sync.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Load type radio
+            load_type = st.radio(
+                "Select Load Type",
+                options=["full", "incremental"],
+                format_func=lambda x: "Full Load (Replace All)" if x == "full" else "Incremental Load (Append New)",
+                horizontal=True,
+                key="ingestion_load_type",
+                label_visibility="collapsed",
+            )
+            
+            # Show watermark for incremental
+            # Show watermark for incremental
+            if st.session_state.get("ingestion_load_type") == "incremental":
+                # Smart Watermark Detection
+                wm_options = ["updated_at", "modified_at", "created_at", "timestamp"]
+                default_idx = 0
+                
+                # Fetch real columns if not already cached
+                if "ingestion_watermark_options" not in st.session_state:
+                    try:
+                        with st.spinner("Detecting watermark columns..."):
+                            service = get_connector_service()
+                            # Default to 'sqlserver' if not specified (User context)
+                            conn_type = st.session_state.get("selected_connector_type", "sqlserver")
+                            conn_config = service.load_configuration(conn_type)
+                            
+                            if conn_config and conn_config.selected_tables:
+                                # Pick first table for detection (schema, [tables])
+                                first_schema = next(iter(conn_config.selected_tables))
+                                tables = conn_config.selected_tables[first_schema]
+                                if tables:
+                                    first_table = tables[0]
+                                    
+                                    cols = service.fetch_columns(conn_type, conn_config.config, first_schema, first_table)
+                                    
+                                    # Filter and prioritize
+                                    detected_cols = []
+                                    for c in cols:
+                                        cname = c['name']
+                                        ctype = c['type'].lower()
+                                        # Accept time/date or numeric fields (potential IDs or timestamps)
+                                        if any(x in ctype for x in ['time', 'date', 'int', 'numeric', 'long', 'decimal']):
+                                            detected_cols.append(cname)
+                                    
+                                    if detected_cols:
+                                        wm_options = detected_cols
+                                        # Smart selection: prioritize 'updated', 'modified'
+                                        for i, opt in enumerate(wm_options):
+                                            if any(k in opt.lower() for k in ['updat', 'modif', 'last', 'timestamp']):
+                                                default_idx = i
+                                                break
+                                                
+                        st.session_state["ingestion_watermark_options"] = wm_options
+                        st.session_state["ingestion_watermark_default_index"] = default_idx
+                        
+                    except Exception as e:
+                        print(f"Watermark detection warning: {e}")
+                        # Fallback to defaults
+                        st.session_state["ingestion_watermark_options"] = wm_options
+                
+                options = st.session_state.get("ingestion_watermark_options", wm_options)
+                idx = st.session_state.get("ingestion_watermark_default_index", 0)
+                
+                st.selectbox(
+                    "Watermark Column",
+                    options=options,
+                    index=idx if idx < len(options) else 0,
+                    key="ingestion_watermark_column",
+                    help=f"Column used to track new/updated records. Auto-detected from {conn_type if 'conn_type' in locals() else 'source'}."
+                )
+            
+            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            
+            # Scheduling
+            with st.expander("Schedule Automatic Sync (Optional)", expanded=False):
+                schedule_enabled = st.toggle(
+                    "Enable Scheduled Sync",
+                    key="ingestion_schedule_enabled",
+                )
+                
+                if schedule_enabled:
+                    sched_col1, sched_col2, sched_col3 = st.columns([2, 1, 1])
+                    
+                    with sched_col1:
+                        st.selectbox(
+                            "Frequency",
+                            options=["hourly", "daily", "weekly"],
+                            format_func=lambda x: x.capitalize(),
+                            key="ingestion_schedule_frequency"
+                        )
+                    
+                    with sched_col2:
+                        st.time_input("Time", key="ingestion_schedule_time", value=None)
+                    
+                    with sched_col3:
+                        st.selectbox(
+                            "Timezone",
+                            options=["UTC", "US/Eastern", "US/Pacific", "Asia/Kolkata"],
+                            key="ingestion_schedule_timezone"
+                        )
+            
+            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            
+            # Start Ingestion Button
+            _, btn_col = st.columns([3, 1])
+            with btn_col:
+                if st.button("Start Ingestion", type="primary", use_container_width=True, key="start_ingestion_btn"):
+                    st.toast("Ingestion job queued!")
+                    st.session_state['inspector_active_stage'] = 1  # Move to Profiling
+                    st.rerun()
+        else:
+            # Standard stats grid for other stages
+            st.markdown(clean_html(f"""
             <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; color: #334155; margin-bottom: 12px;">
                 <span>Total Processing Completion</span>
                 <span style="color: {s_color};">{active_stage['pct']}%</span>
@@ -361,8 +513,9 @@ def render():
                     <div style="font-size: 20px; font-weight: 800; color:{ COLORS['brand'] if active_stage['status'] != 'pending' else '#0F172A' };">0</div>
                 </div>
             </div>
+            """), unsafe_allow_html=True)
         
-        """), unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         
         # LOGS
         logs = generate_stage_logs(active_stage['name'])
