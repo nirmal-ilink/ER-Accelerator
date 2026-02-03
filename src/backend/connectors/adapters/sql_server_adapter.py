@@ -69,7 +69,9 @@ class SQLServerAdapter(BaseConnectorAdapter):
         
         # Connection resilience for Azure
         if is_azure:
-            url += ";connectRetryCount=3;connectRetryInterval=10"
+            retry_count = config.get('retry_count', 3)
+            retry_interval = config.get('retry_interval', 10)
+            url += f";connectRetryCount={retry_count};connectRetryInterval={retry_interval}"
         
         return url
     
@@ -245,8 +247,14 @@ class SQLServerAdapter(BaseConnectorAdapter):
                 message=error_msg
             )
         
-        jdbc_url = self.build_jdbc_url(config)
-        jdbc_props = self.get_jdbc_properties(config)
+        # Use a shorter timeout and fewer retries for testing to avoid long hangs
+        test_config = config.copy()
+        test_config['timeout'] = 10
+        test_config['retry_count'] = 1
+        test_config['retry_interval'] = 2
+        
+        jdbc_url = self.build_jdbc_url(test_config)
+        jdbc_props = self.get_jdbc_properties(test_config)
         
         # Simple connectivity test query
         test_query = "SELECT 1 AS connection_test, @@VERSION AS version"
@@ -290,7 +298,7 @@ class SQLServerAdapter(BaseConnectorAdapter):
             elif "ClassNotFoundException" in error_msg:
                 user_msg = "JDBC driver not installed on cluster."
             elif "[NO_ACTIVE_SESSION]" in error_msg:
-                user_msg = "Databricks Cluster is not reachable or Spark Session is inactive. Please ensure your cluster is running."
+                user_msg = "Databricks Cluster is not reachable or Spark Session is inactive. Since you are running locally with Databricks Connect, Spark operations require an active cluster. Please ensure your Databricks cluster is running and accessible."
             else:
                 user_msg = f"Connection failed: {error_msg[:100]}"
             

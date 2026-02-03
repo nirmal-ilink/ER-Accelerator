@@ -64,6 +64,14 @@ class BaseConnectorAdapter(ABC):
         """
         pass
     
+    @property
+    def requires_spark_for_test(self) -> bool:
+        """
+        Indicates if this adapter requires a Spark session for connectivity testing.
+        Most JDBC-based adapters do, while REST or CLI based ones might not.
+        """
+        return True
+    
     @abstractmethod
     def build_jdbc_url(self, config: Dict[str, Any]) -> str:
         """

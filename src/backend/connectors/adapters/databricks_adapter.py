@@ -41,12 +41,17 @@ class DatabricksAdapter(BaseConnectorAdapter):
         # Catalog is not required for initial connection - it's selected from dropdown
         return ["Host", "Token", "HTTP Path"]
     
-    def _get_connection(self, config: Dict[str, Any]):
+    @property
+    def requires_spark_for_test(self) -> bool:
+        return False
+    
+    def _get_connection(self, config: Dict[str, Any], timeout: int = 30):
         """
         Create a connection to Databricks SQL Warehouse.
         
         Args:
             config: Connection configuration
+            timeout: Socket timeout in seconds
             
         Returns:
             databricks.sql.Connection object
@@ -56,6 +61,11 @@ class DatabricksAdapter(BaseConnectorAdapter):
         host = config.get('host', '').strip()
         token = config.get('token', '').strip()
         http_path = config.get('http_path', '').strip()
+        
+        # Handle common malformed host values
+        # Remove $ prefix (sometimes added from secret references)
+        if host.startswith('$'):
+            host = host[1:]
         
         # Remove https:// if user included it
         if host.startswith('https://'):
@@ -86,7 +96,7 @@ class DatabricksAdapter(BaseConnectorAdapter):
             server_hostname=host,
             http_path=http_path,
             access_token=token,
-            _socket_timeout=30  # 30 second timeout to avoid hanging
+            _socket_timeout=timeout
         )
 
     def build_jdbc_url(self, config: Dict[str, Any]) -> str:
@@ -315,7 +325,8 @@ class DatabricksAdapter(BaseConnectorAdapter):
         
         try:
             # Simple connectivity test - just run SELECT 1
-            connection = self._get_connection(config)
+            # Use a shorter timeout for testing
+            connection = self._get_connection(config, timeout=10)
             cursor = connection.cursor()
             cursor.execute("SELECT 1")
             cursor.fetchone()

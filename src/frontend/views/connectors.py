@@ -865,6 +865,23 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
                 reset_connector_service()
                 service = get_connector_service()
             
+            # FAST-FAIL: Check if Spark session is alive before initiating a remote job
+            # Only if the adapter requires Spark for testing (e.g., SQL Server JDBC)
+            adapter = service.get_adapter(conn_key)
+            if getattr(adapter, 'requires_spark_for_test', True):
+                from src.backend.bootstrapper import get_bootstrapper
+                bs = get_bootstrapper()
+                if not bs.is_session_alive():
+                    st.session_state["connection_tested"] = False
+                    st.error("Databricks Cluster is not reachable or Spark Session is inactive.")
+                    st.info("The application is trying to use Databricks Connect to run this test on your cluster, but it's not responding.")
+                    if st.button("Re-initialize Spark Session", key="reset_spark_precheck_btn"):
+                        with st.spinner("Re-initializing..."):
+                            bs.reset_spark()
+                        st.success("Spark Session re-initialized! Please try testing the connection again.")
+                        st.rerun()
+                    return
+
             result = service.test_connection(conn_key, config)
             
             if result.success:
@@ -884,7 +901,18 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
                 
         except Exception as e:
             st.session_state["connection_tested"] = False
-            st.error(f"Connection test failed: {str(e)}")
+            error_msg = str(e)
+            if "[NO_ACTIVE_SESSION]" in error_msg:
+                st.error("Databricks Cluster is not reachable or Spark Session is inactive.")
+                st.info("Since you are running locally with Databricks Connect, this might be due to a stale session or the cluster being stopped.")
+                if st.button("Re-initialize Spark Session", key="reset_spark_btn"):
+                    from src.backend.bootstrapper import get_bootstrapper
+                    with st.spinner("Re-initializing..."):
+                        get_bootstrapper().reset_spark()
+                    st.success("Spark Session re-initialized! Please try testing the connection again.")
+                    st.rerun()
+            else:
+                st.error(f"Connection test failed: {error_msg}")
 
 
 def _handle_fetch_catalogs(conn_key: str, connector_data: dict):
@@ -1117,6 +1145,12 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             st.info("Configure load type and scheduling in Pipeline Inspector > Ingestion")
             st.toast("Configuration saved!")
             
+            # Invalidate Inspector Cache
+            if "ingestion_config_cached" in st.session_state:
+                del st.session_state["ingestion_config_cached"]
+            if "ingestion_connector_config" in st.session_state:
+                del st.session_state["ingestion_connector_config"]
+            
         except Exception as e:
             status.update(label="Save failed", state="error")
             st.error(f"Failed to save: {str(e)}")
@@ -1198,6 +1232,12 @@ def _handle_legacy_save(conn_key: str, connector_data: dict):
             status.update(label="Saved!", state="complete", expanded=False)
             st.success(f"Connection '{connector_name}' saved!")
             st.toast("Configuration Saved!")
+            
+            # Invalidate Inspector Cache
+            if "ingestion_config_cached" in st.session_state:
+                del st.session_state["ingestion_config_cached"]
+            if "ingestion_connector_config" in st.session_state:
+                del st.session_state["ingestion_connector_config"]
             
     except Exception as e:
         st.error(f"Failed to save: {str(e)}")

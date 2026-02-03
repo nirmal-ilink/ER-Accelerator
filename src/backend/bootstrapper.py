@@ -148,6 +148,17 @@ class Bootstrapper:
         self._is_databricks_connected = False
         return spark
 
+    def is_session_alive(self) -> bool:
+        """Checks if the Spark session is still active and reachable."""
+        if not self.spark:
+            return False
+        try:
+            # Simple metadata query to verify connection
+            self.spark.sql("SELECT 1").collect()
+            return True
+        except Exception:
+            return False
+
     def is_connected_to_databricks(self) -> bool:
         """Returns True if connected to Databricks (either Runtime or Connect)."""
         return self._is_databricks_connected
@@ -158,6 +169,12 @@ class Bootstrapper:
         Useful when Databricks Connect session becomes invalid/stale.
         """
         print("INFO: Resetting Spark session...")
+        try:
+            if self.spark:
+                self.spark.stop()
+        except:
+            pass
+        self._is_databricks_connected = False
         self.spark = self._init_spark()
         return self.spark
 

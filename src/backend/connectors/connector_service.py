@@ -160,7 +160,18 @@ class ConnectorService:
         # Resolve secrets before testing
         resolved_config = self._resolve_secrets(config)
         adapter = self.get_adapter(connector_type)
-        return adapter.test_connection(self.spark, resolved_config)
+        
+        # If the adapter object is stale (from before code reload), force one-time re-registration
+        if not hasattr(adapter, 'requires_spark_for_test'):
+            self._adapters = {} # Clear cache
+            self._register_adapters() # Re-instantiate
+            adapter = self.get_adapter(connector_type)
+        
+        # Only initialize Spark if the adapter requires it for testing
+        requires_spark = getattr(adapter, 'requires_spark_for_test', True)
+        spark_session = self.spark if requires_spark else None
+        
+        return adapter.test_connection(spark_session, resolved_config)
 
     def fetch_metadata(self, connector_type: str, config: Dict[str, Any]) -> SchemaMetadata:
         """
@@ -207,8 +218,9 @@ class ConnectorService:
         Returns:
             List of columns with names and types
         """
+        resolved_config = self._resolve_secrets(config)
         adapter = self.get_adapter(connector_type)
-        return adapter.fetch_columns(self.spark, config, schema, table)
+        return adapter.fetch_columns(self.spark, resolved_config, schema, table)
     
     def _resolve_secrets(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -321,6 +333,7 @@ class ConnectorService:
             )
         """
         
+        # Execution wrapper with auto-recovery for Session and Schema errors
         try:
             self.spark.sql(insert_sql).collect()
             
@@ -332,13 +345,44 @@ class ConnectorService:
                 status="Success",
                 details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
             )
-            
             return True
+
         except Exception as e:
             error_msg = str(e)
             
-            # If table doesn't exist, try to create it
-            if "TABLE_OR_VIEW_NOT_FOUND" in error_msg or "does not exist" in error_msg.lower():
+            # CASE 1: Session Death (Databricks Connect timeout)
+            if "[NO_ACTIVE_SESSION]" in error_msg:
+                print("WARNING: Spark Session is not active. Attempting to re-initialize...")
+                
+                # Re-initialize Spark Session
+                from src.backend.bootstrapper import get_bootstrapper
+                self._spark = get_bootstrapper().reset_spark()
+                
+                # Retry the operation recursively (once) or inline
+                try:
+                    self.spark.sql(insert_sql).collect()
+                    
+                    # Log recovery success
+                    self.audit_logger.log_event(
+                        user=st.session_state.get("username", "System"),
+                        action=f"Saved Configuration",
+                        module="Connectors",
+                        status="Success",
+                        details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id}) after session recovery"
+                    )
+                    return True
+                except Exception as retry_e:
+                    # Check if retry failed due to missing table (corner case)
+                    retry_msg = str(retry_e)
+                    if "TABLE_OR_VIEW_NOT_FOUND" in retry_msg or "does not exist" in retry_msg.lower():
+                        self._create_metadata_table(target_catalog, target_schema, target_table)
+                        self.spark.sql(insert_sql).collect()
+                        return True
+                    else:
+                        raise retry_e
+
+            # CASE 2: Missing Table (First run)
+            elif "TABLE_OR_VIEW_NOT_FOUND" in error_msg or "does not exist" in error_msg.lower():
                 self._create_metadata_table(target_catalog, target_schema, target_table)
                 # Retry the insert
                 self.spark.sql(insert_sql).collect()
@@ -352,6 +396,7 @@ class ConnectorService:
                     details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
                 )
                 return True
+            
             else:
                 # Log failure
                 self.audit_logger.log_event(
@@ -463,6 +508,66 @@ class ConnectorService:
             if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
                 return None
             print(f"Error loading configuration: {e}")
+            return None
+
+    def get_latest_configuration(self) -> Optional[ConnectorConfig]:
+        """
+        Retrieves the most recently saved connector configuration across all types.
+        
+        This is useful for the Ingestion stage to display the currently active
+        data source without needing to know the connector type in advance.
+        
+        Returns:
+            ConnectorConfig of the most recently saved connector, or None.
+        """
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        
+        try:
+            # Query across ALL connector types, ordered by most recent
+            df = self.spark.sql(f"""
+                SELECT 
+                    connection_id, source_type, source_name, configuration, selected_tables,
+                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
+                    status, updated_at
+                FROM {target_table}
+                ORDER BY updated_at DESC
+                LIMIT 1
+            """)
+            
+            rows = df.collect()
+            if not rows:
+                return None
+            
+            row = rows[0]
+            
+            # Parse JSON fields
+            config_dict = json.loads(row['configuration'])
+            try:
+                selected_tables = json.loads(row['selected_tables'])
+            except:
+                selected_tables = {}
+            
+            return ConnectorConfig(
+                connector_type=row['source_type'],
+                connector_name=row['source_name'],
+                config=config_dict,
+                selected_tables=selected_tables,
+                status=row['status'] or 'inactive',
+                load_type=row['load_type'],
+                watermark_column=row['watermark_column'],
+                last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
+                schedule_enabled=row['schedule_enabled'],
+                schedule_cron=row['schedule_cron'],
+                schedule_timezone=row['schedule_timezone']
+            )
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+                return None
+            print(f"Error loading latest configuration: {e}")
             return None
 
 
