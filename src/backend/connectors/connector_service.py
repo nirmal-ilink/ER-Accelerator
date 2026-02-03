@@ -24,12 +24,16 @@ Usage:
 
 import json
 import os
+import uuid  # Added for unique IDs
 import streamlit as st
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 
+# Import Audit Logger
+from src.backend.audit.logger import AuditLogger
+
 # Import adapters
-from .adapters import SQLServerAdapter
+from .adapters import SQLServerAdapter, DatabricksAdapter
 from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, SchemaMetadata
 
 
@@ -77,6 +81,7 @@ class ConnectorService:
         """
         self._spark = spark
         self._secret_manager = None
+        self.audit_logger = AuditLogger()
         self._register_adapters()
     
     def _register_adapters(self):
@@ -84,6 +89,10 @@ class ConnectorService:
         # SQL Server
         sql_adapter = SQLServerAdapter()
         self._adapters[sql_adapter.connector_type] = sql_adapter
+        
+        # Databricks / Unity Catalog
+        databricks_adapter = DatabricksAdapter()
+        self._adapters[databricks_adapter.connector_type] = databricks_adapter
         
         # Future: Add more adapters here
         # self._adapters['snowflake'] = SnowflakeAdapter()
@@ -143,70 +152,41 @@ class ConnectorService:
             }
             for adapter in self._adapters.values()
         ]
-    
-    def _refresh_spark_session(self):
-        """Force refresh of the underlying Spark session."""
-        try:
-            from src.backend.bootstrapper import get_bootstrapper
-            print("INFO: Refreshing ConnectorService Spark session...")
-            self._spark = get_bootstrapper().reset_spark()
-        except Exception as e:
-            print(f"ERROR: Failed to refresh Spark session: {e}")
 
-    def test_connection(
-        self, 
-        connector_type: str, 
-        config: Dict[str, Any]
-    ) -> ConnectionTestResult:
+    def test_connection(self, connector_type: str, config: Dict[str, Any]) -> ConnectionTestResult:
         """
-        Test connection to a data source.
+        Test connection using the appropriate adapter.
+        """
+        # Resolve secrets before testing
+        resolved_config = self._resolve_secrets(config)
+        adapter = self.get_adapter(connector_type)
+        return adapter.test_connection(self.spark, resolved_config)
+
+    def fetch_metadata(self, connector_type: str, config: Dict[str, Any]) -> SchemaMetadata:
+        """
+        Fetch schema metadata using the appropriate adapter.
+        """
+        # Resolve secrets before fetching
+        resolved_config = self._resolve_secrets(config)
+        adapter = self.get_adapter(connector_type)
+        return adapter.fetch_schemas_and_tables(self.spark, resolved_config)
+
+    def fetch_catalogs(self, connector_type: str, config: Dict[str, Any]) -> List[str]:
+        """
+        Fetch available catalogs from a data source (Databricks only).
         
         Args:
-            connector_type: Type of connector (e.g., 'sqlserver')
+            connector_type: Type of connector (e.g., 'databricks')
             config: Connection configuration dictionary
             
         Returns:
-            ConnectionTestResult with success status and details
+            List of catalog names
         """
         adapter = self.get_adapter(connector_type)
-        
-        # First attempt
-        result = adapter.test_connection(self.spark, config)
-        
-        # Check for invalid session error (Databricks Connect specific)
-        # Check both message and raw_error details since adapters might sanitize the message
-        error_indicators = [str(result.message)]
-        if result.details and "raw_error" in result.details:
-            error_indicators.append(str(result.details["raw_error"]))
-            
-        is_session_error = any("[NO_ACTIVE_SESSION]" in err for err in error_indicators)
-        
-        if not result.success and is_session_error:
-            print("WARNING: Caught [NO_ACTIVE_SESSION]. Attempting to refresh Spark session...")
-            self._refresh_spark_session()
-            
-            # Retry with new session
-            result = adapter.test_connection(self.spark, config)
-            
-        return result
-    
-    def fetch_metadata(
-        self, 
-        connector_type: str, 
-        config: Dict[str, Any]
-    ) -> SchemaMetadata:
-        """
-        Fetch schemas and tables from a data source.
-        
-        Args:
-            connector_type: Type of connector (e.g., 'sqlserver')
-            config: Connection configuration dictionary
-            
-        Returns:
-            SchemaMetadata with schema->tables mapping
-        """
-        adapter = self.get_adapter(connector_type)
-        return adapter.fetch_schemas_and_tables(self.spark, config)
+        if hasattr(adapter, 'fetch_catalogs'):
+            return adapter.fetch_catalogs(self.spark, config)
+        else:
+            raise NotImplementedError(f"Connector '{connector_type}' does not support catalog discovery")
 
     def fetch_columns(
         self, 
@@ -259,19 +239,15 @@ class ConnectorService:
     ) -> Dict[str, Any]:
         """
         Store sensitive fields in Databricks Secrets and return config with pointers.
-        
-        Args:
-            connector_type: Type of connector
-            config: Original configuration with raw secrets
-            
-        Returns:
-            Configuration with secrets replaced by pointers
         """
-        secret_fields = ['password', 'token', 'key', 'secret']
         processed_config = {}
+        adapter = self.get_adapter(connector_type)
+        
+        # Simple heuristic for secret fields
+        secret_keywords = ['password', 'token', 'key', 'secret']
         
         for key, value in config.items():
-            is_secret = any(sf in key.lower() for sf in secret_fields)
+            is_secret = any(keyword in key.lower() for keyword in secret_keywords)
             
             if is_secret and value and not value.startswith("databricks://"):
                 # Store in Databricks Secrets
@@ -308,9 +284,8 @@ class ConnectorService:
         # Store secrets and get config with pointers
         safe_config = self._store_secrets(connector_type, config)
         
-        # Prepare data for new schema
-        # connection_id mapped to connector_type for now to maintain singleton pattern per type
-        connection_id = connector_type 
+        # Generate unique connection ID using UUID
+        connection_id = str(uuid.uuid4())
         source_type = connector_type
         
         # Filter out meta fields from config json
@@ -332,52 +307,32 @@ class ConnectorService:
             val = str(v).replace("'", "''")
             return f"'{val}'"
         
-        # Use MERGE to upsert
-        merge_sql = f"""
-            MERGE INTO {target_table} AS target
-            USING (SELECT 
-                '{connection_id}' as connection_id,
-                '{source_type}' as source_type,
-                {escape_sql(connector_name)} as source_name,
-                '{configuration_json}' as configuration,
-                '{selected_tables_json}' as selected_tables,
-                {escape_sql(load_type)} as load_type,
-                {escape_sql(watermark_column)} as watermark_column,
-                {str(schedule_enabled).lower()} as schedule_enabled,
-                {escape_sql(schedule_cron)} as schedule_cron,
-                {escape_sql(schedule_timezone)} as schedule_timezone,
-                '{status}' as status,
-                current_timestamp() as updated_at,
-                current_timestamp() as created_at
-            ) AS source
-            ON target.connection_id = source.connection_id
-            WHEN MATCHED THEN
-                UPDATE SET
-                    source_name = source.source_name,
-                    configuration = source.configuration,
-                    selected_tables = source.selected_tables,
-                    load_type = source.load_type,
-                    watermark_column = source.watermark_column,
-                    schedule_enabled = source.schedule_enabled,
-                    schedule_cron = source.schedule_cron,
-                    schedule_timezone = source.schedule_timezone,
-                    status = source.status,
-                    updated_at = source.updated_at
-            WHEN NOT MATCHED THEN
-                INSERT (
-                    connection_id, source_type, source_name, configuration, selected_tables,
-                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    status, created_at, updated_at
-                )
-                VALUES (
-                    source.connection_id, source.source_type, source.source_name, source.configuration, source.selected_tables,
-                    source.load_type, source.watermark_column, source.schedule_enabled, source.schedule_cron, source.schedule_timezone,
-                    source.status, source.created_at, source.updated_at
-                )
+        # Insert new record (Immutable Ledger style)
+        insert_sql = f"""
+            INSERT INTO {target_table} (
+                connection_id, source_type, source_name, configuration, selected_tables,
+                load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
+                status, created_at, updated_at
+            )
+            VALUES (
+                '{connection_id}', '{source_type}', {escape_sql(connector_name)}, '{configuration_json}', '{selected_tables_json}',
+                {escape_sql(load_type)}, {escape_sql(watermark_column)}, {str(schedule_enabled).lower()}, {escape_sql(schedule_cron)}, {escape_sql(schedule_timezone)},
+                '{status}', current_timestamp(), current_timestamp()
+            )
         """
         
         try:
-            self.spark.sql(merge_sql).collect()
+            self.spark.sql(insert_sql).collect()
+            
+            # Log to Audit Trail
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action=f"Saved Configuration",
+                module="Connectors",
+                status="Success",
+                details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
+            )
+            
             return True
         except Exception as e:
             error_msg = str(e)
@@ -385,10 +340,27 @@ class ConnectorService:
             # If table doesn't exist, try to create it
             if "TABLE_OR_VIEW_NOT_FOUND" in error_msg or "does not exist" in error_msg.lower():
                 self._create_metadata_table(target_catalog, target_schema, target_table)
-                # Retry the merge
-                self.spark.sql(merge_sql).collect()
+                # Retry the insert
+                self.spark.sql(insert_sql).collect()
+                
+                # Log success after retry
+                self.audit_logger.log_event(
+                    user=st.session_state.get("username", "System"),
+                    action=f"Saved Configuration",
+                    module="Connectors",
+                    status="Success",
+                    details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
+                )
                 return True
             else:
+                # Log failure
+                self.audit_logger.log_event(
+                    user=st.session_state.get("username", "System"),
+                    action=f"Saved Configuration",
+                    module="Connectors",
+                    status="Failed",
+                    details=f"Failed to save {connector_type} configuration: {error_msg}"
+                )
                 raise
     
     def _create_metadata_table(
@@ -434,7 +406,7 @@ class ConnectorService:
         connector_type: str
     ) -> Optional[ConnectorConfig]:
         """
-        Load saved configuration for a connector type.
+        Load latest saved configuration for a connector type.
         
         Args:
             connector_type: Type of connector to load
@@ -447,14 +419,15 @@ class ConnectorService:
         target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
         
         try:
-            # Query the new schema columns
+            # Query the latest configuration for this source_type
             df = self.spark.sql(f"""
                 SELECT 
                     connection_id, source_type, source_name, configuration, selected_tables,
                     load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
                     status, updated_at
                 FROM {target_table}
-                WHERE connection_id = '{connector_type}'
+                WHERE source_type = '{connector_type}'
+                ORDER BY updated_at DESC
                 LIMIT 1
             """)
             
@@ -510,3 +483,16 @@ def get_connector_service(spark=None) -> ConnectorService:
     if _service_instance is None:
         _service_instance = ConnectorService(spark)
     return _service_instance
+
+
+def reset_connector_service():
+    """
+    Reset the connector service singleton.
+    
+    Call this after code changes to force re-registration of adapters.
+    Useful during development when adding new connectors.
+    """
+    global _service_instance
+    _service_instance = None
+    # Clear any cached adapters at the class level
+    ConnectorService._adapters = {}

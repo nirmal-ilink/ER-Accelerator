@@ -61,9 +61,10 @@ def render():
             "name": "Databricks",
             "logo": "databricks_logo.png",
             "status": "Inactive",
-            "desc": "Lakehouse Platform",
-            "fields": ["Host", "HTTP Path", "Token"],
-            "supports_schema_browser": False,
+            "desc": "Unity Catalog - Lakehouse Platform",
+            "fields": ["Host", "Token", "HTTP Path"],
+            "supports_schema_browser": True,
+            "supports_catalog_selection": True,  # Shows catalog dropdown after connection
         },
         "oracle": {
             "name": "Oracle DB",
@@ -531,7 +532,8 @@ def render():
     conn_key = get_key(selected_name)
     logo_path = os.path.join(assets_dir, active_data["logo"])
     logo_b64 = get_img_as_base64(logo_path)
-    is_active = active_data["status"] == "Active"
+    # Status is active if historically active OR if connection test passed in this session
+    is_active = active_data["status"] == "Active" or st.session_state.get("connection_tested", False)
     supports_schema_browser = active_data.get("supports_schema_browser", False)
 
     st.write("")
@@ -602,45 +604,131 @@ def render():
         # ACTION BUTTONS ROW 1: Test & Fetch
         # ==========================================================================
         if supports_schema_browser:
-            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
+            supports_catalog_selection = active_data.get("supports_catalog_selection", False)
             
-            with btn_col1:
-                test_clicked = st.button(
-                    "Test Connection",
-                    key=f"test_{conn_key}",
-                    use_container_width=True,
-                )
+            if supports_catalog_selection:
+                # DATABRICKS FLOW: Test -> Fetch Catalogs -> Select -> Fetch Schemas
+                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
+                
+                with btn_col1:
+                    test_clicked = st.button(
+                        "Test Connection",
+                        key=f"test_{conn_key}",
+                        use_container_width=True,
+                    )
+                
+                with btn_col2:
+                    fetch_catalogs_clicked = st.button(
+                        "Fetch Catalogs",
+                        key=f"fetch_catalogs_{conn_key}",
+                        use_container_width=True,
+                        disabled=not st.session_state.get("connection_tested", False),
+                    )
+                
+                # Handle Test Connection
+                if test_clicked:
+                    _handle_test_connection(conn_key, active_data)
+                
+                # Handle Fetch Catalogs
+                if fetch_catalogs_clicked:
+                    _handle_fetch_catalogs(conn_key, active_data)
+                
+                # ==========================================================================
+                # CATALOG SELECTION (Databricks only)
+                # ==========================================================================
+                if st.session_state.get("databricks_catalogs"):
+                    st.markdown(
+                        "<hr style='border:none; border-top:1px solid #e5e7eb; margin:16px 0;'>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        "<div style='font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;'>"
+                        "Step 2: Select Catalog"
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+                    
+                    catalogs = st.session_state["databricks_catalogs"]
+                    current_catalog = st.session_state.get("databricks_selected_catalog", "")
+                    
+                    # Find current index
+                    try:
+                        current_idx = catalogs.index(current_catalog) if current_catalog in catalogs else 0
+                    except ValueError:
+                        current_idx = 0
+                    
+                    cat_col1, cat_col2 = st.columns([3, 1])
+                    
+                    with cat_col1:
+                        selected_catalog = st.selectbox(
+                            "Available Catalogs",
+                            options=catalogs,
+                            index=current_idx,
+                            key="databricks_catalog_select",
+                            label_visibility="collapsed",
+                        )
+                    
+                    with cat_col2:
+                        fetch_schemas_clicked = st.button(
+                            "Fetch Schemas",
+                            key=f"fetch_schemas_{conn_key}",
+                            use_container_width=True,
+                        )
+                    
+                    # Update session state when catalog changes
+                    if selected_catalog != st.session_state.get("databricks_selected_catalog"):
+                        st.session_state["databricks_selected_catalog"] = selected_catalog
+                        # Clear schema metadata when catalog changes
+                        st.session_state["schema_metadata"] = None
+                        st.session_state["selected_tables"] = {}
+                    
+                    # Handle Fetch Schemas
+                    if fetch_schemas_clicked:
+                        _handle_fetch_schemas(conn_key, active_data)
             
-            with btn_col2:
-                fetch_clicked = st.button(
-                    "Fetch Schemas",
-                    key=f"fetch_{conn_key}",
-                    use_container_width=True,
-                )
-            
-            # Handle Test Connection
-            if test_clicked:
-                _handle_test_connection(conn_key, active_data)
-            
-            # Handle Fetch Schemas
-            if fetch_clicked:
-                _handle_fetch_schemas(conn_key, active_data)
+            else:
+                # STANDARD FLOW (SQL Server, etc.): Test -> Fetch Schemas
+                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
+                
+                with btn_col1:
+                    test_clicked = st.button(
+                        "Test Connection",
+                        key=f"test_{conn_key}",
+                        use_container_width=True,
+                    )
+                
+                with btn_col2:
+                    fetch_clicked = st.button(
+                        "Fetch Schemas",
+                        key=f"fetch_{conn_key}",
+                        use_container_width=True,
+                    )
+                
+                # Handle Test Connection
+                if test_clicked:
+                    _handle_test_connection(conn_key, active_data)
+                
+                # Handle Fetch Schemas
+                if fetch_clicked:
+                    _handle_fetch_schemas(conn_key, active_data)
             
             # Show fetch error if any
             if st.session_state.get("fetch_error"):
                 st.error(st.session_state["fetch_error"])
             
             # ==========================================================================
-            # STEP 2: SCHEMA & TABLE BROWSER
+            # STEP 3: SCHEMA & TABLE BROWSER
             # ==========================================================================
             if st.session_state.get("schema_metadata"):
                 st.markdown(
                     "<hr style='border:none; border-top:1px solid #e5e7eb; margin:20px 0;'>",
                     unsafe_allow_html=True,
                 )
+                
+                step_num = "3" if supports_catalog_selection else "2"
                 st.markdown(
-                    "<div style='font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;'>"
-                    "Step 2: Select Tables for Ingestion"
+                    f"<div style='font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;'>"
+                    f"Step {step_num}: Select Tables for Ingestion"
                     "</div>",
                     unsafe_allow_html=True,
                 )
@@ -760,18 +848,33 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
     st.session_state["selected_tables"] = {}
     st.session_state["fetch_error"] = None
     
+    # Clear catalog state for Databricks when retesting
+    if conn_key == "databricks":
+        st.session_state["databricks_catalogs"] = None
+        st.session_state["databricks_selected_catalog"] = None
+    
     with st.spinner("Testing connection..."):
         try:
-            from src.backend.connectors import get_connector_service
+            from src.backend.connectors import get_connector_service, reset_connector_service
             
             service = get_connector_service()
             config = _get_config_from_session(conn_key, connector_data["fields"])
+            
+            # Check if adapter is registered, if not, reset and retry
+            if conn_key.lower() not in service._adapters:
+                reset_connector_service()
+                service = get_connector_service()
             
             result = service.test_connection(conn_key, config)
             
             if result.success:
                 st.session_state["connection_tested"] = True
                 st.success(f"{result.message}")
+                
+                # Rerun to update button states (enable Fetch Catalogs)
+                time.sleep(1) # Small delay to let user see success message
+                st.rerun()
+                    
                 if result.details:
                     with st.expander("Connection Details"):
                         st.json(result.details)
@@ -784,16 +887,58 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
             st.error(f"Connection test failed: {str(e)}")
 
 
+def _handle_fetch_catalogs(conn_key: str, connector_data: dict):
+    """Handle the Fetch Catalogs button click (Databricks only)."""
+    st.session_state["fetch_error"] = None
+    
+    with st.spinner("Fetching available catalogs..."):
+        try:
+            from src.backend.connectors import get_connector_service, reset_connector_service
+            
+            service = get_connector_service()
+            
+            # Check if adapter is registered, if not, reset and retry
+            if conn_key.lower() not in service._adapters:
+                reset_connector_service()
+                service = get_connector_service()
+            
+            config = _get_config_from_session(conn_key, connector_data["fields"])
+            
+            catalogs = service.fetch_catalogs(conn_key, config)
+            
+            st.session_state["databricks_catalogs"] = catalogs
+            # Auto-select first catalog
+            if catalogs:
+                st.session_state["databricks_selected_catalog"] = catalogs[0]
+            
+            st.success(f"Found {len(catalogs)} catalog(s)")
+            st.rerun()  # Refresh to show catalog dropdown
+            
+        except Exception as e:
+            st.session_state["fetch_error"] = f"Failed to fetch catalogs: {str(e)}"
+            st.session_state["databricks_catalogs"] = None
+
+
 def _handle_fetch_schemas(conn_key: str, connector_data: dict):
     """Handle the Fetch Schemas button click."""
     st.session_state["fetch_error"] = None
     
     with st.spinner("Fetching schemas and tables... This may take a moment."):
         try:
-            from src.backend.connectors import get_connector_service
+            from src.backend.connectors import get_connector_service, reset_connector_service
             
             service = get_connector_service()
+            
+            # Check if adapter is registered, if not, reset and retry
+            if conn_key.lower() not in service._adapters:
+                reset_connector_service()
+                service = get_connector_service()
+            
             config = _get_config_from_session(conn_key, connector_data["fields"])
+            
+            # For Databricks, add the selected catalog to config
+            if conn_key == "databricks" and st.session_state.get("databricks_selected_catalog"):
+                config["catalog"] = st.session_state["databricks_selected_catalog"]
             
             metadata = service.fetch_metadata(conn_key, config)
             
