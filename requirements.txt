@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+altair
+PyYAML
+pyspark
+databricks-connect
+databricks-sdk
+pyarrow
