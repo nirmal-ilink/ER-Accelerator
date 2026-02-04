@@ -38,10 +38,10 @@ def generate_stage_logs(stage_name):
     
     specific_logs = {
         "Ingestion": [
-            f"[INFO] {get_current_time_str()} - Connecting to Oracle DB source...",
+            f"[INFO] {get_current_time_str()} - Connecting to data source...",
             f"[INFO] {get_current_time_str()} - Fetching batch 2041 (1.2GB)...",
             f"[INFO] {get_current_time_str()} - Validating schema compatibility...",
-            f"[INFO] {get_current_time_str()} - Writing raw data to S3 landing zone..."
+            f"[INFO] {get_current_time_str()} - Writing raw data to landing zone..."
         ],
         "Profiling": [
             f"[INFO] {get_current_time_str()} - Sampling 20% of dataset for analysis...",
@@ -68,7 +68,7 @@ def generate_stage_logs(stage_name):
             f"[INFO] {get_current_time_str()} - Merging 4 records into Golden ID: G-10293..."
         ],
         "Publishing": [
-            f"[INFO] {get_current_time_str()} - Formatting output for Snowflake...",
+            f"[INFO] {get_current_time_str()} - Formatting output for destination...",
             f"[INFO] {get_current_time_str()} - Triggering downstream webhook...",
             f"[INFO] {get_current_time_str()} - Compliance check: GDPR...",
             f"[INFO] {get_current_time_str()} - Sync completed. Duration: 4ms."
@@ -76,6 +76,34 @@ def generate_stage_logs(stage_name):
     }
     
     return specific_logs.get(stage_name, common_logs)
+
+def get_ingestion_stage_desc():
+    """Get dynamic description for Ingestion stage based on configured sources."""
+    try:
+        # Optimization: Check cache first to avoid slow backend calls on every render
+        config = st.session_state.get("ingestion_connector_config")
+        
+        if config is None and not st.session_state.get("ingestion_config_cached", False):
+            service = get_connector_service()
+            config = service.get_latest_configuration()
+            # Cache the result
+            st.session_state["ingestion_connector_config"] = config
+            st.session_state["ingestion_config_cached"] = True
+            
+        if config and config.connector_type:
+            connector_names = {
+                "sqlserver": "SQL Server",
+                "databricks": "Databricks",
+                "snowflake": "Snowflake"
+            }
+            name = config.connector_name or connector_names.get(config.connector_type, config.connector_type.upper())
+            table_count = sum(len(t) for t in config.selected_tables.values()) if config.selected_tables else 0
+            if table_count > 0:
+                return f"{name} connected ({table_count} tables)"
+            return f"{name} configured"
+    except Exception:
+        pass
+    return "No source configured"
 
 def render():
     if 'inspector_active_stage' not in st.session_state:
@@ -93,8 +121,12 @@ def render():
         'active_bg': "#FFF1F2"
     }
 
+    # Get dynamic ingestion description based on configured connector
+    ingestion_desc = get_ingestion_stage_desc()
+    has_source = "configured" in ingestion_desc or "connected" in ingestion_desc
+    
     stages = [
-        {"id": 0, "name": "Ingestion", "pct": 100, "status": "done", "icon": "ingest", "meta": "SUCCESS", "desc": "Oracle, SAP, CSV loaded"},
+        {"id": 0, "name": "Ingestion", "pct": 100 if has_source else 0, "status": "done" if has_source else "pending", "icon": "ingest", "meta": "SUCCESS" if has_source else "PENDING", "desc": ingestion_desc},
         {"id": 1, "name": "Profiling", "pct": 100, "status": "done", "icon": "profile",  "meta": "SUCCESS", "desc": "Quality checks passed (99.8%)"},
         {"id": 2, "name": "Cleansing", "pct": 100, "status": "done", "icon": "clean",  "meta": "SUCCESS", "desc": "Standardization rules applied"},
         {"id": 3, "name": "Resolution", "pct": 72, "status": "active", "icon": "dedup",  "meta": "RUNNING", "desc": "Fuzzy matching (Block 4/12)"},
@@ -471,85 +503,116 @@ def render():
             
             st.markdown(f"""
             <style>
-                /* Radio Card Styling */
+                /* Radio Card Container */
                 div[role="radiogroup"][aria-label="Load Strategy"] {{
-                    display: flex;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
                     gap: 16px;
                     width: 100%;
                 }}
                 @media (max-width: 640px) {{
                     div[role="radiogroup"][aria-label="Load Strategy"] {{
-                        flex-direction: column;
+                        grid-template-columns: 1fr;
                     }}
                 }}
+                
+                /* Individual Radio Card - Premium Padding */
                 div[role="radiogroup"][aria-label="Load Strategy"] > label {{
-                    flex: 1;
-                    background: white;
-                    border: 1px solid #E2E8F0;
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
                     border-radius: 12px;
-                    padding: 20px;
-                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    padding: 24px 28px;
+                    min-height: 90px;
+                    transition: all 0.2s ease;
                     cursor: pointer;
                     display: flex;
                     flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+                    justify-content: center;
+                    position: relative;
                 }}
+                
+                /* Hover State */
                 div[role="radiogroup"][aria-label="Load Strategy"] > label:hover {{
-                    border-color: {COLORS['brand']}60;
-                    background: #FEF2F2; /* Very light brand tint */
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                    border-color: #d1d5db;
+                    background: #fafafa;
                 }}
-                /* Active State - Elegant */
+                
+                /* Selected State */
                 div[role="radiogroup"][aria-label="Load Strategy"] > label:has(input:checked) {{
                     border-color: {COLORS['brand']};
-                    background: #FFFFFF; /* Keep white for cleanliness */
-                    box-shadow: 0 0 0 1px {COLORS['brand']}, 0 4px 12px -2px {COLORS['brand']}25; /* Glow effect */
-                }}
-                /* Hide default radio circle ONLY for Load Strategy */
-                div[role="radiogroup"][aria-label="Load Strategy"] input[type="radio"] {{
-                    accent-color: {COLORS['brand']};
-                    display: none;
+                    background: #ffffff;
                 }}
                 
-                /* Custom Indicator for Active State */
-                 div[role="radiogroup"][aria-label="Load Strategy"] > label:has(input:checked)::before {{
-                    content: '✓';
+                /* Hide ALL native radio elements - VERY AGGRESSIVE */
+                div[role="radiogroup"][aria-label="Load Strategy"] input[type="radio"],
+                div[role="radiogroup"][aria-label="Load Strategy"] input,
+                div[role="radiogroup"][aria-label="Load Strategy"] label > div:first-child,
+                div[role="radiogroup"][aria-label="Load Strategy"] label > span:first-child {{
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    position: absolute !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                    pointer-events: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }}
+                
+                /* Hide Streamlit custom radio circle */
+                div[role="radiogroup"][aria-label="Load Strategy"] label svg,
+                div[role="radiogroup"][aria-label="Load Strategy"] label > div:has(svg) {{
+                    display: none !important;
+                }}
+                
+                /* Hide any circles rendered by Streamlit for radio */
+                div[role="radiogroup"][aria-label="Load Strategy"] label [class*="Radio"],
+                div[role="radiogroup"][aria-label="Load Strategy"] label [class*="radio"] {{
+                    display: none !important;
+                }}
+                
+                /* Radio Indicator - Top Right Position */
+                div[role="radiogroup"][aria-label="Load Strategy"] > label::before {{
+                    content: '';
                     position: absolute;
-                    top: 16px;
-                    right: 16px;
+                    right: 20px;
+                    top: 20px;
                     width: 20px;
                     height: 20px;
-                    background: {COLORS['brand']};
-                    color: white;
+                    border: 2px solid #d1d5db;
                     border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 12px;
-                    font-weight: 800;
-                    box-shadow: 0 2px 4px {COLORS['brand']}40;
+                    background: #ffffff;
+                    transition: all 0.2s ease;
                 }}
                 
-                /* Typography in Radio */
-                div[role="radiogroup"][aria-label="Load Strategy"] p {{
-                    font-size: 13px;
-                    line-height: 1.5;
-                    color: #64748B; /* Check caption color */
-                    margin: 0;
+                /* Radio Indicator - Selected (inner dot) */
+                div[role="radiogroup"][aria-label="Load Strategy"] > label:has(input:checked)::before {{
+                    border-color: {COLORS['brand']};
+                    border-width: 6px;
+                    background: #ffffff;
                 }}
-                /* Title Styling */
+                
+                /* Card Title */
                 div[role="radiogroup"][aria-label="Load Strategy"] p strong {{
-                    font-size: 16px;
-                    color: #1E293B;
-                    font-weight: 700;
+                    font-size: 14px;
+                    color: #1f2937;
+                    font-weight: 600;
                     display: block;
-                    margin-bottom: 4px;
+                    margin-bottom: 6px;
                 }}
+                
+                /* Selected Card Title */
                 div[role="radiogroup"][aria-label="Load Strategy"] > label:has(input:checked) p strong {{
                     color: {COLORS['brand']};
+                }}
+                
+                /* Card Description */
+                div[role="radiogroup"][aria-label="Load Strategy"] p {{
+                    font-size: 12px;
+                    line-height: 1.5;
+                    color: #6b7280;
+                    margin: 0;
+                    padding-right: 40px;
                 }}
             </style>
             """, unsafe_allow_html=True)
@@ -557,11 +620,11 @@ def render():
             # Radio button that acts as the single selector mechanism
             load_choice = st.radio(
                 "Load Strategy",
-                options=["Full Load", "Incremental"],
-                format_func=lambda x: f"**{x}**" if x == "Full Load" else f"**{x}**",
+                options=["Full Load", "Incremental Load"],
+                format_func=lambda x: f"**{x}**",
                 captions=[
-                    "Replaces all existing data with fresh source data. Best for full synchronization.",
-                    "Appends only new and modified records. Optimized for performance at scale."
+                    "Replaces all existing data with fresh source data. Best for full synchronization",
+                    "Appends only new and modified records. Optimized for performance at scale"
                 ],
                 key="ingestion_load_type_radio",
                 horizontal=True,

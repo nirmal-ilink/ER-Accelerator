@@ -875,6 +875,332 @@ st.markdown(f"""
         background-color: #f8fafc !important;
     }}
 
+    /* ---------------------------------------------------------
+       GLOBAL SELECTBOX / DROPDOWN STYLING - CLEAN WHITE THEME
+       --------------------------------------------------------- */
+    
+    /* DROPDOWN TRIGGER - CLEAN WHITE */
+    .stSelectbox [data-baseweb="select"] > div:first-child,
+    div[data-baseweb="select"] > div:first-child {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        color: #1f2937 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+        transition: all 0.2s ease !important;
+    }}
+    
+    .stSelectbox [data-baseweb="select"] > div:first-child:hover,
+    div[data-baseweb="select"] > div:first-child:hover {{
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06) !important;
+    }}
+    
+    .stSelectbox [data-baseweb="select"] > div:first-child:focus-within,
+    div[data-baseweb="select"] > div:first-child:focus-within {{
+        border-color: #d11f41 !important;
+        box-shadow: 0 0 0 1px rgba(209, 31, 65, 0.2) !important;
+    }}
+    
+    /* DROPDOWN TEXT */
+    .stSelectbox span, div[data-baseweb="select"] span {{
+        color: #1f2937 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+    }}
+    
+    /* DROPDOWN ARROW */
+    .stSelectbox svg, div[data-baseweb="select"] svg {{
+        fill: #64748b !important;
+    }}
+    
+    /* DROPDOWN MENU CONTAINER - CLEAN WHITE */
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] > div {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.08) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }}
+    
+    /* DROPDOWN LIST */
+    ul[data-testid="stSelectboxVirtualDropdown"],
+    [data-baseweb="menu"],
+    ul[role="listbox"] {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        padding: 6px !important;
+        border: none !important;
+        border-radius: 12px !important;
+    }}
+    
+    /* DROPDOWN ITEMS */
+    li[role="option"],
+    li.st-emotion-cache-xcuh4j,
+    li.st-emotion-cache-5djvkm,
+    .eg1z3xh0 {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #374151 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        margin: 2px 6px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
+    }}
+    
+    /* HOVER STATE */
+    li[role="option"]:hover,
+    li.st-emotion-cache-xcuh4j:hover,
+    li.st-emotion-cache-5djvkm:hover {{
+        background: #fef2f2 !important;
+        background-color: #fef2f2 !important;
+        color: #111827 !important;
+    }}
+    
+    /* SELECTED STATE - Brand Red */
+    li[role="option"][aria-selected="true"],
+    li.st-emotion-cache-5djvkm {{
+        background: #fef2f2 !important;
+        background-color: #fef2f2 !important;
+        color: #d11f41 !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* TEXT INSIDE DROPDOWN ITEMS */
+    .st-emotion-cache-qiev7j,
+    .st-emotion-cache-11loom0,
+    li[role="option"] div {{
+        color: inherit !important;
+        font-weight: inherit !important;
+    }}
+    
+    /* REMOVE ANY DARK BORDERS/OUTLINES */
+    li[role="option"]::before,
+    li[role="option"]::after,
+    .stSelectbox *::before,
+    .stSelectbox *::after {{
+        display: none !important;
+    }}
+    
+    /* SCROLLBAR - CLEAN */
+    ul[data-testid="stSelectboxVirtualDropdown"],
+    [data-baseweb="menu"],
+    ul[role="listbox"] {{
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: #e5e7eb transparent !important;
+    }}
+    
+    ul[data-testid="stSelectboxVirtualDropdown"]::-webkit-scrollbar {{
+        width: 4px !important;
+        height: 0px !important;
+    }}
+    ul[data-testid="stSelectboxVirtualDropdown"]::-webkit-scrollbar-thumb {{
+        background: #d1d5db !important;
+        border-radius: 4px !important;
+    }}
+    ul[data-testid="stSelectboxVirtualDropdown"]::-webkit-scrollbar-track {{
+        background: transparent !important;
+    }}
+    
+    /* Hide horizontal scrollbar everywhere in dropdown */
+    [data-baseweb="popover"] *,
+    .stSelectbox * {{
+        overflow-x: hidden !important;
+    }}
+    
+    /* SELECTBOX LABEL STYLING */
+    .stSelectbox label,
+    div[data-testid="stSelectbox"] label {{
+        color: #475569 !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        margin-bottom: 6px !important;
+    }}
+    
+    .stSelectbox label p,
+    div[data-testid="stSelectbox"] label p {{
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }}
+
+    /* ---------------------------------------------------------
+       GLOBAL EXPANDER STYLING - CLEAN WHITE THEME
+       --------------------------------------------------------- */
+    
+    /* Expander Container */
+    [data-testid="stExpander"],
+    details[data-testid="stExpander"] {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        margin-bottom: 12px !important;
+    }}
+    
+    /* Expander Header/Summary */
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] [data-testid="stExpanderHeader"],
+    details[data-testid="stExpander"] summary {{
+        background: #f8fafc !important;
+        background-color: #f8fafc !important;
+        color: #1e293b !important;
+        padding: 14px 18px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        border: none !important;
+        list-style: none !important;
+    }}
+    
+    /* Expander Header Text */
+    [data-testid="stExpander"] summary p,
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpanderHeader"] p,
+    [data-testid="stExpanderHeader"] span {{
+        color: #1e293b !important;
+        background: transparent !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* Expander Header Hover */
+    [data-testid="stExpander"] summary:hover,
+    details[data-testid="stExpander"] summary:hover {{
+        background: #f1f5f9 !important;
+        background-color: #f1f5f9 !important;
+    }}
+    
+    /* Expander Content Area */
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"],
+    details[data-testid="stExpander"] > div {{
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        padding: 16px !important;
+        border-top: 1px solid #e2e8f0 !important;
+    }}
+    
+    /* Expander Icon/Arrow */
+    [data-testid="stExpander"] svg,
+    [data-testid="stExpanderHeader"] svg {{
+        fill: #64748b !important;
+        color: #64748b !important;
+    }}
+
+    /* ---------------------------------------------------------
+       GLOBAL CHECKBOX STYLING - VISIBLE LABELS
+       --------------------------------------------------------- */
+    
+    /* Checkbox Container */
+    [data-testid="stCheckbox"],
+    .stCheckbox {{
+        background: transparent !important;
+    }}
+    
+    /* Checkbox Label - Force Visibility */
+    [data-testid="stCheckbox"] label,
+    .stCheckbox label {{
+        color: #374151 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        cursor: pointer !important;
+    }}
+    
+    [data-testid="stCheckbox"] label p,
+    [data-testid="stCheckbox"] label span,
+    .stCheckbox label p,
+    .stCheckbox label span {{
+        color: #374151 !important;
+        font-weight: 500 !important;
+    }}
+    
+    /* Checkbox Box Styling */
+    [data-testid="stCheckbox"] input[type="checkbox"],
+    .stCheckbox input[type="checkbox"] {{
+        accent-color: #d11f41 !important;
+        width: 18px !important;
+        height: 18px !important;
+    }}
+    
+    /* Checkbox Hover */
+    [data-testid="stCheckbox"] label:hover p,
+    .stCheckbox label:hover p {{
+        color: #1e293b !important;
+    }}
+    
+    /* Checked Checkbox Label */
+    [data-testid="stCheckbox"]:has(input:checked) label p,
+    .stCheckbox:has(input:checked) label p {{
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }}
+
+    /* ---------------------------------------------------------
+       GLOBAL RADIO BUTTON STYLING - VISIBLE LABELS
+       --------------------------------------------------------- */
+    
+    /* Radio Group Container */
+    div[role="radiogroup"] {{
+        background: transparent !important;
+    }}
+    
+    /* Radio Label - Force Visibility */
+    div[role="radiogroup"] label,
+    div[role="radiogroup"] > label {{
+        color: #374151 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        cursor: pointer !important;
+        padding: 8px 0 !important;
+    }}
+    
+    div[role="radiogroup"] label p,
+    div[role="radiogroup"] label span {{
+        color: #374151 !important;
+        font-weight: 500 !important;
+    }}
+    
+    /* Radio Button Circle */
+    div[role="radiogroup"] input[type="radio"] {{
+        accent-color: #d11f41 !important;
+        width: 18px !important;
+        height: 18px !important;
+    }}
+    
+    /* Radio Hover */
+    div[role="radiogroup"] label:hover p {{
+        color: #1e293b !important;
+    }}
+    
+    /* Selected Radio Label */
+    div[role="radiogroup"] label:has(input:checked) p {{
+        color: #d11f41 !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* Radio Section Label (the group title) */
+    .stRadio label {{
+        color: #475569 !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }}
+
 </style>
 
 
