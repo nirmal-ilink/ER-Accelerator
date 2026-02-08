@@ -105,6 +105,14 @@ class Bootstrapper:
         db_creds = self._get_databricks_credentials()
         if db_creds:
             try:
+                # Windows Compatibility Fix for Databricks Connect
+                # 'UnixStreamServer' is not available on Windows, but some internals might reference it.
+                import socketserver
+                import sys
+                if sys.platform == 'win32' and not hasattr(socketserver, 'UnixStreamServer'):
+                    # Mock it with TCPServer as a fallback to prevent AttributeErrors
+                    socketserver.UnixStreamServer = socketserver.TCPServer
+
                 from databricks.connect import DatabricksSession
                 
                 print(f"INFO: Initializing Databricks Connect session '{app_name}'...")

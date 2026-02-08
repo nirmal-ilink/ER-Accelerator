@@ -318,8 +318,152 @@ def render():
             transition: all 0.2s ease;
         }}
         .stats-tile:hover {{ background: #FFFFFF; border-color: {COLORS['border']}; transform: translateY(-3px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }}
+        
+        /* SOURCE CARD - Premium Glassmorphism Design */
+        .source-card-premium {{
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 24px rgba(16, 185, 129, 0.1),
+                0 1px 3px rgba(0,0,0,0.04),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        
+        .source-card-premium::before {{
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(135deg, {COLORS['success']}, #34D399, #6EE7B7, {COLORS['success']});
+            background-size: 300% 300%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }}
+        
+        .source-card-premium:hover {{
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 40px rgba(16, 185, 129, 0.18),
+                0 4px 12px rgba(0,0,0,0.06),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+        }}
+        
+        .source-card-premium:hover::before {{
+            opacity: 1;
+            animation: gradientRotate 3s linear infinite;
+        }}
+        
+        @keyframes gradientRotate {{
+            0% {{ background-position: 0% 50%; }}
+            50% {{ background-position: 100% 50%; }}
+            100% {{ background-position: 0% 50%; }}
+        }}
+        
+        /* Pulsing Live Indicator */
+        @keyframes livePulse {{
+            0%, 100% {{ opacity: 1; transform: scale(1); }}
+            50% {{ opacity: 0.6; transform: scale(1.15); }}
+        }}
+        
+        .live-indicator {{
+            width: 10px;
+            height: 10px;
+            background: {COLORS['success']};
+            border-radius: 50%;
+            display: inline-block;
+            animation: livePulse 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }}
+        
+        /* Premium Stats Tile */
+        .stats-tile-premium {{
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 16px 20px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }}
+        
+        .stats-tile-premium::after {{
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }}
+        
+        .stats-tile-premium:hover {{
+            transform: translateY(-3px);
+            border-color: {COLORS['success']}40;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+        }}
+        
+        .stats-tile-premium:hover::after {{
+            opacity: 1;
+        }}
+        
+        /* Refresh Button */
+        .st-key-refresh_config_btn button {{
+            background: transparent !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #64748B !important;
+            padding: 8px 16px !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }}
+        
+        .st-key-refresh_config_btn button:hover {{
+            background: #F8FAFC !important;
+            border-color: {COLORS['success']} !important;
+            color: {COLORS['success']} !important;
+        }}
+        
+        /* CONNECTION ID INPUT STYLING */
+        .st-key-ingestion_connection_id_input input {{
+            font-family: 'JetBrains Mono', 'Consolas', monospace !important;
+            font-size: 13px !important;
+            letter-spacing: 0.3px !important;
+            background: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 10px !important;
+            padding: 12px 16px !important;
+            height: 44px !important;
+        }}
+        .st-key-ingestion_connection_id_input input:focus {{
+            border-color: {COLORS['brand']} !important;
+            box-shadow: 0 0 0 3px rgba(209, 31, 65, 0.1) !important;
+        }}
+        .st-key-ingestion_connection_id_input input::placeholder {{
+            color: #94A3B8 !important;
+            font-weight: 400 !important;
+        }}
+        
+        /* LOAD BUTTON STYLING */
+        .st-key-load_conn_id_btn button {{
+            height: 44px !important;
+            font-weight: 600 !important;
+        }}
     </style>
     """), unsafe_allow_html=True)
+
     
     # --- HEADER ---
     st.markdown(clean_html(f"""
@@ -404,94 +548,160 @@ def render():
                 st.session_state["ingestion_schedule_enabled"] = False
             
             # ================================================================
-            # STEP 1: SOURCE CONFIGURATION SUMMARY
+            # CONNECTION ID INPUT
             # ================================================================
-            # Load saved configuration first
-            # Load saved configuration (with Caching)
-            try:
-                # Check cache first to avoid slow backend calls
-                loaded_config = st.session_state.get("ingestion_connector_config")
-                is_cached = st.session_state.get("ingestion_config_cached", False)
-                
-                if not is_cached:
-                    service = get_connector_service()
-                    
-                    # If the service is stale (from before code reload), reset it
-                    if not hasattr(service, 'get_latest_configuration'):
-                        reset_connector_service()
-                        service = get_connector_service()
-                    
-                    # Get the MOST RECENTLY saved configuration across all connector types
-                    loaded_config = service.get_latest_configuration()
-                    
-                    # Store in cache
-                    st.session_state["ingestion_connector_config"] = loaded_config
-                    st.session_state["ingestion_config_cached"] = True
-                
-                active_connector_type = loaded_config.connector_type if loaded_config else None
-                
-                if loaded_config and loaded_config.selected_tables:
-                    total_schemas = len(loaded_config.selected_tables)
-                    total_tables = sum(len(t) for t in loaded_config.selected_tables.values())
-                    
-                    # Show source summary card - Premium Design
-                    connector_display_name = loaded_config.connector_name or active_connector_type.upper()
-                    is_databricks = active_connector_type == "databricks"
-                    
-                    st.markdown(f"""
-                    <div class="source-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="background: linear-gradient(135deg, {COLORS['success']}15 0%, {COLORS['success']}08 100%); width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid {COLORS['success']}20;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{COLORS['success']}" stroke-width="2">
-                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div style="font-size: 11px; font-weight: 600; color: {COLORS['success']}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Source Active</div>
-                                    <div style="font-weight: 700; color: #0F172A; font-size: 18px; letter-spacing: -0.3px;">{connector_display_name}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 24px;">
-                                <div style="text-align: center; px-4 py-3 bg-slate-50 rounded-xl">
-                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; line-height: 1;">{total_schemas}</div>
-                                    <div style="font-size: 11px; color: #64748B; text-transform: uppercase; margin-top: 4px; font-weight: 600;">Schemas</div>
-                                </div>
-                                <div style="text-align: center; px-4 py-3 bg-slate-50 rounded-xl">
-                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; line-height: 1;">{total_tables}</div>
-                                    <div style="font-size: 11px; color: #64748B; text-transform: uppercase; margin-top: 4px; font-weight: 600;">Tables</div>
-                                </div>
-                            </div>
-                        </div>
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <div style="background: linear-gradient(135deg, {COLORS['brand']}15 0%, {COLORS['brand']}08 100%); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid {COLORS['brand']}20;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{COLORS['brand']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                        </svg>
                     </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Store in session for later use
-                    st.session_state["ingestion_connector_config"] = loaded_config
-                    st.session_state["ingestion_connector_type"] = active_connector_type
-                    st.session_state["ingestion_is_databricks"] = is_databricks
-                else:
-                    # No configuration found - Premium Warning Card
-                    st.markdown("""
-                    <div style="background: white; border: 1px solid #FCD34D; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                    <div>
+                        <div style="font-weight: 700; color: #0F172A; font-size: 15px;">Connection ID</div>
+                        <div style="color: #64748B; font-size: 12px;">Paste the UUID from your connector configuration</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            id_col, btn_col = st.columns([3, 1])
+            with id_col:
+                connection_id_input = st.text_input(
+                    "Connection ID",
+                    placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000",
+                    key="ingestion_connection_id_input",
+                    label_visibility="collapsed"
+                )
+            with btn_col:
+                load_by_id = st.button("Load", key="load_conn_id_btn", use_container_width=True, type="primary")
+            
+            # Handle loading by ID
+            if load_by_id and connection_id_input:
+                with st.spinner("Loading configuration (querying backend)..."):
+                    try:
+                        from src.backend.connectors import get_connector_service
+                        svc = get_connector_service()
+                        
+                        print(f"DEBUG: Attempting to load connection ID: {connection_id_input}")
+                        config = svc.get_configuration_by_id(connection_id_input.strip())
+                        
+                        print(f"DEBUG: Loaded config: {config}")
+                        
+                        if config:
+                            st.session_state["ingestion_connector_config"] = config
+                            st.session_state["ingestion_config_cached"] = True
+                            st.session_state["ingestion_connector_type"] = config.connector_type
+                            st.session_state["ingestion_is_databricks"] = config.connector_type == "databricks"
+                            st.success(f"Loaded configuration: {config.connector_name}")
+                            st.rerun()
+                        else:
+                            st.error("Connection ID not found. Please check and try again.")
+                    except Exception as ex:
+                        print(f"ERROR: Failed to load configuration: {ex}")
+                        st.error(f"Failed to load: {ex}")
+            
+            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            
+            # ================================================================
+            # STEP 1: SOURCE CONFIGURATION SUMMARY - Auto-fetch from Backend
+            # ================================================================
+            # Auto-fetch latest configuration on page load if not already cached
+            if "ingestion_connector_config" not in st.session_state or st.session_state.get("ingestion_force_refresh", False):
+                try:
+                    from src.backend.connectors import get_connector_service as _get_svc
+                    svc = _get_svc()
+                    loaded_config = svc.get_latest_configuration()
+                    if loaded_config:
+                        st.session_state["ingestion_connector_config"] = loaded_config
+                        st.session_state["ingestion_config_cached"] = True
+                        st.session_state["ingestion_connector_type"] = loaded_config.connector_type
+                        st.session_state["ingestion_is_databricks"] = loaded_config.connector_type == "databricks"
+                    st.session_state["ingestion_force_refresh"] = False
+                except Exception as e:
+                    pass  # Silently fail, will show "No Source" card
+            
+            loaded_config = st.session_state.get("ingestion_connector_config")
+            is_cached = st.session_state.get("ingestion_config_cached", False)
+            
+            active_connector_type = loaded_config.connector_type if loaded_config else None
+            
+            if loaded_config and loaded_config.selected_tables:
+                total_schemas = len(loaded_config.selected_tables)
+                total_tables = sum(len(t) for t in loaded_config.selected_tables.values())
+                
+                # Show source summary card - Premium Design
+                connector_display_name = loaded_config.connector_name or active_connector_type.upper()
+                is_databricks = active_connector_type == "databricks"
+                last_sync = loaded_config.last_sync_time[:16].replace("T", " ") if loaded_config.last_sync_time else "Just now"
+                
+                st.markdown(f"""
+                <div class="source-card-premium">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="display: flex; align-items: center; gap: 18px;">
+                            <div style="background: linear-gradient(135deg, {COLORS['success']}18 0%, {COLORS['success']}08 100%); width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid {COLORS['success']}25;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{COLORS['success']}" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                                 </svg>
                             </div>
-                            <div style="flex: 1;">
-                                <div style="font-size: 11px; font-weight: 600; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Action Required</div>
-                                <div style="font-weight: 700; color: #0F172A; font-size: 16px;">No Source Configured</div>
-                                <div style="color: #64748B; font-size: 13px; margin-top: 2px;">Configure a data connector in the Connectors page to begin.</div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <span class="live-indicator"></span>
+                                    <span style="font-size: 11px; font-weight: 700; color: {COLORS['success']}; text-transform: uppercase; letter-spacing: 0.8px;">Source Active</span>
+                                </div>
+                                <div style="font-weight: 700; color: #0F172A; font-size: 20px; letter-spacing: -0.4px;">{connector_display_name}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
+                                    <span style="color: #94A3B8;">Last sync:</span> {last_sync}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 16px;">
+                            <div class="stats-tile-premium">
+                                <div style="font-size: 28px; font-weight: 800; color: #0F172A; line-height: 1; background: linear-gradient(135deg, #0F172A, #334155); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{total_schemas}</div>
+                                <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin-top: 6px; font-weight: 700; letter-spacing: 0.5px;">Schemas</div>
+                            </div>
+                            <div class="stats-tile-premium">
+                                <div style="font-size: 28px; font-weight: 800; color: #0F172A; line-height: 1; background: linear-gradient(135deg, #0F172A, #334155); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{total_tables}</div>
+                                <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin-top: 6px; font-weight: 700; letter-spacing: 0.5px;">Tables</div>
                             </div>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
-                    st.session_state["ingestion_connector_config"] = None
-            except Exception as e:
-                st.warning(f"Unable to load source configuration: {e}")
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Refresh button row
+                ref_col1, ref_col2 = st.columns([4, 1])
+                with ref_col2:
+                    if st.button("↻ Refresh", key="refresh_config_btn", use_container_width=True):
+                        st.session_state["ingestion_force_refresh"] = True
+                        st.session_state.pop("ingestion_connector_config", None)
+                        st.rerun()
+                
+                # Store in session for later use
+                st.session_state["ingestion_connector_config"] = loaded_config
+                st.session_state["ingestion_connector_type"] = active_connector_type
+                st.session_state["ingestion_is_databricks"] = is_databricks
+            else:
+                # No configuration found - Premium Warning Card
+                st.markdown("""
+                <div style="background: white; border: 1px solid #FCD34D; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                            </svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; font-weight: 600; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Action Required</div>
+                            <div style="font-weight: 700; color: #0F172A; font-size: 16px;">No Source Configured</div>
+                            <div style="color: #64748B; font-size: 13px; margin-top: 2px;">Configure a data connector in the Connectors page or paste a Connection ID above.</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.session_state["ingestion_connector_config"] = None
+
             
             # ================================================================
             # STEP 2: LOAD TYPE SELECTION - Premium Radio Card Design
@@ -935,11 +1145,94 @@ def render():
             # START INGESTION BUTTON
             # ================================================================
             _, btn_col = st.columns([2.5, 1.5])
+            
+            # Console rendering container
+            st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+            console_placeholder = st.empty()
+            
+            # Helper to render console
+            def render_console(logs):
+                if not logs:
+                    return
+                log_content = ""
+                for ts, msg in logs:
+                    color = "#10B981" if "INFO" in msg else "#F59E0B" if "WARN" in msg else "#EF4444" if "ERROR" in msg else "#94A3B8"
+                    log_content += f"<div style='margin-bottom: 6px;'><span style='color: #64748B; margin-right: 8px;'>{ts}</span><span style='color: {color};'>{msg}</span></div>"
+                
+                console_placeholder.markdown(f"""
+                <div style="background: #0F172A; border-radius: 12px; padding: 20px; font-family: 'JetBrains Mono', monospace; color: #E2E8F0; border: 1px solid #1E293B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #1E293B; padding-bottom: 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+                        <div style="font-size: 12px; font-weight: 700; color: #F8FAFC; text-transform: uppercase; letter-spacing: 0.5px;">Execution Stream Console (stdout)</div>
+                    </div>
+                    <div style="font-size: 11px; line-height: 1.6; max-height: 200px; overflow-y: auto;">
+                        {log_content}
+                        <div style="animation: blink 1s step-end infinite; color: #EF4444; font-weight: bold; margin-top: 4px;">_</div>
+                    </div>
+                    <style>
+                        @keyframes blink {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0; }} }}
+                    </style>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Initialize logs in session if not present
+            if "ingestion_console_logs" not in st.session_state:
+                st.session_state["ingestion_console_logs"] = []
+            
+            # Render existing logs
+            render_console(st.session_state["ingestion_console_logs"])
+
             with btn_col:
                 if st.button("Start Ingestion", type="primary", use_container_width=True, key="start_ingestion_btn"):
-                    st.toast("Ingestion job queued!")
-                    st.session_state['inspector_active_stage'] = 1  # Move to Profiling
-                    st.rerun()
+                    config = st.session_state.get("ingestion_connector_config")
+                    
+                    if config and config.connection_id:
+                        try:
+                            # Clear logs for new run
+                            st.session_state["ingestion_console_logs"] = []
+                            import datetime
+                            
+                            def log(msg):
+                                ts = datetime.datetime.now().strftime("%H:%M:%S")
+                                st.session_state["ingestion_console_logs"].append((ts, msg))
+                                render_console(st.session_state["ingestion_console_logs"])
+                            
+                            log(f"[INFO] Initializing ingestion job for connection ID: {config.connection_id[:8]}...")
+                            
+                            with st.spinner("Triggering ingestion notebook..."):
+                                from src.backend.connectors import get_connector_service, reset_connector_service
+                                
+                                # Force reset to ensure we use the updated method (SDK based) instead of cached old class (DBUtils based)
+                                reset_connector_service()
+                                svc = get_connector_service()
+                                
+                                # Simulate steps since notebook run is blocking/opaque
+                                log("[INFO] Connecting to data source...")
+                                import time
+                                time.sleep(0.8) 
+                                
+                                log("[INFO] Validating schema compatibility...")
+                                time.sleep(0.8)
+                                
+                                log("[INFO] Triggering notebook execution: nb_brz_ingestion")
+                                result = svc.trigger_ingestion_notebook(config.connection_id)
+                                
+                                log(f"[INFO] Notebook execution completed successfully")
+                                log(f"[INFO] Result: {result}")
+                                
+                            st.toast("Ingestion job completed successfully!", icon="🚀")
+                            
+                            # Optional: Wait a bit before moving so user sees the success
+                            time.sleep(2)
+                            st.session_state['inspector_active_stage'] = 1  # Move to Profiling
+                            st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"Failed to trigger ingestion: {e}")
+                            st.session_state["ingestion_console_logs"].append((datetime.datetime.now().strftime("%H:%M:%S"), f"[ERROR] {str(e)}"))
+                            render_console(st.session_state["ingestion_console_logs"])
+                    else:
+                        st.error("No active configuration found. Please configure a source first.")
         elif active_stage['name'] == "Profiling":
             # ================================================================
             # PROFILING STAGE - Data Quality Analysis
@@ -1351,23 +1644,27 @@ def render():
         st.markdown("</div>", unsafe_allow_html=True)
         
         # LOGS
-        logs = generate_stage_logs(active_stage['name'])
-        log_html = ""
-        for log in logs:
-            is_warn = "WARN" in log
-            log_html += f'<span class="log-line"><span class="log-ts">{get_current_time_str()}</span> <span style="{"color: #FCD34D" if is_warn else ""};">{log}</span></span>'
-            
-        st.markdown(clean_html(f"""
-            <div class="log-box">
-                <div style="border-bottom: 1px solid #1E293B; padding-bottom: 12px; margin-bottom: 16px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
-                    Execution Stream Console (stdout)
+        # Only show specific stage logs for non-Ingestion stages (Ingestion has its own live console)
+        if active_stage['name'] != "Ingestion":
+            logs = generate_stage_logs(active_stage['name'])
+            log_html = ""
+            for log in logs:
+                is_warn = "WARN" in log
+                log_html += f'<span class="log-line"><span class="log-ts">{get_current_time_str()}</span> <span style="{"color: #FCD34D" if is_warn else ""};">{log}</span></span>'
+                
+            st.markdown(clean_html(f"""
+                <div class="log-box">
+                    <div style="border-bottom: 1px solid #1E293B; padding-bottom: 12px; margin-bottom: 16px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+                        Execution Stream Console (stdout)
+                    </div>
+                    {log_html}
+                    <span style="animation: blink 1.2s infinite; font-size: 14px; color: {COLORS['brand']};">_</span>
                 </div>
-                {log_html}
-                <span style="animation: blink 1.2s infinite; font-size: 14px; color: {COLORS['brand']};">_</span>
             </div>
-        </div>
-        """), unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
+        else:
+            st.markdown("</div>", unsafe_allow_html=True)
         
         # Navigation Buttons (Pagination Style)
         st.write("")

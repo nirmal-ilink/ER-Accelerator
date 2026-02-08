@@ -24,10 +24,17 @@ Usage:
 
 import json
 import os
+import datetime # Added for cache timestamp
 import uuid  # Added for unique IDs
 import streamlit as st
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
+
+# Constants
+CACHE_FILE_NAME = "connector_cache.json"
+
+# Module-level singleton instance
+_service_instance = None
 
 # Import Audit Logger
 from src.backend.audit.logger import AuditLogger
@@ -40,6 +47,7 @@ from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, S
 @dataclass
 class ConnectorConfig:
     """Stored connector configuration."""
+    connection_id: str  # Unique ID
     connector_type: str
     connector_name: str
     config: Dict[str, Any]
@@ -83,6 +91,33 @@ class ConnectorService:
         self._secret_manager = None
         self.audit_logger = AuditLogger()
         self._register_adapters()
+        
+    def _get_cache_path(self):
+        """Returns key for local cache file."""
+        # Use a specific directory for cache, or current directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(current_dir, CACHE_FILE_NAME)
+
+    def _save_to_cache(self, config_data: Dict[str, Any]):
+        """Saves configuration to local JSON cache."""
+        try:
+            cache_path = self._get_cache_path()
+            with open(cache_path, 'w') as f:
+                json.dump(config_data, f, indent=2)
+            print(f"INFO: Saved configuration to local cache: {cache_path}")
+        except Exception as e:
+            print(f"WARNING: Failed to write to local cache: {e}")
+
+    def _read_from_cache(self) -> Optional[Dict[str, Any]]:
+        """Reads configuration from local JSON cache."""
+        try:
+            cache_path = self._get_cache_path()
+            if os.path.exists(cache_path):
+                with open(cache_path, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"WARNING: Failed to read from local cache: {e}")
+        return None
     
     def _register_adapters(self):
         """Register all available connector adapters."""
@@ -289,7 +324,7 @@ class ConnectorService:
         schedule_enabled: bool = False,
         schedule_cron: Optional[str] = None,
         schedule_timezone: str = "UTC"
-    ) -> bool:
+    ) -> str:
         """
         Save connector configuration to ingestion_metadata table.
         """
@@ -337,7 +372,6 @@ class ConnectorService:
         try:
             self.spark.sql(insert_sql).collect()
             
-            # Log to Audit Trail
             self.audit_logger.log_event(
                 user=st.session_state.get("username", "System"),
                 action=f"Saved Configuration",
@@ -345,7 +379,25 @@ class ConnectorService:
                 status="Success",
                 details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
             )
-            return True
+            
+            # Update Local Cache
+            cache_data = {
+                "connection_id": connection_id,
+                "source_type": source_type,
+                "source_name": connector_name,
+                "configuration": configuration_json,
+                "selected_tables": selected_tables_json,
+                "load_type": load_type,
+                "watermark_column": watermark_column,
+                "schedule_enabled": schedule_enabled,
+                "schedule_cron": schedule_cron,
+                "schedule_timezone": schedule_timezone,
+                "status": status,
+                "updated_at": datetime.datetime.now().isoformat()
+            }
+            self._save_to_cache(cache_data)
+            
+            return connection_id
 
         except Exception as e:
             error_msg = str(e)
@@ -370,14 +422,14 @@ class ConnectorService:
                         status="Success",
                         details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id}) after session recovery"
                     )
-                    return True
+                    return connection_id
                 except Exception as retry_e:
                     # Check if retry failed due to missing table (corner case)
                     retry_msg = str(retry_e)
                     if "TABLE_OR_VIEW_NOT_FOUND" in retry_msg or "does not exist" in retry_msg.lower():
                         self._create_metadata_table(target_catalog, target_schema, target_table)
                         self.spark.sql(insert_sql).collect()
-                        return True
+                        return connection_id
                     else:
                         raise retry_e
 
@@ -395,7 +447,7 @@ class ConnectorService:
                     status="Success",
                     details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
                 )
-                return True
+                return connection_id
             
             else:
                 # Log failure
@@ -490,6 +542,7 @@ class ConnectorService:
                 selected_tables = {}
             
             return ConnectorConfig(
+                connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
                 config=config_dict,
@@ -524,6 +577,38 @@ class ConnectorService:
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
         target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
         
+        # 1. Try Local Cache First (Fast Path)
+        cached_data = self._read_from_cache()
+        if cached_data:
+            try:
+                # Parse JSON fields if they are strings in the cache (depends on how we saved them)
+                # In _save_to_cache we constructed a dict where configuration is ALREADY a JSON string
+                config_dict = json.loads(cached_data['configuration']) if isinstance(cached_data['configuration'], str) else cached_data['configuration']
+                
+                selected_tables = {}
+                if 'selected_tables' in cached_data:
+                     st_val = cached_data['selected_tables']
+                     selected_tables = json.loads(st_val) if isinstance(st_val, str) else st_val
+
+                print("INFO: Loaded connector configuration from local cache.")
+                return ConnectorConfig(
+                    connection_id=cached_data.get('connection_id'),
+                    connector_type=cached_data['source_type'],
+                    connector_name=cached_data['source_name'],
+                    config=config_dict,
+                    selected_tables=selected_tables,
+                    status=cached_data.get('status', 'active'),
+                    load_type=cached_data.get('load_type', 'full'),
+                    watermark_column=cached_data.get('watermark_column'),
+                    last_sync_time=cached_data.get('updated_at'),
+                    schedule_enabled=cached_data.get('schedule_enabled', False),
+                    schedule_cron=cached_data.get('schedule_cron'),
+                    schedule_timezone=cached_data.get('schedule_timezone', 'UTC')
+                )
+            except Exception as e:
+                print(f"WARNING: Cache corrupted or invalid format, falling back to Spark: {e}")
+                # Fall through to Spark
+
         try:
             # Query across ALL connector types, ordered by most recent
             df = self.spark.sql(f"""
@@ -550,6 +635,7 @@ class ConnectorService:
                 selected_tables = {}
             
             return ConnectorConfig(
+                connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
                 config=config_dict,
@@ -570,9 +656,182 @@ class ConnectorService:
             print(f"Error loading latest configuration: {e}")
             return None
 
+    def get_configuration_by_id(self, connection_id: str) -> Optional[ConnectorConfig]:
+        """
+        Retrieves a connector configuration by its unique connection_id.
+        
+        This is useful for the Pipeline Inspector when a user pastes
+        a specific connection ID to load that particular configuration.
+        
+        Args:
+            connection_id: The UUID of the connection to retrieve
+            
+        Returns:
+            ConnectorConfig if found, None otherwise.
+        """
+        if not connection_id or not connection_id.strip():
+            print("DEBUG: get_configuration_by_id - Empty connection_id provided")
+            return None
+            
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        
+        # Sanitize the connection_id to prevent SQL injection
+        safe_id = connection_id.strip().replace("'", "''")
+        
+        print(f"DEBUG: Looking for connection_id='{safe_id}' in {target_table}")
+        
+        try:
+            # First, let's see what connection IDs exist in the table
+            all_ids_df = self.spark.sql(f"""
+                SELECT connection_id, source_name, updated_at
+                FROM {target_table}
+                ORDER BY updated_at DESC
+                LIMIT 10
+            """)
+            all_ids = all_ids_df.collect()
+            print(f"DEBUG: Available connection IDs in database:")
+            for row in all_ids:
+                print(f"  - {row['connection_id']} ({row['source_name']})")
+            
+            df = self.spark.sql(f"""
+                SELECT 
+                    connection_id, source_type, source_name, configuration, selected_tables,
+                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
+                    status, updated_at
+                FROM {target_table}
+                WHERE connection_id = '{safe_id}'
+                LIMIT 1
+            """)
+            
+            rows = df.collect()
+            if not rows:
+                print(f"DEBUG: No rows found for connection_id='{safe_id}'")
+                return None
+            
+            row = rows[0]
+            
+            # Parse JSON fields
+            config_dict = json.loads(row['configuration'])
+            try:
+                selected_tables = json.loads(row['selected_tables'])
+            except:
+                selected_tables = {}
+            
+            return ConnectorConfig(
+                connection_id=row['connection_id'],
+                connector_type=row['source_type'],
+                connector_name=row['source_name'],
+                config=config_dict,
+                selected_tables=selected_tables,
+                status=row['status'] or 'inactive',
+                load_type=row['load_type'],
+                watermark_column=row['watermark_column'],
+                last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
+                schedule_enabled=row['schedule_enabled'],
+                schedule_cron=row['schedule_cron'],
+                schedule_timezone=row['schedule_timezone']
+            )
+            
+        except Exception as e:
+            error_msg = str(e)
+            import traceback
+            traceback.print_exc()
+            print(f"ERROR: get_configuration_by_id failed: {error_msg}")
+            
+            if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+                return None
+            return None
 
-# Factory function for easy access
-_service_instance: Optional[ConnectorService] = None
+
+    
+    def trigger_ingestion_notebook(self, connection_id: str) -> str:
+        """
+        Triggers the ingestion notebook for a specific connection.
+        
+        Args:
+            connection_id: The UUID of the connection configuration to process.
+            
+        Returns:
+            Output/Exit value of the notebook execution.
+            
+        Raises:
+            Exception: If notebook execution fails or DBUtils is unavailable.
+        """
+        print(f"INFO: Triggering ingestion notebook for ID: {connection_id}")
+        
+        # Determine the correct notebook path
+        # Using the standard /Shared location as requested
+        notebook_path = "/Shared/ER_aligned/nb_brz_ingestion"
+        
+        try:
+            # Use Databricks SDK to trigger the notebook as a job
+            # dbutils.notebook.run is not supported in non-notebook contexts (like Apps/Jobs)
+            from databricks.sdk import WorkspaceClient
+            from databricks.sdk.service.jobs import Task, NotebookTask, Source
+
+            w = WorkspaceClient()
+            
+            print(f"INFO: Submitting one-time run for: {notebook_path}")
+            
+            # Submit a one-time run
+            # This returns a future-like object or waits depending on SDK version usage
+            # We use 'submit' which waits for completion by default in some contexts, 
+            # or we can use .result() on the returned operation.
+            
+            run = w.jobs.submit(
+                run_name=f"Ingestion_Trigger_{connection_id[:8]}",
+                tasks=[
+                    Task(
+                        task_key="ingestion_task",
+                        notebook_task=NotebookTask(
+                            notebook_path=notebook_path,
+                            base_parameters={"connection_id": connection_id}
+                        )
+                    )
+                ]
+            ).result() # Wait for completion
+            
+            print(f"INFO: Job execution completed. State: {run.state.life_cycle_state}")
+            
+            if run.state.result_state and run.state.result_state.name == "SUCCESS":
+                 # Log the event for success
+                self.audit_logger.log_event(
+                    user=st.session_state.get("username", "System"),
+                    action="Triggered Ingestion",
+                    module="Connectors",
+                    status="Success",
+                    details=f"Triggered {notebook_path} for ID {connection_id}. Run ID: {run.run_id}"
+                )
+                return f"Success (Run ID: {run.run_id})"
+            else:
+                 raise Exception(f"Job failed with state: {run.state.result_state}")
+
+        except ImportError:
+            # Fallback if SDK is not installed (unlikely in DBX)
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action="Triggered Ingestion",
+                module="Connectors",
+                status="Failed",
+                details=f"Failed to trigger {notebook_path}: databricks-sdk not installed."
+            )
+            raise Exception("databricks-sdk is missing. Cannot trigger ingestion job.")
+            
+        except Exception as e:
+            error_msg = str(e)
+            print(f"ERROR: Failed to trigger notebook: {error_msg}")
+            
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action="Triggered Ingestion",
+                module="Connectors",
+                status="Failed",
+                details=f"Failed to trigger {notebook_path}: {error_msg}"
+            )
+            raise e
+
 
 def get_connector_service(spark=None) -> ConnectorService:
     """

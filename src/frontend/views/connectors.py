@@ -473,6 +473,87 @@ def render():
             font-size: 12px;
             font-weight: 600;
         }
+        
+        /* =================================================================
+           CONNECTION ID CODE BLOCK - LIGHT THEME
+           ================================================================= */
+        
+        /* Override Streamlit's dark code block with light theme */
+        [data-testid="stMain"] [data-testid="stCode"] {
+            background: #f8fafc !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] > div {
+            background: #f8fafc !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] pre {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 12px 16px !important;
+        }
+        
+        /* Disable the hover highlight overlay that hides text */
+        [data-testid="stMain"] [data-testid="stCode"] pre::before,
+        [data-testid="stMain"] [data-testid="stCode"] pre::after,
+        [data-testid="stMain"] [data-testid="stCode"] > div::before,
+        [data-testid="stMain"] [data-testid="stCode"] > div::after {
+            display: none !important;
+            content: none !important;
+        }
+        
+        /* Keep background stable on all hover states */
+        [data-testid="stMain"] [data-testid="stCode"]:hover,
+        [data-testid="stMain"] [data-testid="stCode"] > div:hover,
+        [data-testid="stMain"] [data-testid="stCode"] pre:hover {
+            background: #f8fafc !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] code {
+            color: #1e293b !important;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace !important;
+            font-size: 13px !important;
+            background: transparent !important;
+        }
+        
+        /* Force text to stay visible in all hover states */
+        [data-testid="stMain"] [data-testid="stCode"]:hover code,
+        [data-testid="stMain"] [data-testid="stCode"] code:hover,
+        [data-testid="stMain"] [data-testid="stCode"] pre:hover code,
+        [data-testid="stMain"] [data-testid="stCode"] > div:hover code {
+            color: #1e293b !important;
+            background: transparent !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Polished copy button styling - Red accent */
+        [data-testid="stMain"] [data-testid="stCode"] button {
+            background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%) !important;
+            border: 1px solid #fca5a5 !important;
+            border-radius: 6px !important;
+            padding: 6px 10px !important;
+            box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1) !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] button:hover {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+            border-color: #f87171 !important;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] button svg {
+            stroke: #dc2626 !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+        
+        [data-testid="stMain"] [data-testid="stCode"] button:hover svg {
+            stroke: #b91c1c !important;
+        }
 
     </style>
     """, unsafe_allow_html=True)
@@ -1128,7 +1209,8 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             
             status.update(label="Saving to Delta table...")
             # Save with defaults - load configuration is set in Pipeline Inspector
-            service.save_configuration(
+            # Returns the connection_id (UUID string)
+            connection_id = service.save_configuration(
                 connector_type=conn_key,
                 connector_name=connector_data["name"],
                 config=config,
@@ -1142,8 +1224,102 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
                 f"Saved configuration for {connector_data['name']} "
                 f"with {total_selected} tables selected"
             )
-            st.info("Configure load type and scheduling in Pipeline Inspector > Ingestion")
+            
+            # Display Connection ID with custom HTML component (fully working copy button)
+            import streamlit.components.v1 as components
+            
+            copy_html = f'''
+            <div style="
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 12px 0 8px 0;
+            ">
+                <div style="
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #6b7280;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 6px;
+                ">Connection ID</div>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 10px 14px;
+                ">
+                    <code id="conn-id" style="
+                        font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+                        font-size: 13px;
+                        color: #1e293b;
+                        background: transparent;
+                        letter-spacing: 0.3px;
+                        flex: 1;
+                    ">{connection_id}</code>
+                    <button id="copy-btn" onclick="
+                        navigator.clipboard.writeText('{connection_id}');
+                        var btn = document.getElementById('copy-btn');
+                        var icon = document.getElementById('copy-icon');
+                        var text = document.getElementById('copy-text');
+                        icon.innerHTML = '<polyline points=&quot;20 6 9 17 4 12&quot;></polyline>';
+                        icon.style.stroke = '#059669';
+                        text.textContent = 'Copied!';
+                        btn.style.background = '#ecfdf5';
+                        btn.style.borderColor = '#6ee7b7';
+                        btn.style.color = '#059669';
+                        setTimeout(function() {{
+                            icon.innerHTML = '<rect x=&quot;9&quot; y=&quot;9&quot; width=&quot;13&quot; height=&quot;13&quot; rx=&quot;2&quot; ry=&quot;2&quot;></rect><path d=&quot;M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1&quot;></path>';
+                            icon.style.stroke = '#dc2626';
+                            text.textContent = 'Copy';
+                            btn.style.background = '#fef2f2';
+                            btn.style.borderColor = '#fecaca';
+                            btn.style.color = '#dc2626';
+                        }}, 1500);
+                    " style="
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        min-width: 80px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 6px;
+                        padding: 7px 14px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        color: #dc2626;
+                        cursor: pointer;
+                        transition: all 0.15s ease;
+                        white-space: nowrap;
+                    " onmouseover="
+                        if (document.getElementById('copy-text').textContent !== 'Copied!') {{
+                            this.style.background = '#fee2e2';
+                            this.style.borderColor = '#fca5a5';
+                        }}
+                    " onmouseout="
+                        if (document.getElementById('copy-text').textContent !== 'Copied!') {{
+                            this.style.background = '#fef2f2';
+                            this.style.borderColor = '#fecaca';
+                        }}
+                    ">
+                        <svg id="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span id="copy-text">Copy</span>
+                    </button>
+                </div>
+            </div>
+            '''
+            components.html(copy_html, height=75)
+            
+            st.caption("💡 Use this Connection ID for reference. Configure load type in Pipeline Inspector → Ingestion")
             st.toast("Configuration saved!")
+            
+            # Store connection_id in session for potential reference
+            st.session_state["last_saved_connection_id"] = connection_id
             
             # Invalidate Inspector Cache
             if "ingestion_config_cached" in st.session_state:

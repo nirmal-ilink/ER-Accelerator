@@ -125,3 +125,75 @@ Timestamp,User,Action,Module,Status,Details
 2026-02-04 13:49:08,admin,User Login,Auth,Success,Session started for admin
 2026-02-04 14:09:56,admin,User Login,Auth,Success,Session started for admin
 2026-02-04 14:10:53,admin,User Login,Auth,Success,Session started for admin
+2026-02-04 15:51:49,admin,User Login,Auth,Success,Session started for admin
+2026-02-04 15:54:35,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:02:19,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:02:54,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:04:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:08:05,System,Saved Configuration,Connectors,Success,Saved sqlserver configuration 'New Saved Config' (ID: 6f02cee5-64c7-4e59-a88b-33fef9eb5d3a)
+2026-02-05 09:08:42,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:09:13,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 09:11:51,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 17:27:05,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 17:35:38,admin,User Login,Auth,Success,Session started for admin
+2026-02-05 17:38:20,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 09:14:17,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 09:18:00,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 09:19:11,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 11:11:34,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: bc68ef4d-b27b-4d20-a8ae-96d328ab02cd) after session recovery
+2026-02-06 11:14:05,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 35b75236-f1cc-40e4-a2ba-94b9046d07ed)
+2026-02-06 11:33:49,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 6f392e4a-de02-418a-bf75-04d98d340604)
+2026-02-06 11:35:03,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: f8d32bb8-577f-4649-923e-47d371b212cc)
+2026-02-06 11:37:15,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 55320a99-b8b9-45aa-ab0f-33878d879086)
+2026-02-06 11:39:16,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 5af68e21-b5b1-4050-bb88-33ec7ea9118a)
+2026-02-06 11:39:29,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: d9aa1a3b-2e70-4f6d-8334-dc9da8656121)
+2026-02-06 11:41:11,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: e4e5228b-7d15-408a-80e7-938279ca8ddc)
+2026-02-06 11:43:32,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: e0bc88a6-d2d0-4799-9f94-439ba7403409)
+2026-02-06 11:45:13,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: a2e4b537-e7f6-4c56-9f76-46e8d908dafc)
+2026-02-06 11:59:25,System,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 5622e22c-981e-438b-91ba-a947a4ce1aa7)
+2026-02-06 12:15:17,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 12:32:54,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 12:33:38,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 12:37:15,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 12:37:45,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 13:40:31,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 13:40:55,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 13:46:10,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 14:30:06,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 14:30:32,System,Triggered Ingestion,Connectors,Failed,Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: 'DBUtils' object has no attribute 'notebook'
+2026-02-06 14:39:15,System,Triggered Ingestion,Connectors,Failed,Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: 'DBUtils' object has no attribute 'notebook'
+2026-02-06 14:41:13,System,Triggered Ingestion,Connectors,Failed,Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: 'DBUtils' object has no attribute 'notebook'
+2026-02-06 14:47:01,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 14:54:58,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 14:57:20,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 14:57:54,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 15:06:58,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-06 15:08:26,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-06 15:09:01,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 15:10:26,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 15:13:34,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 15:13:45,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 15:14:36,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 15:57:08,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 15:59:49,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:00:02,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:01:41,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:03:43,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:05:26,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:10:14,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:11:08,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:12:34,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:18:45,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:21:57,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:26:10,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-06 16:35:06,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:37:18,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:42:42,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 16:43:54,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-06 16:54:10,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-06 16:54:56,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-06 16:59:00,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 17:04:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 17:09:05,admin,User Login,Auth,Success,Session started for admin
+2026-02-06 17:11:36,admin,User Login,Auth,Success,Session started for admin
+2026-02-08 22:59:59,admin,User Login,Auth,Success,Session started for admin
