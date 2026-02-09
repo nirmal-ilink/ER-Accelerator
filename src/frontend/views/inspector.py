@@ -94,6 +94,7 @@ def get_ingestion_stage_desc():
             connector_names = {
                 "sqlserver": "SQL Server",
                 "databricks": "Databricks",
+                "fabric": "Microsoft Fabric",
                 "snowflake": "Snowflake"
             }
             name = config.connector_name or connector_names.get(config.connector_type, config.connector_type.upper())

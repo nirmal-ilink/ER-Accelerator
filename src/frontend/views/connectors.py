@@ -66,6 +66,15 @@ def render():
             "supports_schema_browser": True,
             "supports_catalog_selection": True,  # Shows catalog dropdown after connection
         },
+        "fabric": {
+            "name": "Microsoft Fabric",
+            "logo": "fabric_logo.png",
+            "status": "Inactive",
+            "desc": "OneLake - Unified Analytics Platform",
+            "fields": ["SQL Endpoint", "Database"],
+            "supports_schema_browser": True,
+            "supports_catalog_selection": False,
+        },
         "oracle": {
             "name": "Oracle DB",
             "logo": "oracle_logo.png",

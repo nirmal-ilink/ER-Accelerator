@@ -8,3 +8,5 @@ databricks-connect
 databricks-sdk
 databricks-sql-connector
 pyarrow
+pyodbc>=4.0.35
+azure-identity>=1.15.0

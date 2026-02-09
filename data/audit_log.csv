@@ -197,3 +197,17 @@ Timestamp,User,Action,Module,Status,Details
 2026-02-06 17:09:05,admin,User Login,Auth,Success,Session started for admin
 2026-02-06 17:11:36,admin,User Login,Auth,Success,Session started for admin
 2026-02-08 22:59:59,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 09:12:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 09:21:35,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-09 09:30:28,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 09:30:52,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: One of job_cluster_key, new_cluster, or existing_cluster_id must be specified. Serverless compute for workflows is not enabled in the workspace."
+2026-02-09 09:31:21,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 09:33:37,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-09 09:59:03,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-02-09 10:03:45,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID sqlserver. Run ID: 265493880422367
+2026-02-09 12:05:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 14:59:26,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 15:20:13,System,Saved Configuration,Connectors,Failed,"Failed to save fabric configuration: ('28000', '[28000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Could not login because the authentication failed. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Could not login because the authentication failed. (18456)')"
+2026-02-09 15:40:08,System,Saved Configuration,Connectors,Failed,"Failed to save fabric configuration: ('42000', '[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Data Manipulation Language (DML) statements are not supported for this table type in this version of SQL Server. (24559) (SQLExecDirectW)')"
+2026-02-09 15:43:45,admin,User Login,Auth,Success,Session started for admin
+2026-02-09 16:07:59,admin,User Login,Auth,Success,Session started for admin

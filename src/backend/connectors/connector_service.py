@@ -40,8 +40,15 @@ _service_instance = None
 from src.backend.audit.logger import AuditLogger
 
 # Import adapters
-from .adapters import SQLServerAdapter, DatabricksAdapter
+from .adapters import SQLServerAdapter, DatabricksAdapter, FabricAdapter
 from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, SchemaMetadata
+from src.backend.utils.git_utils import get_current_branch
+
+FABRIC_ENDPOINT = "ohk6lkhiim6ezfv6gravnt3iq4-qjn3af3jrkje7ellmgoj635c7q.datawarehouse.fabric.microsoft.com"
+FABRIC_DATABASE = "lh_mdm"
+FABRIC_TABLE = "ingestion_metadata"
+
+
 
 
 @dataclass
@@ -129,6 +136,10 @@ class ConnectorService:
         databricks_adapter = DatabricksAdapter()
         self._adapters[databricks_adapter.connector_type] = databricks_adapter
         
+        # Microsoft Fabric / OneLake
+        fabric_adapter = FabricAdapter()
+        self._adapters[fabric_adapter.connector_type] = fabric_adapter
+        
         # Future: Add more adapters here
         # self._adapters['snowflake'] = SnowflakeAdapter()
         # self._adapters['oracle'] = OracleAdapter()
@@ -141,6 +152,13 @@ class ConnectorService:
             from src.backend.bootstrapper import get_bootstrapper
             self._spark = get_bootstrapper().spark
         return self._spark
+    
+    def _is_fabric_mode(self) -> bool:
+        """Check if we are running in Fabric mode based on git branch."""
+        branch = get_current_branch()
+        is_fabric = branch and branch.lower() == "fabric"
+        # print(f"DEBUG: ConnectorService Mode: {'Fabric' if is_fabric else 'Databricks'} (Branch: {branch})")
+        return is_fabric
     
     @property
     def secret_manager(self):
@@ -370,6 +388,49 @@ class ConnectorService:
         
         # Execution wrapper with auto-recovery for Session and Schema errors
         try:
+            # --- BRANCH-BASED STORAGE ROUTING ---
+            if self._is_fabric_mode():
+                try:
+                    # Prepare record for Fabric
+                    fabric_record = {
+                        "connection_id": connection_id,
+                        "source_type": source_type,
+                        "source_name": connector_name,
+                        "configuration": json.dumps(configuration),
+                        "selected_tables": json.dumps(selected_tables),
+                        "load_type": load_type,
+                        "watermark_column": watermark_column,
+                        "schedule_enabled": schedule_enabled,
+                        "schedule_cron": schedule_cron,
+                        "schedule_timezone": schedule_timezone,
+                        "status": status
+                    }
+                    self._save_to_fabric(connection_id, fabric_record)
+                    print(f"INFO: Saved to Fabric (Branch: fabric)")
+                    
+                    # Update Local Cache (Same as before)
+                    cache_data = {
+                        "connection_id": connection_id,
+                        "source_type": source_type,
+                        "source_name": connector_name,
+                        "configuration": configuration_json,
+                        "selected_tables": selected_tables_json,
+                        "load_type": load_type,
+                        "watermark_column": watermark_column,
+                        "schedule_enabled": schedule_enabled,
+                        "schedule_cron": schedule_cron,
+                        "schedule_timezone": schedule_timezone,
+                        "status": status,
+                        "updated_at": datetime.datetime.now().isoformat()
+                    }
+                    self._save_to_cache(cache_data)
+                    return connection_id
+                    
+                except Exception as e:
+                    print(f"ERROR: Failed to save to Fabric: {e}")
+                    raise e # Fail strictly if in Fabric mode
+            
+            # --- DATABRICKS STORAGE (Default/Main) ---
             self.spark.sql(insert_sql).collect()
             
             self.audit_logger.log_event(
@@ -396,6 +457,9 @@ class ConnectorService:
                 "updated_at": datetime.datetime.now().isoformat()
             }
             self._save_to_cache(cache_data)
+            
+            # Remove the old Dual Write block if it exists (it was added in previous steps)
+            # We are now strictly branching, not dual writing.
             
             return connection_id
 
@@ -516,6 +580,9 @@ class ConnectorService:
         target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
         
         try:
+            if self._is_fabric_mode():
+                return self._load_latest_from_fabric(connector_type)
+            
             # Query the latest configuration for this source_type
             df = self.spark.sql(f"""
                 SELECT 
@@ -610,6 +677,9 @@ class ConnectorService:
                 # Fall through to Spark
 
         try:
+            if self._is_fabric_mode():
+                return self._load_latest_from_fabric() # No type filter = latest of any type
+
             # Query across ALL connector types, ordered by most recent
             df = self.spark.sql(f"""
                 SELECT 
@@ -685,9 +755,6 @@ class ConnectorService:
         try:
             # First, let's see what connection IDs exist in the table
             all_ids_df = self.spark.sql(f"""
-                SELECT connection_id, source_name, updated_at
-                FROM {target_table}
-                ORDER BY updated_at DESC
                 LIMIT 10
             """)
             all_ids = all_ids_df.collect()
@@ -695,6 +762,9 @@ class ConnectorService:
             for row in all_ids:
                 print(f"  - {row['connection_id']} ({row['source_name']})")
             
+            if self._is_fabric_mode():
+                return self._get_by_id_from_fabric(safe_id)
+
             df = self.spark.sql(f"""
                 SELECT 
                     connection_id, source_type, source_name, configuration, selected_tables,
@@ -780,11 +850,15 @@ class ConnectorService:
             # We use 'submit' which waits for completion by default in some contexts, 
             # or we can use .result() on the returned operation.
             
+            # Use an existing all-purpose cluster for the job
+            cluster_id = "0128-094053-9i8cvs82"
+            
             run = w.jobs.submit(
                 run_name=f"Ingestion_Trigger_{connection_id[:8]}",
                 tasks=[
                     Task(
                         task_key="ingestion_task",
+                        existing_cluster_id=cluster_id,
                         notebook_task=NotebookTask(
                             notebook_path=notebook_path,
                             base_parameters={"connection_id": connection_id}
@@ -831,6 +905,216 @@ class ConnectorService:
                 details=f"Failed to trigger {notebook_path}: {error_msg}"
             )
             raise e
+
+    def trigger_profiling_notebook(self, connection_id: str, connector_type: str = "fabric") -> str:
+        """
+        Triggers the profiling notebook for a specific connection.
+        
+        Args:
+            connection_id: The UUID of the connection configuration.
+            connector_type: Type of connector (determines which notebook/environment to use).
+            
+        Returns:
+            Status message.
+        """
+        print(f"INFO: Triggering profiling notebook for ID: {connection_id} ({connector_type})")
+        
+        if connector_type == "fabric":
+            # For Fabric, we might need to use Fabric APIs or just guide the user
+            # Since we can't easily trigger a Fabric notebook from here without complex setup,
+            # we'll assume this is running within Fabric or just return instructions.
+            # However, if we assume we are in a notebook environment that can run it:
+            try:
+                # If running in Fabric/Databricks notebook
+                from notebookutils import mssparkutils
+                notebook_path = "nb_mdm_profiling_fabric"
+                print(f"INFO: Running notebook {notebook_path}...")
+                
+                # Check if we can run it
+                # run(path, timeout_seconds, arguments)
+                result = mssparkutils.notebook.run(
+                    notebook_path, 
+                    3600, 
+                    {"connection_id": connection_id}
+                )
+                return f"Profiling completed. Result: {result}"
+            except ImportError:
+                return "Profiling triggered (simulated - not in Fabric env)"
+            except Exception as e:
+                print(f"ERROR: Failed to trigger profiling: {e}")
+                raise e
+        else:
+            # Databricks profiling
+            return self.trigger_ingestion_notebook(connection_id) # Re-using ingestion logic for now
+
+            # Databricks profiling
+            return self.trigger_ingestion_notebook(connection_id) # Re-using ingestion logic for now
+
+    def _get_fabric_connection(self):
+        """Helper to get pyodbc connection to Fabric Metadata DB."""
+        import pyodbc
+        from azure.identity import DefaultAzureCredential
+        import struct
+        
+        credential = DefaultAzureCredential()
+        token = credential.get_token("https://database.windows.net/.default")
+        
+        token_bytes = token.token.encode('utf-16-le')
+        token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
+        SQL_COPT_SS_ACCESS_TOKEN = 1256
+        
+        conn_str = (
+            f"Driver={{ODBC Driver 18 for SQL Server}};"
+            f"Server={FABRIC_ENDPOINT},1433;"
+            f"Database={FABRIC_DATABASE};"
+            f"Encrypt=yes;"
+            f"TrustServerCertificate=no;"
+            f"Connection Timeout=30;"
+        )
+        
+        return pyodbc.connect(conn_str, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
+
+    def _save_to_fabric(self, connection_id: str, record: Dict[str, Any]):
+        """Save configuration record to Fabric SQL Endpoint."""
+        print(f"INFO: Saving configuration to Fabric: {FABRIC_ENDPOINT} -> {FABRIC_DATABASE}.{FABRIC_TABLE}")
+        
+        conn = self._get_fabric_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Check if table exists (simplified check)
+            try:
+                cursor.execute(f"SELECT TOP 1 * FROM {FABRIC_TABLE}")
+            except Exception:
+                print("INFO: Table does not exist, creating...")
+                create_sql = f"""
+                CREATE TABLE {FABRIC_TABLE} (
+                    connection_id VARCHAR(50) NOT NULL,
+                    source_type VARCHAR(50),
+                    source_name VARCHAR(100),
+                    configuration VARCHAR(MAX),
+                    selected_tables VARCHAR(MAX),
+                    load_type VARCHAR(50),
+                    watermark_column VARCHAR(100),
+                    schedule_enabled BIT,
+                    schedule_cron VARCHAR(50),
+                    schedule_timezone VARCHAR(50),
+                    status VARCHAR(20),
+                    created_at DATETIME2,
+                    updated_at DATETIME2
+                )
+                """
+                cursor.execute(create_sql)
+                conn.commit()
+        
+            # Upsert logic (Delete + Insert)
+            delete_sql = f"DELETE FROM {FABRIC_TABLE} WHERE connection_id = ?"
+            cursor.execute(delete_sql, connection_id)
+            
+            insert_sql = f"""
+            INSERT INTO {FABRIC_TABLE} (
+                connection_id, source_type, source_name, configuration, selected_tables,
+                load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
+                status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
+            """
+            
+            cursor.execute(insert_sql, (
+                connection_id,
+                record['source_type'],
+                record['source_name'],
+                record['configuration'],
+                record['selected_tables'],
+                record['load_type'],
+                record['watermark_column'],
+                1 if record['schedule_enabled'] else 0,
+                record['schedule_cron'],
+                record['schedule_timezone'],
+                record['status']
+            ))
+            conn.commit()
+            print("INFO: Successfully saved to Fabric.")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def _row_to_config(self, row) -> ConnectorConfig:
+        """Convert a DB row (tuple/dict) to ConnectorConfig."""
+        # Row schema: connection_id, source_type, source_name, configuration, selected_tables,
+        # load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone, status, updated_at
+        try:
+            # Handle potential tuple vs dict (Access by index for pyodbc row)
+            # 0:id, 1:type, 2:name, 3:config, 4:tables, 5:load, 6:watermark, 7:sched_en, 8:cron, 9:tz, 10:status, 12:updated_at
+            
+            config_str = row.configuration
+            tables_str = row.selected_tables
+            
+            config_dict = json.loads(config_str)
+            try:
+                selected_tables = json.loads(tables_str)
+            except:
+                selected_tables = {}
+                
+            return ConnectorConfig(
+                connection_id=row.connection_id,
+                connector_type=row.source_type,
+                connector_name=row.source_name,
+                config=config_dict,
+                selected_tables=selected_tables,
+                status=row.status or 'inactive',
+                load_type=row.load_type,
+                watermark_column=row.watermark_column,
+                last_sync_time=row.updated_at.isoformat() if row.updated_at else None,
+                schedule_enabled=bool(row.schedule_enabled),
+                schedule_cron=row.schedule_cron,
+                schedule_timezone=row.schedule_timezone
+            )
+        except Exception as e:
+            print(f"ERROR: Parsing Fabric row failed: {e}")
+            return None
+
+    def _load_latest_from_fabric(self, connector_type: str = None) -> Optional[ConnectorConfig]:
+        """Load latest config from Fabric."""
+        conn = self._get_fabric_connection()
+        cursor = conn.cursor()
+        try:
+            if connector_type:
+                sql = f"SELECT TOP 1 * FROM {FABRIC_TABLE} WHERE source_type = ? ORDER BY updated_at DESC"
+                cursor.execute(sql, connector_type)
+            else:
+                sql = f"SELECT TOP 1 * FROM {FABRIC_TABLE} ORDER BY updated_at DESC"
+                cursor.execute(sql)
+            
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_config(row)
+            return None
+        except Exception as e:
+             if "Invalid object name" in str(e): return None # Table doesn't exist yet
+             print(f"ERROR: Load from Fabric failed: {e}")
+             return None
+        finally:
+            cursor.close()
+            conn.close()
+
+    def _get_by_id_from_fabric(self, connection_id: str) -> Optional[ConnectorConfig]:
+        """Load specific config from Fabric."""
+        conn = self._get_fabric_connection()
+        cursor = conn.cursor()
+        try:
+            sql = f"SELECT TOP 1 * FROM {FABRIC_TABLE} WHERE connection_id = ?"
+            cursor.execute(sql, connection_id)
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_config(row)
+            return None
+        except Exception as e:
+             print(f"ERROR: Get by ID from Fabric failed: {e}")
+             return None
+        finally:
+            cursor.close()
+            conn.close()
+
 
 
 def get_connector_service(spark=None) -> ConnectorService:
