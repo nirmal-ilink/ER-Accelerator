@@ -26,6 +26,7 @@ import json
 import os
 import datetime # Added for cache timestamp
 import uuid  # Added for unique IDs
+import threading # Added for async save
 import streamlit as st
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
@@ -327,6 +328,11 @@ class ConnectorService:
     ) -> str:
         """
         Save connector configuration to ingestion_metadata table.
+        Optimized for UI responsiveness:
+        1. Stores secrets (Synchronous - fast)
+        2. Saves to local cache (Synchronous - fast)
+        3. Writes to Delta Table (Asynchronous - background thread)
+        Returns connection_id immediately.
         """
         # Store secrets and get config with pointers
         safe_config = self._store_secrets(connector_type, config)
@@ -343,7 +349,69 @@ class ConnectorService:
         configuration_json = json.dumps(configuration).replace("'", "''")
         selected_tables_json = json.dumps(selected_tables).replace("'", "''")
         
+        # Update Local Cache - IMMEDIATE UI FEEDBACK
+        cache_data = {
+            "connection_id": connection_id,
+            "source_type": source_type,
+            "source_name": connector_name,
+            "configuration": configuration_json,
+            "selected_tables": selected_tables_json,
+            "load_type": load_type,
+            "watermark_column": watermark_column,
+            "schedule_enabled": schedule_enabled,
+            "schedule_cron": schedule_cron,
+            "schedule_timezone": schedule_timezone,
+            "status": status,
+            "updated_at": datetime.datetime.now().isoformat()
+        }
+        self._save_to_cache(cache_data)
+        
+        # Launch background thread for heavy Spark write
+        # This prevents the UI from freezing
+        thread = threading.Thread(
+            target=self._persist_to_delta_async,
+            kwargs={
+                "connection_id": connection_id,
+                "connector_type": connector_type,
+                "connector_name": connector_name,
+                "configuration_json": configuration_json,
+                "selected_tables_json": selected_tables_json,
+                "load_type": load_type,
+                "watermark_column": watermark_column,
+                "schedule_enabled": schedule_enabled,
+                "schedule_cron": schedule_cron,
+                "schedule_timezone": schedule_timezone,
+                "status": status,
+                "user": st.session_state.get("username", "System")
+            }
+        )
+        thread.daemon = True # Ensure thread doesn't block app exit
+        thread.start()
+        
+        return connection_id
+
+    def _persist_to_delta_async(
+        self,
+        connection_id: str,
+        connector_type: str,
+        connector_name: str,
+        configuration_json: str,
+        selected_tables_json: str,
+        load_type: str,
+        watermark_column: Optional[str],
+        schedule_enabled: bool,
+        schedule_cron: Optional[str],
+        schedule_timezone: str,
+        status: str,
+        user: str
+    ):
+        """
+        Background worker to write configuration to Delta Checkpoint.
+        """
+        print(f"INFO: [Async Save] Starting background persistence for {connection_id}...")
+        
         # Get target table location
+        # NOTE: st.secrets might handle threading differently, but usually works if read-only
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
         target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
@@ -362,76 +430,57 @@ class ConnectorService:
                 status, created_at, updated_at
             )
             VALUES (
-                '{connection_id}', '{source_type}', {escape_sql(connector_name)}, '{configuration_json}', '{selected_tables_json}',
+                '{connection_id}', '{connector_type}', {escape_sql(connector_name)}, '{configuration_json}', '{selected_tables_json}',
                 {escape_sql(load_type)}, {escape_sql(watermark_column)}, {str(schedule_enabled).lower()}, {escape_sql(schedule_cron)}, {escape_sql(schedule_timezone)},
                 '{status}', current_timestamp(), current_timestamp()
             )
         """
         
-        # Execution wrapper with auto-recovery for Session and Schema errors
         try:
             self.spark.sql(insert_sql).collect()
             
             self.audit_logger.log_event(
-                user=st.session_state.get("username", "System"),
-                action=f"Saved Configuration",
+                user=user,
+                action=f"Saved Configuration (Async)",
                 module="Connectors",
                 status="Success",
                 details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
             )
+            print(f"INFO: [Async Save] Successfully wrote {connection_id} to Delta table.")
             
-            # Update Local Cache
-            cache_data = {
-                "connection_id": connection_id,
-                "source_type": source_type,
-                "source_name": connector_name,
-                "configuration": configuration_json,
-                "selected_tables": selected_tables_json,
-                "load_type": load_type,
-                "watermark_column": watermark_column,
-                "schedule_enabled": schedule_enabled,
-                "schedule_cron": schedule_cron,
-                "schedule_timezone": schedule_timezone,
-                "status": status,
-                "updated_at": datetime.datetime.now().isoformat()
-            }
-            self._save_to_cache(cache_data)
-            
-            return connection_id
-
         except Exception as e:
             error_msg = str(e)
+            print(f"ERROR: [Async Save] Failed to write {connection_id}: {error_msg}")
             
             # CASE 1: Session Death (Databricks Connect timeout)
             if "[NO_ACTIVE_SESSION]" in error_msg:
                 print("WARNING: Spark Session is not active. Attempting to re-initialize...")
                 
                 # Re-initialize Spark Session
-                from src.backend.bootstrapper import get_bootstrapper
-                self._spark = get_bootstrapper().reset_spark()
-                
-                # Retry the operation recursively (once) or inline
                 try:
+                    from src.backend.bootstrapper import get_bootstrapper
+                    self._spark = get_bootstrapper().reset_spark()
+                    
                     self.spark.sql(insert_sql).collect()
                     
                     # Log recovery success
                     self.audit_logger.log_event(
-                        user=st.session_state.get("username", "System"),
-                        action=f"Saved Configuration",
+                        user=user,
+                        action=f"Saved Configuration (Async)",
                         module="Connectors",
                         status="Success",
                         details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id}) after session recovery"
                     )
-                    return connection_id
+                    print(f"INFO: [Async Save] Recovered and wrote {connection_id}.")
                 except Exception as retry_e:
                     # Check if retry failed due to missing table (corner case)
                     retry_msg = str(retry_e)
                     if "TABLE_OR_VIEW_NOT_FOUND" in retry_msg or "does not exist" in retry_msg.lower():
                         self._create_metadata_table(target_catalog, target_schema, target_table)
                         self.spark.sql(insert_sql).collect()
-                        return connection_id
+                        print(f"INFO: [Async Save] Created table and wrote {connection_id}.")
                     else:
-                        raise retry_e
+                        print(f"ERROR: [Async Save] Recovery failed for {connection_id}: {retry_e}")
 
             # CASE 2: Missing Table (First run)
             elif "TABLE_OR_VIEW_NOT_FOUND" in error_msg or "does not exist" in error_msg.lower():
@@ -441,24 +490,23 @@ class ConnectorService:
                 
                 # Log success after retry
                 self.audit_logger.log_event(
-                    user=st.session_state.get("username", "System"),
-                    action=f"Saved Configuration",
+                    user=user,
+                    action=f"Saved Configuration (Async)",
                     module="Connectors",
                     status="Success",
                     details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
                 )
-                return connection_id
+                print(f"INFO: [Async Save] Created table and wrote {connection_id}.")
             
             else:
                 # Log failure
                 self.audit_logger.log_event(
-                    user=st.session_state.get("username", "System"),
-                    action=f"Saved Configuration",
+                    user=user,
+                    action=f"Saved Configuration (Async)",
                     module="Connectors",
                     status="Failed",
                     details=f"Failed to save {connector_type} configuration: {error_msg}"
                 )
-                raise
     
     def _create_metadata_table(
         self, 

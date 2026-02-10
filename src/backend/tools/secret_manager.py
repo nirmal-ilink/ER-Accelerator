@@ -23,9 +23,13 @@ class SecretManager:
         # If we still don't have them, the SDK will check env vars or config
         self.w = WorkspaceClient(host=host, token=token)
         self.scope_name = "mdm-connectors"
+        self._scope_verified = False  # Cache validation
 
     def ensure_scope(self):
         """Ensures the secret scope exists, creates it if not."""
+        if self._scope_verified:
+            return
+
         try:
             # Check if scope exists
             scopes = list(self.w.secrets.list_scopes())
@@ -35,7 +39,10 @@ class SecretManager:
                 print(f"Creating secret scope: {self.scope_name}")
                 self.w.secrets.create_scope(scope=self.scope_name)
             else:
-                print(f"Secret scope already exists: {self.scope_name}")
+                # print(f"Secret scope already exists: {self.scope_name}")
+                pass
+            
+            self._scope_verified = True
                 
         except Exception as e:
             # If we fail to list or create, it might be a permission issue
