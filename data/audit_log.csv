@@ -211,3 +211,5 @@ Timestamp,User,Action,Module,Status,Details
 2026-02-09 15:40:08,System,Saved Configuration,Connectors,Failed,"Failed to save fabric configuration: ('42000', '[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Data Manipulation Language (DML) statements are not supported for this table type in this version of SQL Server. (24559) (SQLExecDirectW)')"
 2026-02-09 15:43:45,admin,User Login,Auth,Success,Session started for admin
 2026-02-09 16:07:59,admin,User Login,Auth,Success,Session started for admin
+2026-02-10 10:59:37,admin,User Login,Auth,Success,Session started for admin
+2026-02-10 11:04:46,System,Saved Configuration,Connectors,Failed,"Failed to save fabric configuration: ('42000', '[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]An integer precision value between 0 and 6 must be specified. (24597) (SQLExecDirectW)')"

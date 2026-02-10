@@ -45,7 +45,7 @@ from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, S
 from src.backend.utils.git_utils import get_current_branch
 
 FABRIC_ENDPOINT = "ohk6lkhiim6ezfv6gravnt3iq4-qjn3af3jrkje7ellmgoj635c7q.datawarehouse.fabric.microsoft.com"
-FABRIC_DATABASE = "lh_mdm"
+FABRIC_DATABASE = "wh_mdm"
 FABRIC_TABLE = "ingestion_metadata"
 
 
@@ -1000,8 +1000,8 @@ class ConnectorService:
                     schedule_cron VARCHAR(50),
                     schedule_timezone VARCHAR(50),
                     status VARCHAR(20),
-                    created_at DATETIME2,
-                    updated_at DATETIME2
+                    created_at DATETIME2(6),
+                    updated_at DATETIME2(6)
                 )
                 """
                 cursor.execute(create_sql)
