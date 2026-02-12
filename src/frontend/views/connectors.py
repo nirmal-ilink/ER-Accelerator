@@ -1,13 +1,13 @@
 """
-Data Connectors Page - Enterprise data source management with schema/table selection.
+Data Connectors Page - Enterprise data source connection management.
 
-This module provides a multi-step workflow for configuring data connectors:
+This module provides a streamlined workflow for configuring data connectors:
 1. Select connector type and enter credentials
-2. Test connection and fetch available schemas/tables
-3. Select specific tables for ingestion
-4. Save configuration to Databricks
+2. Provide a unique connection name
+3. Test connection and save configuration
 
-Supports: SQL Server (with schema browser), plus Snowflake, Oracle, etc. (basic mode)
+Schema/table selection and load configuration are handled in the Pipeline Inspector.
+Supports: SQL Server, Snowflake, Databricks, Oracle, SAP HANA, Delta Lake.
 """
 
 import streamlit as st
@@ -564,7 +564,7 @@ def render():
     st.markdown("### Data Connectors")
     st.markdown(
         "<p style='color:#6b7280; font-size:14px; margin-top:-10px;'>"
-        "Configure and manage your enterprise data sources with schema-level table selection."
+        "Configure and save your enterprise data source connections."
         "</p>",
         unsafe_allow_html=True,
     )
@@ -640,10 +640,13 @@ def render():
             )
 
         with hc2:
-            if is_active:
+            # Blinker updates based on test connection result
+            test_status = st.session_state.get(f"{conn_key}_test_status", "inactive" if not is_active else "active")
+            if test_status == "active":
                 st.markdown(
                     """<div style="background:#dcfce7; color:#166534; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:6px; float:right;">
-                    <span style="width:6px; height:6px; background:#22c55e; border-radius:50%;"></span>Active</div>""",
+                    <span style="width:6px; height:6px; background:#22c55e; border-radius:50%; animation: blink-green 1.5s infinite;"></span>Active</div>
+                    <style>@keyframes blink-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }</style>""",
                     unsafe_allow_html=True,
                 )
             else:
@@ -668,6 +671,14 @@ def render():
             unsafe_allow_html=True,
         )
 
+        # Connection Name input (user-scoped, unique)
+        st.text_input(
+            "CONNECTION NAME",
+            key=f"{conn_key}_connection_name",
+            placeholder="e.g. Production SQL, Dev Warehouse",
+            help="A unique name for this connection. Used to identify it in the Pipeline Inspector.",
+        )
+
         # Input fields (2 columns)
         c1, c2 = st.columns(2)
         for i, f in enumerate(active_data["fields"]):
@@ -682,225 +693,33 @@ def render():
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
         # ==========================================================================
-        # ACTION BUTTONS ROW 1: Test & Fetch
+        # ACTION BUTTONS: Test Connection + Save Connection
         # ==========================================================================
-        if supports_schema_browser:
-            supports_catalog_selection = active_data.get("supports_catalog_selection", False)
-            
-            if supports_catalog_selection:
-                # DATABRICKS FLOW: Test -> Fetch Catalogs -> Select -> Fetch Schemas
-                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
-                
-                with btn_col1:
-                    test_clicked = st.button(
-                        "Test Connection",
-                        key=f"test_{conn_key}",
-                        use_container_width=True,
-                    )
-                
-                with btn_col2:
-                    fetch_catalogs_clicked = st.button(
-                        "Fetch Catalogs",
-                        key=f"fetch_catalogs_{conn_key}",
-                        use_container_width=True,
-                        disabled=not st.session_state.get("connection_tested", False),
-                    )
-                
-                # Handle Test Connection
-                if test_clicked:
-                    _handle_test_connection(conn_key, active_data)
-                
-                # Handle Fetch Catalogs
-                if fetch_catalogs_clicked:
-                    _handle_fetch_catalogs(conn_key, active_data)
-                
-                # ==========================================================================
-                # CATALOG SELECTION (Databricks only)
-                # ==========================================================================
-                if st.session_state.get("databricks_catalogs"):
-                    st.markdown(
-                        "<hr style='border:none; border-top:1px solid #e5e7eb; margin:16px 0;'>",
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(
-                        "<div style='font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;'>"
-                        "Step 2: Select Catalog"
-                        "</div>",
-                        unsafe_allow_html=True,
-                    )
-                    
-                    catalogs = st.session_state["databricks_catalogs"]
-                    current_catalog = st.session_state.get("databricks_selected_catalog", "")
-                    
-                    # Find current index
-                    try:
-                        current_idx = catalogs.index(current_catalog) if current_catalog in catalogs else 0
-                    except ValueError:
-                        current_idx = 0
-                    
-                    cat_col1, cat_col2 = st.columns([3, 1])
-                    
-                    with cat_col1:
-                        selected_catalog = st.selectbox(
-                            "Available Catalogs",
-                            options=catalogs,
-                            index=current_idx,
-                            key="databricks_catalog_select",
-                            label_visibility="collapsed",
-                        )
-                    
-                    with cat_col2:
-                        fetch_schemas_clicked = st.button(
-                            "Fetch Schemas",
-                            key=f"fetch_schemas_{conn_key}",
-                            use_container_width=True,
-                        )
-                    
-                    # Update session state when catalog changes
-                    if selected_catalog != st.session_state.get("databricks_selected_catalog"):
-                        st.session_state["databricks_selected_catalog"] = selected_catalog
-                        # Clear schema metadata when catalog changes
-                        st.session_state["schema_metadata"] = None
-                        st.session_state["selected_tables"] = {}
-                    
-                    # Handle Fetch Schemas
-                    if fetch_schemas_clicked:
-                        _handle_fetch_schemas(conn_key, active_data)
-            
-            else:
-                # STANDARD FLOW (SQL Server, etc.): Test -> Fetch Schemas
-                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
-                
-                with btn_col1:
-                    test_clicked = st.button(
-                        "Test Connection",
-                        key=f"test_{conn_key}",
-                        use_container_width=True,
-                    )
-                
-                with btn_col2:
-                    fetch_clicked = st.button(
-                        "Fetch Schemas",
-                        key=f"fetch_{conn_key}",
-                        use_container_width=True,
-                    )
-                
-                # Handle Test Connection
-                if test_clicked:
-                    _handle_test_connection(conn_key, active_data)
-                
-                # Handle Fetch Schemas
-                if fetch_clicked:
-                    _handle_fetch_schemas(conn_key, active_data)
-            
-            # Show fetch error if any
-            if st.session_state.get("fetch_error"):
-                st.error(st.session_state["fetch_error"])
-            
-            # ==========================================================================
-            # STEP 3: SCHEMA & TABLE BROWSER
-            # ==========================================================================
-            if st.session_state.get("schema_metadata"):
-                st.markdown(
-                    "<hr style='border:none; border-top:1px solid #e5e7eb; margin:20px 0;'>",
-                    unsafe_allow_html=True,
-                )
-                
-                step_num = "3" if supports_catalog_selection else "2"
-                st.markdown(
-                    f"<div style='font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;'>"
-                    f"Step {step_num}: Select Tables for Ingestion"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-                
-                metadata = st.session_state["schema_metadata"]
-                
-                # Summary stats
-                st.markdown(
-                    f"""
-                    <div style="display:flex; gap:16px; margin-bottom:16px;">
-                        <div style="background:#f0f9ff; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#0369a1;">{metadata.total_schemas}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">Schemas</span>
-                        </div>
-                        <div style="background:#f0fdf4; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#15803d;">{metadata.total_tables}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">Tables</span>
-                        </div>
-                        <div style="background:#fef3c7; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#b45309;">{_count_selected_tables()}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">Selected</span>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                
-                # Render schema browser
-                _render_schema_browser(metadata.schemas, conn_key)
-                
-                st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
-                
-                # ==========================================================================
-                # SAVE BUTTON
-                # ==========================================================================
-                st.markdown(
-                    "<hr style='border:none; border-top:1px solid #e5e7eb; margin:16px 0;'>",
-                    unsafe_allow_html=True,
-                )
-                
-                _, save_col = st.columns([3, 1])
-                with save_col:
-                    save_clicked = st.button(
-                        "Save Configuration",
-                        key=f"save_{conn_key}",
-                        type="primary",
-                        use_container_width=True,
-                    )
-                
-                if save_clicked:
-                    _handle_save_configuration(conn_key, active_data)
+        btn_col1, _, btn_col3 = st.columns([1.2, 2, 1.2])
         
-        else:
-            # ==========================================================================
-            # NON-SCHEMA-BROWSER CONNECTORS (Original behavior)
-            # ==========================================================================
-            _, b1, b2, b3 = st.columns([4, 1.5, 1.3, 0.8])
+        with btn_col1:
+            test_clicked = st.button(
+                "Test Connection",
+                key=f"test_{conn_key}",
+                use_container_width=True,
+            )
+        
+        with btn_col3:
+            save_clicked = st.button(
+                "Save Connection",
+                key=f"save_{conn_key}",
+                type="primary",
+                use_container_width=True,
+            )
+        
+        # Handle Test Connection
+        if test_clicked:
+            _handle_test_connection(conn_key, active_data)
+        
+        # Handle Save Connection
+        if save_clicked:
+            _handle_save_configuration(conn_key, active_data)
 
-            with b1:
-                test_clicked = st.button(
-                    "Test Connection",
-                    type="secondary",
-                    use_container_width=True,
-                    key=f"test_{conn_key}",
-                )
-                if test_clicked:
-                    with st.spinner("Testing..."):
-                        time.sleep(1)
-                    st.toast("Connection verified")
-
-            with b2:
-                label = "Disconnect" if is_active else "Connect"
-                toggle_clicked = st.button(
-                    label,
-                    type="secondary",
-                    use_container_width=True,
-                    key=f"toggle_{conn_key}",
-                )
-                if toggle_clicked:
-                    time.sleep(0.5)
-                    st.toast("Done")
-
-            with b3:
-                save_clicked = st.button(
-                    "Save",
-                    type="primary",
-                    use_container_width=True,
-                    key=f"save_{conn_key}",
-                )
-                if save_clicked:
-                    _handle_legacy_save(conn_key, active_data)
 
 
 # ==============================================================================
@@ -923,16 +742,8 @@ def _get_config_from_session(conn_key: str, fields: list) -> dict:
 
 
 def _handle_test_connection(conn_key: str, connector_data: dict):
-    """Handle the Test Connection button click."""
-    # Clear previous schema data - this closes the schema browser
-    st.session_state["schema_metadata"] = None
-    st.session_state["selected_tables"] = {}
+    """Handle the Test Connection button click — updates blinker status + shows toast."""
     st.session_state["fetch_error"] = None
-    
-    # Clear catalog state for Databricks when retesting
-    if conn_key == "databricks":
-        st.session_state["databricks_catalogs"] = None
-        st.session_state["databricks_selected_catalog"] = None
     
     with st.spinner("Testing connection..."):
         try:
@@ -946,20 +757,19 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
                 reset_connector_service()
                 service = get_connector_service()
             
-            # FAST-FAIL: Check if Spark session is alive before initiating a remote job
-            # Only if the adapter requires Spark for testing (e.g., SQL Server JDBC)
+            # FAST-FAIL: Check if Spark session is alive
             adapter = service.get_adapter(conn_key)
             if getattr(adapter, 'requires_spark_for_test', True):
                 from src.backend.bootstrapper import get_bootstrapper
                 bs = get_bootstrapper()
                 if not bs.is_session_alive():
                     st.session_state["connection_tested"] = False
+                    st.session_state[f"{conn_key}_test_status"] = "inactive"
                     st.error("Databricks Cluster is not reachable or Spark Session is inactive.")
-                    st.info("The application is trying to use Databricks Connect to run this test on your cluster, but it's not responding.")
                     if st.button("Re-initialize Spark Session", key="reset_spark_precheck_btn"):
                         with st.spinner("Re-initializing..."):
                             bs.reset_spark()
-                        st.success("Spark Session re-initialized! Please try testing the connection again.")
+                        st.toast("Spark Session re-initialized! Try again.")
                         st.rerun()
                     return
 
@@ -967,30 +777,25 @@ def _handle_test_connection(conn_key: str, connector_data: dict):
             
             if result.success:
                 st.session_state["connection_tested"] = True
-                st.success(f"{result.message}")
-                
-                # Rerun to update button states (enable Fetch Catalogs)
-                time.sleep(1) # Small delay to let user see success message
-                st.rerun()
-                    
-                if result.details:
-                    with st.expander("Connection Details"):
-                        st.json(result.details)
+                st.session_state[f"{conn_key}_test_status"] = "active"
+                st.toast("\u2705 Connection successful!")
+                st.rerun()  # Rerun to update blinker
             else:
                 st.session_state["connection_tested"] = False
+                st.session_state[f"{conn_key}_test_status"] = "inactive"
                 st.error(f"{result.message}")
                 
         except Exception as e:
             st.session_state["connection_tested"] = False
+            st.session_state[f"{conn_key}_test_status"] = "inactive"
             error_msg = str(e)
             if "[NO_ACTIVE_SESSION]" in error_msg:
                 st.error("Databricks Cluster is not reachable or Spark Session is inactive.")
-                st.info("Since you are running locally with Databricks Connect, this might be due to a stale session or the cluster being stopped.")
                 if st.button("Re-initialize Spark Session", key="reset_spark_btn"):
                     from src.backend.bootstrapper import get_bootstrapper
                     with st.spinner("Re-initializing..."):
                         get_bootstrapper().reset_spark()
-                    st.success("Spark Session re-initialized! Please try testing the connection again.")
+                    st.toast("Spark Session re-initialized! Try again.")
                     st.rerun()
             else:
                 st.error(f"Connection test failed: {error_msg}")
@@ -1175,32 +980,31 @@ def _render_schema_browser(schemas: dict, conn_key: str):
 
 
 def _handle_save_configuration(conn_key: str, connector_data: dict):
-    """Handle saving the connector configuration with selected tables."""
-    selected_tables = st.session_state.get("selected_tables", {})
+    """Handle saving the connector configuration (connection details only, no table selection)."""
+    # Validate connection name
+    connection_name = st.session_state.get(f"{conn_key}_connection_name", "").strip()
+    current_user = st.session_state.get("user_name", "System")
     
-    # Filter out empty selections
-    selected_tables = {
-        schema: tables for schema, tables in selected_tables.items() if tables
-    }
-    
-    if not selected_tables:
-        st.warning("Please select at least one table before saving.")
+    if not connection_name:
+        st.warning("Please enter a Connection Name before saving.")
         return
     
-    total_selected = sum(len(t) for t in selected_tables.values())
-    
-    with st.status("Saving configuration...", expanded=True) as status:
+    with st.status("Saving connection...", expanded=True) as status:
         try:
             from src.backend.connectors import get_connector_service
-            import sys
-            import importlib
-            
-            # Hot-fix: Force reload backend service to ensure latest SQL fix is active
-            if 'src.backend.connectors.connector_service' in sys.modules:
-                importlib.reload(sys.modules['src.backend.connectors.connector_service'])
             
             status.update(label="Connecting to Databricks...")
             service = get_connector_service()
+            
+            # Check for duplicate connection name (user-scoped)
+            status.update(label="Checking connection name availability...")
+            if service.check_connection_name_exists(connection_name, current_user):
+                status.update(label="Duplicate name detected", state="error")
+                st.warning(
+                    f"You already have a connection named **'{connection_name}'**. "
+                    "Please choose a different name."
+                )
+                return
             
             status.update(label="Processing configuration...")
             config = _get_config_from_session(conn_key, connector_data["fields"])
@@ -1208,24 +1012,22 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             status.update(label="Storing credentials securely...")
             
             status.update(label="Saving to Delta table...")
-            # Save with defaults - load configuration is set in Pipeline Inspector
-            # Returns the connection_id (UUID string)
             connection_id = service.save_configuration(
                 connector_type=conn_key,
                 connector_name=connector_data["name"],
                 config=config,
-                selected_tables=selected_tables,
+                connection_name=connection_name,
+                created_by=current_user,
                 status="active",
             )
             
-            status.update(label="Configuration saved successfully!", state="complete")
+            status.update(label="Connection saved successfully!", state="complete")
             
             st.success(
-                f"Saved configuration for {connector_data['name']} "
-                f"with {total_selected} tables selected"
+                f"Connection **'{connection_name}'** saved for {connector_data['name']}"
             )
             
-            # Display Connection ID with custom HTML component (fully working copy button)
+            # Display Connection ID with custom HTML component
             import streamlit.components.v1 as components
             
             copy_html = f'''
@@ -1315,8 +1117,8 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             '''
             components.html(copy_html, height=75)
             
-            st.caption("💡 Use this Connection ID for reference. Configure load type in Pipeline Inspector → Ingestion")
-            st.toast("Configuration saved!")
+            st.caption("💡 Select this connection in Pipeline Inspector → Ingestion to browse schemas and configure tables.")
+            st.toast("Connection saved!")
             
             # Store connection_id in session for potential reference
             st.session_state["last_saved_connection_id"] = connection_id

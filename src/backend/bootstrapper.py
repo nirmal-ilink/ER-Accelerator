@@ -156,16 +156,39 @@ class Bootstrapper:
         self._is_databricks_connected = False
         return spark
 
-    def is_session_alive(self) -> bool:
-        """Checks if the Spark session is still active and reachable."""
+    def is_session_alive(self, timeout: int = 5) -> bool:
+        """
+        Checks if the Spark session is still active and reachable.
+        Uses a background thread with timeout to prevent hanging the UI.
+        """
         if not self.spark:
             return False
-        try:
-            # Simple metadata query to verify connection
-            self.spark.sql("SELECT 1").collect()
-            return True
-        except Exception:
+            
+        import threading
+        
+        # Container for result (using list to be mutable in closure)
+        status = {"alive": False}
+        
+        def _check_connection():
+            try:
+                # Simple metadata query to verify connection
+                self.spark.sql("SELECT 1").collect()
+                status["alive"] = True
+            except Exception:
+                status["alive"] = False
+        
+        # Run check in a separate thread to enforce timeout
+        thread = threading.Thread(target=_check_connection)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=timeout)
+        
+        # If thread is still alive, it timed out
+        if thread.is_alive():
+            print(f"WARNING: Spark session check timed out after {timeout}s")
             return False
+            
+        return status["alive"]
 
     def is_connected_to_databricks(self) -> bool:
         """Returns True if connected to Databricks (either Runtime or Connect)."""

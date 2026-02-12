@@ -51,9 +51,11 @@ class ConnectorConfig:
     connection_id: str  # Unique ID
     connector_type: str
     connector_name: str
+    connection_name: str  # User-given name (unique per user)
     config: Dict[str, Any]
-    selected_tables: Dict[str, List[str]]  # schema -> [tables]
+    selected_tables: Dict[str, Any]  # schema -> {table: {load_type, watermark_column}} or legacy list
     status: str  # 'active', 'inactive', 'error'
+    created_by: str = "System"  # Username who created this connection
     # Load configuration
     load_type: str = "full"  # 'full' or 'incremental'
     watermark_column: Optional[str] = None  # e.g., 'updated_at'
@@ -207,7 +209,32 @@ class ConnectorService:
         requires_spark = getattr(adapter, 'requires_spark_for_test', True)
         spark_session = self.spark if requires_spark else None
         
-        return adapter.test_connection(spark_session, resolved_config)
+        # Wrapper for timeout protection
+        import threading
+        result_container = {"result": None, "error": None}
+        
+        def _run_test():
+            try:
+                result_container["result"] = adapter.test_connection(spark_session, resolved_config)
+            except Exception as e:
+                result_container["error"] = e
+        
+        # use a 20s timeout (adapter internal timeout is usually 10s, this is a safety net)
+        thread = threading.Thread(target=_run_test)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=20)
+        
+        if thread.is_alive():
+            return ConnectionTestResult(
+                success=False,
+                message="Connection test timed out. The server is unreachable or the cluster is unresponsive."
+            )
+            
+        if result_container["error"]:
+            raise result_container["error"]
+            
+        return result_container["result"]
 
     def fetch_metadata(self, connector_type: str, config: Dict[str, Any]) -> SchemaMetadata:
         """
@@ -318,7 +345,9 @@ class ConnectorService:
         connector_type: str,
         connector_name: str,
         config: Dict[str, Any],
-        selected_tables: Dict[str, List[str]],
+        connection_name: str = "",
+        created_by: str = "System",
+        selected_tables: Optional[Dict[str, Any]] = None,
         status: str = "active",
         load_type: str = "full",
         watermark_column: Optional[str] = None,
@@ -334,6 +363,9 @@ class ConnectorService:
         3. Writes to Delta Table (Asynchronous - background thread)
         Returns connection_id immediately.
         """
+        if selected_tables is None:
+            selected_tables = {}
+        
         # Store secrets and get config with pointers
         safe_config = self._store_secrets(connector_type, config)
         
@@ -354,6 +386,8 @@ class ConnectorService:
             "connection_id": connection_id,
             "source_type": source_type,
             "source_name": connector_name,
+            "connection_name": connection_name,
+            "created_by": created_by,
             "configuration": configuration_json,
             "selected_tables": selected_tables_json,
             "load_type": load_type,
@@ -374,6 +408,8 @@ class ConnectorService:
                 "connection_id": connection_id,
                 "connector_type": connector_type,
                 "connector_name": connector_name,
+                "connection_name": connection_name,
+                "created_by": created_by,
                 "configuration_json": configuration_json,
                 "selected_tables_json": selected_tables_json,
                 "load_type": load_type,
@@ -382,7 +418,7 @@ class ConnectorService:
                 "schedule_cron": schedule_cron,
                 "schedule_timezone": schedule_timezone,
                 "status": status,
-                "user": st.session_state.get("username", "System")
+                "user": created_by
             }
         )
         thread.daemon = True # Ensure thread doesn't block app exit
@@ -395,6 +431,8 @@ class ConnectorService:
         connection_id: str,
         connector_type: str,
         connector_name: str,
+        connection_name: str,
+        created_by: str,
         configuration_json: str,
         selected_tables_json: str,
         load_type: str,
@@ -425,14 +463,14 @@ class ConnectorService:
         # Insert new record (Immutable Ledger style)
         insert_sql = f"""
             INSERT INTO {target_table} (
-                connection_id, source_type, source_name, configuration, selected_tables,
+                connection_id, source_type, source_name, connection_name, configuration, selected_tables,
                 load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                status, created_at, updated_at
+                created_by, status, created_at, updated_at
             )
             VALUES (
-                '{connection_id}', '{connector_type}', {escape_sql(connector_name)}, '{configuration_json}', '{selected_tables_json}',
+                '{connection_id}', '{connector_type}', {escape_sql(connector_name)}, {escape_sql(connection_name)}, '{configuration_json}', '{selected_tables_json}',
                 {escape_sql(load_type)}, {escape_sql(watermark_column)}, {str(schedule_enabled).lower()}, {escape_sql(schedule_cron)}, {escape_sql(schedule_timezone)},
-                '{status}', current_timestamp(), current_timestamp()
+                {escape_sql(created_by)}, '{status}', current_timestamp(), current_timestamp()
             )
         """
         
@@ -526,6 +564,7 @@ class ConnectorService:
                 connection_id STRING COMMENT 'Unique identifier for the connection',
                 source_type STRING COMMENT 'Type of data source (e.g. sqlserver)',
                 source_name STRING COMMENT 'Display name of the source',
+                connection_name STRING COMMENT 'User-given connection name, unique per user',
                 configuration STRING COMMENT 'Connection parameters in JSON format',
                 selected_tables STRING COMMENT 'Selected schemas and tables in JSON format',
                 load_type STRING COMMENT 'full or incremental',
@@ -533,6 +572,7 @@ class ConnectorService:
                 schedule_enabled BOOLEAN,
                 schedule_cron STRING,
                 schedule_timezone STRING,
+                created_by STRING COMMENT 'Username who created this connection',
                 status STRING COMMENT 'active, inactive',
                 created_at TIMESTAMP,
                 updated_at TIMESTAMP
@@ -545,6 +585,16 @@ class ConnectorService:
             )
         """
         self.spark.sql(create_sql)
+        
+        # Add new columns to existing tables (ALTER TABLE is idempotent for IF NOT EXISTS-like behavior)
+        try:
+            self.spark.sql(f"ALTER TABLE {table} ADD COLUMNS (connection_name STRING COMMENT 'User-given connection name')")
+        except Exception:
+            pass  # Column already exists
+        try:
+            self.spark.sql(f"ALTER TABLE {table} ADD COLUMNS (created_by STRING COMMENT 'Username who created this connection')")
+        except Exception:
+            pass  # Column already exists
     
     def load_configuration(
         self, 
@@ -567,9 +617,9 @@ class ConnectorService:
             # Query the latest configuration for this source_type
             df = self.spark.sql(f"""
                 SELECT 
-                    connection_id, source_type, source_name, configuration, selected_tables,
+                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
                     load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    status, updated_at
+                    created_by, status, updated_at
                 FROM {target_table}
                 WHERE source_type = '{connector_type}'
                 ORDER BY updated_at DESC
@@ -593,9 +643,11 @@ class ConnectorService:
                 connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
+                connection_name=row.get('connection_name') or '',
                 config=config_dict,
                 selected_tables=selected_tables,
                 status=row['status'] or 'inactive',
+                created_by=row.get('created_by') or 'System',
                 load_type=row['load_type'],
                 watermark_column=row['watermark_column'],
                 last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
@@ -629,8 +681,6 @@ class ConnectorService:
         cached_data = self._read_from_cache()
         if cached_data:
             try:
-                # Parse JSON fields if they are strings in the cache (depends on how we saved them)
-                # In _save_to_cache we constructed a dict where configuration is ALREADY a JSON string
                 config_dict = json.loads(cached_data['configuration']) if isinstance(cached_data['configuration'], str) else cached_data['configuration']
                 
                 selected_tables = {}
@@ -643,9 +693,11 @@ class ConnectorService:
                     connection_id=cached_data.get('connection_id'),
                     connector_type=cached_data['source_type'],
                     connector_name=cached_data['source_name'],
+                    connection_name=cached_data.get('connection_name', ''),
                     config=config_dict,
                     selected_tables=selected_tables,
                     status=cached_data.get('status', 'active'),
+                    created_by=cached_data.get('created_by', 'System'),
                     load_type=cached_data.get('load_type', 'full'),
                     watermark_column=cached_data.get('watermark_column'),
                     last_sync_time=cached_data.get('updated_at'),
@@ -661,9 +713,9 @@ class ConnectorService:
             # Query across ALL connector types, ordered by most recent
             df = self.spark.sql(f"""
                 SELECT 
-                    connection_id, source_type, source_name, configuration, selected_tables,
+                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
                     load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    status, updated_at
+                    created_by, status, updated_at
                 FROM {target_table}
                 ORDER BY updated_at DESC
                 LIMIT 1
@@ -686,9 +738,11 @@ class ConnectorService:
                 connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
+                connection_name=row.get('connection_name') or '',
                 config=config_dict,
                 selected_tables=selected_tables,
                 status=row['status'] or 'inactive',
+                created_by=row.get('created_by') or 'System',
                 load_type=row['load_type'],
                 watermark_column=row['watermark_column'],
                 last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
@@ -745,9 +799,9 @@ class ConnectorService:
             
             df = self.spark.sql(f"""
                 SELECT 
-                    connection_id, source_type, source_name, configuration, selected_tables,
+                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
                     load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    status, updated_at
+                    created_by, status, updated_at
                 FROM {target_table}
                 WHERE connection_id = '{safe_id}'
                 LIMIT 1
@@ -771,9 +825,11 @@ class ConnectorService:
                 connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
+                connection_name=row.get('connection_name') or '',
                 config=config_dict,
                 selected_tables=selected_tables,
                 status=row['status'] or 'inactive',
+                created_by=row.get('created_by') or 'System',
                 load_type=row['load_type'],
                 watermark_column=row['watermark_column'],
                 last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
@@ -792,6 +848,219 @@ class ConnectorService:
                 return None
             return None
 
+    def check_connection_name_exists(self, connection_name: str, created_by: str) -> bool:
+        """
+        Check if a connection name already exists for the given user.
+        
+        Args:
+            connection_name: The connection name to check
+            created_by: The username to scope the check
+            
+        Returns:
+            True if the name already exists for this user, False otherwise.
+        """
+        if not connection_name or not created_by:
+            return False
+            
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        
+        safe_name = connection_name.strip().replace("'", "''")
+        safe_user = created_by.strip().replace("'", "''")
+        
+        try:
+            df = self.spark.sql(f"""
+                SELECT COUNT(*) as cnt
+                FROM {target_table}
+                WHERE LOWER(connection_name) = LOWER('{safe_name}')
+                  AND LOWER(created_by) = LOWER('{safe_user}')
+            """)
+            rows = df.collect()
+            return rows[0]['cnt'] > 0 if rows else False
+        except Exception as e:
+            error_msg = str(e)
+            if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+                return False
+            print(f"WARNING: check_connection_name_exists failed: {e}")
+            return False
+
+    def get_user_connections(self, username: str) -> List[ConnectorConfig]:
+        """
+        Fetch all connections created by a specific user.
+        
+        Args:
+            username: The username to filter by
+            
+        Returns:
+            List of ConnectorConfig objects for the user's connections.
+        """
+        if not username:
+            return []
+            
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        
+        safe_user = username.strip().replace("'", "''")
+        
+        try:
+            df = self.spark.sql(f"""
+                SELECT 
+                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
+                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
+                    created_by, status, updated_at
+                FROM {target_table}
+                WHERE LOWER(created_by) = LOWER('{safe_user}')
+                ORDER BY updated_at DESC
+            """)
+            
+            rows = df.collect()
+            connections = []
+            for row in rows:
+                try:
+                    config_dict = json.loads(row['configuration'])
+                except:
+                    config_dict = {}
+                try:
+                    selected_tables = json.loads(row['selected_tables'])
+                except:
+                    selected_tables = {}
+                
+                connections.append(ConnectorConfig(
+                    connection_id=row['connection_id'],
+                    connector_type=row['source_type'],
+                    connector_name=row['source_name'],
+                    connection_name=row.get('connection_name') or '',
+                    config=config_dict,
+                    selected_tables=selected_tables,
+                    status=row['status'] or 'inactive',
+                    created_by=row.get('created_by') or 'System',
+                    load_type=row['load_type'],
+                    watermark_column=row['watermark_column'],
+                    last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
+                    schedule_enabled=row['schedule_enabled'],
+                    schedule_cron=row['schedule_cron'],
+                    schedule_timezone=row['schedule_timezone']
+                ))
+            
+            return connections
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+                return []
+            print(f"Error loading user connections: {e}")
+            return []
+
+    def update_table_configuration(
+        self,
+        connection_id: str,
+        selected_tables: Dict[str, Any]
+    ) -> bool:
+        """
+        Update the selected_tables configuration for an existing connection.
+        Used by the Pipeline Inspector to save per-table load type and watermark config.
+        
+        Args:
+            connection_id: The UUID of the connection to update
+            selected_tables: New table config, e.g. {"schema": {"table": {"load_type": "full"}}}
+            
+        Returns:
+            True if update was successful, False otherwise.
+        """
+        if not connection_id:
+            return False
+            
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        
+        safe_id = connection_id.strip().replace("'", "''")
+        selected_tables_json = json.dumps(selected_tables).replace("'", "''")
+        
+        try:
+            update_sql = f"""
+                UPDATE {target_table}
+                SET selected_tables = '{selected_tables_json}',
+                    updated_at = current_timestamp()
+                WHERE connection_id = '{safe_id}'
+            """
+            self.spark.sql(update_sql).collect()
+            
+            # Also update local cache if it matches
+            cached_data = self._read_from_cache()
+            if cached_data and cached_data.get('connection_id') == connection_id:
+                cached_data['selected_tables'] = selected_tables_json
+                cached_data['updated_at'] = datetime.datetime.now().isoformat()
+                self._save_to_cache(cached_data)
+            
+            print(f"INFO: Updated table configuration for connection {connection_id}")
+            return True
+            
+        except Exception as e:
+            print(f"ERROR: Failed to update table configuration: {e}")
+            return False
+
+    def fetch_schemas_for_connection(self, connection_id: str, catalog: str = None) -> 'SchemaMetadata':
+        """
+        Fetch schema/table metadata for an existing connection by its ID.
+        
+        Resolves secrets automatically so the frontend doesn't need raw config.
+        For Databricks, a catalog must be specified.
+        
+        Args:
+            connection_id: UUID of the saved connection
+            catalog: (Databricks only) catalog name to browse
+            
+        Returns:
+            SchemaMetadata with schema→tables mapping
+        """
+        config = self.get_configuration_by_id(connection_id)
+        if not config:
+            raise ValueError(f"Connection '{connection_id}' not found.")
+        
+        resolved = self._resolve_secrets(config.config)
+        
+        # Inject catalog for Databricks if provided
+        if catalog and config.connector_type == "databricks":
+            resolved["catalog"] = catalog
+        
+        adapter = self.get_adapter(config.connector_type)
+        return adapter.fetch_schemas_and_tables(self.spark, resolved)
+
+    def fetch_all_columns_for_table(
+        self,
+        connection_id: str,
+        schema: str,
+        table: str,
+        catalog: str = None
+    ) -> List[Dict[str, str]]:
+        """
+        Fetch column definitions for a table from an existing connection by its ID.
+        
+        Resolves secrets automatically so the frontend doesn't need raw config.
+        
+        Args:
+            connection_id: UUID of the saved connection
+            schema: Schema name
+            table: Table name
+            catalog: (Databricks only) catalog name
+            
+        Returns:
+            List of dicts with 'name' and 'type' keys
+        """
+        config = self.get_configuration_by_id(connection_id)
+        if not config:
+            raise ValueError(f"Connection '{connection_id}' not found.")
+        
+        resolved = self._resolve_secrets(config.config)
+        
+        if catalog and config.connector_type == "databricks":
+            resolved["catalog"] = catalog
+        
+        adapter = self.get_adapter(config.connector_type)
+        return adapter.fetch_columns(self.spark, resolved, schema, table)
 
     
     def trigger_ingestion_notebook(self, connection_id: str) -> str:
@@ -828,11 +1097,18 @@ class ConnectorService:
             # We use 'submit' which waits for completion by default in some contexts, 
             # or we can use .result() on the returned operation.
             
+            # Get configured cluster ID from .streamlit/secrets.toml or env vars
+            cluster_id = st.secrets.get("DATABRICKS_CLUSTER_ID")
+            if not cluster_id:
+                raise ValueError("DATABRICKS_CLUSTER_ID not configured. Set it in .streamlit/secrets.toml or Databricks secret scope.")
+            print(f"DEBUG: Using existing_cluster_id={cluster_id} for ingestion task")
+            
             run = w.jobs.submit(
                 run_name=f"Ingestion_Trigger_{connection_id[:8]}",
                 tasks=[
                     Task(
                         task_key="ingestion_task",
+                        existing_cluster_id=cluster_id,
                         notebook_task=NotebookTask(
                             notebook_path=notebook_path,
                             base_parameters={"connection_id": connection_id}
@@ -874,6 +1150,105 @@ class ConnectorService:
             self.audit_logger.log_event(
                 user=st.session_state.get("username", "System"),
                 action="Triggered Ingestion",
+                module="Connectors",
+                status="Failed",
+                details=f"Failed to trigger {notebook_path}: {error_msg}"
+            )
+            raise e
+
+
+
+    def trigger_profiling_notebook(self, connection_id: str) -> Dict[str, Any]:
+        """
+        Triggers the profiling notebook for a specific connection and returns the metrics.
+        
+        Args:
+            connection_id: The UUID of the connection configuration to process.
+            
+        Returns:
+            Dictionary containing profiling metrics.
+            
+        Raises:
+            Exception: If notebook execution fails or SDK is unavailable.
+        """
+        print(f"INFO: Triggering profiling notebook for ID: {connection_id}")
+        
+        # Determine the correct notebook path
+        notebook_path = "/Shared/ER_aligned/nb_mdm_profiling"
+        
+        try:
+            # Import SDK inside method to avoid top-level dependency issues
+            from databricks.sdk import WorkspaceClient
+            from databricks.sdk.service.jobs import Task, NotebookTask, Source
+
+            w = WorkspaceClient()
+            
+            print(f"INFO: Submitting one-time run for: {notebook_path}")
+            
+            # Submit a one-time run and wait for the result
+            # Get configured cluster ID from .streamlit/secrets.toml or env vars
+            cluster_id = st.secrets.get("DATABRICKS_CLUSTER_ID")
+            if not cluster_id:
+                raise ValueError("DATABRICKS_CLUSTER_ID not configured. Set it in .streamlit/secrets.toml or Databricks secret scope.")
+            
+            run_output = w.jobs.submit(
+                run_name=f"Profiling_Trigger_{connection_id[:8]}",
+                tasks=[
+                    Task(
+                        task_key="profiling_task",
+                        existing_cluster_id=cluster_id,
+                        notebook_task=NotebookTask(
+                            notebook_path=notebook_path,
+                            base_parameters={"connection_id": connection_id}
+                        )
+                    )
+                ]
+            ).result() 
+            
+            print(f"INFO: Job execution completed. State: {run_output.state.life_cycle_state}")
+            
+            if run_output.state.result_state and run_output.state.result_state.name == "SUCCESS":
+                # Retrieve the notebook output
+                # The run_output object from .result() contains the run_id, but to get the output we need to call get_run_output
+                # However, for single-task runs, the run_id of the task run is what we need for get_run_output?
+                # Actually w.jobs.submit returns a Run object representing the *job run*.
+                # We need the task run ID to get the output.
+                
+                # Fetch the detailed run info to get task run IDs
+                job_run = w.jobs.get_run(run_output.run_id)
+                task_run_id = job_run.tasks[0].run_id
+                
+                output = w.jobs.get_run_output(task_run_id)
+                
+                # Check for notebook output
+                if output.notebook_output and output.notebook_output.result:
+                    result_json = output.notebook_output.result
+                    print(f"INFO: Notebook returned: {result_json}")
+                    
+                     # Log success
+                    self.audit_logger.log_event(
+                        user=st.session_state.get("username", "System"),
+                        action="Triggered Profiling",
+                        module="Connectors",
+                        status="Success",
+                        details=f"Triggered {notebook_path} for ID {connection_id}. Run ID: {run_output.run_id}"
+                    )
+                    
+                    return json.loads(result_json)
+                else:
+                    print("WARN: Notebook completed but returned no output.")
+                    return {"status": "success", "message": "No output returned"}
+                
+            else:
+                 raise Exception(f"Job failed with state: {run_output.state.result_state}")
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"ERROR: Failed to trigger profiling notebook: {error_msg}")
+            
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action="Triggered Profiling",
                 module="Connectors",
                 status="Failed",
                 details=f"Failed to trigger {notebook_path}: {error_msg}"
