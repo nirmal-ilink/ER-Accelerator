@@ -127,8 +127,6 @@ def render():
             existing = service.load_configuration(connector_type)
             if existing:
                 return {
-                    "load_type": existing.load_type,
-                    "watermark_column": existing.watermark_column,
                     "last_sync_time": existing.last_sync_time or "Never",
                     "schedule_enabled": existing.schedule_enabled,
                     "schedule_cron": existing.schedule_cron,
@@ -869,8 +867,6 @@ def _handle_fetch_schemas(conn_key: str, connector_data: dict):
             existing = service.load_configuration(conn_key)
             if existing:
                 st.session_state["existing_connector_config"] = {
-                    "load_type": existing.load_type,
-                    "watermark_column": existing.watermark_column,
                     "last_sync_time": existing.last_sync_time or "Never",
                     "schedule_enabled": existing.schedule_enabled,
                     "schedule_cron": existing.schedule_cron,
@@ -983,7 +979,14 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
     """Handle saving the connector configuration (connection details only, no table selection)."""
     # Validate connection name
     connection_name = st.session_state.get(f"{conn_key}_connection_name", "").strip()
-    current_user = st.session_state.get("user_name", "System")
+    
+    # helper to get current user
+    current_user = st.session_state.get("user_name")
+    if not current_user:
+        current_user = "System"
+        print("WARNING: User context missing during save. Defaulting to 'System'.")
+    else:
+        print(f"INFO: Saving connection as user '{current_user}'")
     
     if not connection_name:
         st.warning("Please enter a Connection Name before saving.")
@@ -1123,11 +1126,9 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             # Store connection_id in session for potential reference
             st.session_state["last_saved_connection_id"] = connection_id
             
-            # Invalidate Inspector Cache
-            if "ingestion_config_cached" in st.session_state:
-                del st.session_state["ingestion_config_cached"]
-            if "ingestion_connector_config" in st.session_state:
-                del st.session_state["ingestion_connector_config"]
+            # Invalidate Inspector Cache so the dropdown refreshes
+            for key in ["ingestion_config_cached", "ingestion_connector_config", "_cached_saved_connections"]:
+                st.session_state.pop(key, None)
             
         except Exception as e:
             status.update(label="Save failed", state="error")

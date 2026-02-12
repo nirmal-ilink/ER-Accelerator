@@ -1,4 +1,5 @@
 import os
+import base64
 import streamlit as st
 from typing import Optional
 from databricks.sdk import WorkspaceClient
@@ -62,6 +63,40 @@ class SecretManager:
     def get_secret_metadata_pointer(self, key: str) -> str:
         """Returns the pointer string to be stored in metadata tables."""
         return f"databricks://secrets/{self.scope_name}/{key}"
+
+    def get_secret(self, key: str) -> Optional[str]:
+        """Retrieves the plaintext value of a secret."""
+        try:
+            # key might be the full pointer or just the key name
+            if key.startswith("databricks://secrets/"):
+                parts = key.replace("databricks://secrets/", "").split("/")
+                if len(parts) >= 2:
+                    scope = parts[0]
+                    secret_key = parts[1]
+                else:
+                     return None
+            else:
+                scope = self.scope_name
+                secret_key = key
+
+            print(f"DEBUG: Fetching secret from Databricks: scope='{scope}', key='{secret_key}'")
+            response = self.w.secrets.get_secret(scope=scope, key=secret_key)
+            if response and response.value:
+                # Databricks SDK returns base64-encoded value — decode it
+                try:
+                    decoded_value = base64.b64decode(response.value).decode('utf-8')
+                    print(f"DEBUG: Successfully decoded secret for key='{secret_key}' (Length: {len(decoded_value)})")
+                    return decoded_value
+                except Exception as decode_err:
+                    # If decoding fails, the value might already be plaintext
+                    print(f"DEBUG: Base64 decode failed ({decode_err}), using raw value for key='{secret_key}'")
+                    return response.value
+            else:
+                print(f"DEBUG: Secret retrieval returned empty value for key='{key}'")
+                return None
+        except Exception as e:
+            print(f"ERROR: Error getting secret '{key}': {e}")
+            return None
 
 def get_secret_manager(host: Optional[str] = None, token: Optional[str] = None) -> SecretManager:
     return SecretManager(host=host, token=token)

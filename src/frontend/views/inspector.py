@@ -3,6 +3,7 @@ import re
 import random
 import datetime
 import textwrap
+import sys
 from src.backend.connectors import get_connector_service, reset_connector_service
 
 # --- UTILS ---
@@ -150,18 +151,167 @@ def render():
         .pulse-dot {{ width: 10px; height: 10px; background: {COLORS['brand']}; border-radius: 50%; animation: pulse-red 2.5s infinite; }}
         @keyframes pulse-red {{ 0% {{ box-shadow: 0 0 0 0 rgba(209, 31, 65, 0.4); }} 70% {{ box-shadow: 0 0 0 10px rgba(209, 31, 65, 0); }} 100% {{ box-shadow: 0 0 0 0 rgba(0,0,0,0); }} }}
 
-        /* --- FORM ELEMENTS (Force Light Theme) --- */
+        /* --- FORM ELEMENTS (Force Light Theme & Alignment) --- */
+        
+        /* === SELECTBOX STYLING === */
+        /* Selectbox outer container */
+        div[data-testid="stSelectbox"] {{
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }}
+        
+        /* Selectbox inner container - main visible box */
         div[data-baseweb="select"] > div {{
             background-color: #FFFFFF !important;
             color: #0F172A !important;
+            border: 1.5px solid #CBD5E1 !important;
+            border-radius: 8px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            padding: 0 10px !important;
+            font-size: 13px !important;
+            line-height: 18px !important;
+        }}
+        
+        /* Selectbox text */
+        div[data-baseweb="select"] span {{
+            font-size: 13px !important;
+            line-height: 18px !important;
+            color: #0F172A !important;
+            font-weight: 400 !important;
+        }}
+        
+        /* === TEXT INPUT STYLING === */
+        /* Text input outer container */
+        div[data-testid="stTextInput"] {{
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }}
+        
+        /* Remove all borders from wrapper */
+        div[data-testid="stTextInput"] div[data-baseweb="input"],
+        div[data-testid="stTextInput"] div[data-baseweb="input"]:hover,
+        div[data-testid="stTextInput"] div[data-baseweb="input"]:focus,
+        div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {{
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }}
+        
+        /* Text input inner container - main visible box (EXACT MATCH TO SELECTBOX) */
+        div[data-testid="stTextInput"] div[data-baseweb="input"] > div {{
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border: 1.5px solid #CBD5E1 !important;
+            border-radius: 8px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 !important;
+        }}
+        
+        /* Text input actual input element */
+        div[data-testid="stTextInput"] input {{
+             color: #0F172A !important;
+             background-color: transparent !important;
+             border: none !important;
+             outline: none !important;
+             height: 40px !important;
+             padding: 0 10px !important;
+             font-size: 13px !important;
+             line-height: 18px !important;
+             font-weight: 400 !important;
+             width: 100% !important;
+        }}
+        
+        /* Remove focus effects */
+        div[data-testid="stTextInput"] input:focus,
+        div[data-testid="stTextInput"] input:active {{
+             outline: none !important;
+             border: none !important;
+             box-shadow: none !important;
+        }}
+        
+        /* === MARKDOWN CONTAINER ALIGNMENT === */
+        /* Force markdown containers to align with widgets */
+        div[data-testid="stMarkdown"] {{
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }}
+        
+        /* === DISABLED TEXT INPUT STYLING === */
+        /* Style disabled text inputs (for N/A indicators) */
+        div[data-testid="stTextInput"] input:disabled {{
+            background-color: #F1F5F9 !important;
+            color: #94A3B8 !important;
+            font-style: italic !important;
+            cursor: not-allowed !important;
+        }}
+        
+        div[data-testid="stTextInput"] input:disabled + div {{
+            background-color: #F1F5F9 !important;
+        }}
+        
+        div[data-testid="stTextInput"]:has(input:disabled) div[data-baseweb="input"] > div {{
+            background-color: #F1F5F9 !important;
             border-color: #E2E8F0 !important;
         }}
+
         div[data-baseweb="popover"] div[data-baseweb="menu"] {{
             background-color: #FFFFFF !important;
         }}
         div[data-testid="stSelectbox"] label p {{
             font-weight: 600 !important;
             color: #334155 !important;
+        }}
+
+        /* --- PROFESSIONAL EXPANDER STYLING (Folder Icon + Badges) --- */
+        /* Badge Styling inside Expander: Use code blocks as pills */
+        div[data-testid="stExpander"] summary code {{
+            background-color: #E2E8F0 !important;
+            color: #475569 !important;
+            border-radius: 12px !important;
+            padding: 2px 10px !important;
+            font-family: var(--font, "Source Sans Pro", sans-serif) !important; /* Override monospace */
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            border: none !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            margin-left: 8px !important;
+        }}
+
+        /* Icon Styling inside Expander: Inject SVG Folder */
+        div[data-testid="stExpander"] summary p {{
+            padding-left: 28px !important;
+            position: relative !important;
+        }}
+
+        div[data-testid="stExpander"] summary p::before {{
+            content: "" !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 20px !important;
+            height: 20px !important;
+            /* Professional SVG Folder Icon (Dark Grey / Slate-500) */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2364748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>') !important;
+            background-repeat: no-repeat !important;
+            background-size: contain !important;
         }}
 
         /* --- FORCE RADIO VISIBILITY (Fix for Resolution Stage) --- */
@@ -576,24 +726,69 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
-            # --- Fetch saved connections for current user ---
+            # --- Fetch saved connections from backend ---
             current_user = st.session_state.get("user_name", "")
-            user_connections = []
             connection_options = ["-- Select a saved connection --"]
             connection_map = {}
             
-            if current_user:
+            # Cache connections in session state to avoid blocking Spark query on every rerun
+            # Initialize Service ONCE at the top of this block
+            from src.backend.connectors import get_connector_service as _get_conn_svc
+            _conn_svc = _get_conn_svc()
+
+            # Force refresh by changing key (v2) to clear stale empty states
+            cache_key = "_cached_saved_connections_v2"
+            if cache_key not in st.session_state:
                 try:
-                    from src.backend.connectors import get_connector_service as _get_conn_svc
-                    _conn_svc = _get_conn_svc()
-                    user_connections = _conn_svc.get_user_connections(current_user)
-                    for uc in user_connections:
-                        source_label = uc.connector_type.upper() if uc.connector_type else "UNKNOWN"
-                        label = f"{uc.connection_name or uc.connector_name} ({source_label})"
-                        connection_options.append(label)
-                        connection_map[label] = uc
-                except Exception:
-                    pass
+                    with st.spinner("Loading saved connections..."):
+                        import time # Added for start_time
+                        
+                        start_time = time.time()
+                        # 1. Try fetching user-specific connections
+                        st.toast(f"Checking connections for user: {current_user}...")
+                        print(f"DEBUG: Fetching connections for user: '{current_user}'")
+                        user_connections = _conn_svc.get_user_connections(current_user)
+                        
+                        # 2. Fallback: If no user connections, fetch ALL connections (visibility safety net)
+                        # This handles cases where 'created_by' column is missing or default 'System' was used
+                        if not user_connections:
+                            st.toast("No user connections found. Checking system-wide...")
+                            print("DEBUG: No user-specific connections found. Falling back to fetching ALL connections.")
+                            all_connections = _conn_svc.get_all_connections()
+                            user_connections = all_connections
+                        
+                        st.session_state[cache_key] = user_connections
+                        
+                        duration = time.time() - start_time
+                        if user_connections:
+                            st.toast(f"Loaded {len(user_connections)} connections in {duration:.2f}s")
+                        else:
+                            st.toast("No saved connections found.")
+                            
+                            # Show which table was queried to help debug
+                            target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+                            target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+                            table_path = f"{target_catalog}.{target_schema}.configuration_metadata"
+                            st.warning(f"No connections found in `{table_path}` for user `{current_user}`. Please verify your `DATABRICKS_CATALOG` and `DATABRICKS_SCHEMA` secrets.")
+                            
+                except Exception as e:
+                    st.error(f"Failed to load connections: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    st.session_state[cache_key] = []
+            
+                except Exception as e:
+                    st.error(f"Failed to load connections: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    st.session_state[cache_key] = []
+            
+            # Build dropdown options from cached connections
+            for uc in st.session_state.get(cache_key, []):
+                source_label = uc.connector_type.upper() if uc.connector_type else "UNKNOWN"
+                label = f"{uc.connection_name or uc.connector_name} ({source_label})"
+                connection_options.append(label)
+                connection_map[label] = uc
             
             # Auto-select if there's already a loaded config
             default_index = 0
@@ -681,8 +876,9 @@ def render():
                 level1_label = hierarchy[0]
                 level1_value = None
                 
-                if is_databricks:
+                if is_databricks or active_connector_type == "sqlserver":
                     # Databricks: Fetch catalogs live
+                    # SQL Server: Fetch databases live
                     if "ingestion_catalogs" not in st.session_state:
                         try:
                             from src.backend.connectors import get_connector_service
@@ -691,15 +887,62 @@ def render():
                             catalogs = svc.fetch_catalogs(active_connector_type, resolved_cfg)
                             st.session_state["ingestion_catalogs"] = catalogs if catalogs else ["default"]
                         except Exception as cat_err:
-                            st.error(f"Failed to fetch catalogs: {cat_err}")
-                            st.session_state["ingestion_catalogs"] = ["default"]
+                            st.warning(f"Failed to fetch {hierarchy[0].lower()}s: {cat_err}")
+                            # Fallback to configured database for SQL Server
+                            if active_connector_type == "sqlserver":
+                                st.session_state["ingestion_catalogs"] = [loaded_config.config.get("database", "default")]
+                            else:
+                                st.session_state["ingestion_catalogs"] = ["default"]
                     
                     catalogs = st.session_state.get("ingestion_catalogs", ["default"])
-                    level1_value = st.selectbox(level1_label, options=catalogs, key="ingestion_selected_catalog")
+                    
+                    # Pre-select configured database for SQL Server if available in the list
+                    default_idx = 0
+                    if active_connector_type == "sqlserver":
+                        config_db = loaded_config.config.get("database")
+                        if config_db and config_db in catalogs:
+                            try:
+                                default_idx = catalogs.index(config_db)
+                            except:
+                                pass
+                    
+                    # Custom HTML Layout for Selectbox Label
+                    st.markdown(f"""
+                    <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
+                        {level1_label}
+                    </div>
+                    """, unsafe_allow_html=True)
+                                
+                    level1_value = st.selectbox(level1_label, options=catalogs, index=default_idx, key="ingestion_selected_catalog", label_visibility="collapsed")
                 else:
-                    # SQL Server / Others: Database is part of config, show as read-only info
+                    # Others: Database/Container is part of config, show as read-only info
                     db_name = loaded_config.config.get("database", "N/A")
-                    st.text_input(level1_label, value=db_name, disabled=True, key="ingestion_level1_display")
+                    
+                    # Custom HTML Layout to fix "DATABASE" alignment issue
+                    # We render the label and value as a single HTML block
+                    st.markdown(f"""
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
+                            {level1_label}
+                        </div>
+                        <div style="
+                            background-color: #F0F2F6; 
+                            color: #31333F; 
+                            padding: 10px 12px; 
+                            border-radius: 8px; 
+                            border: 1px solid #E2E8F0; 
+                            font-size: 14px;
+                            width: 100%;
+                            display: flex;
+                            align-items: center;
+                            height: 42px;
+                        ">
+                            {db_name}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Hidden input to maintain state if needed (though level1_value is just read)
                     level1_value = db_name
                 
                 # Fetch Metadata button
@@ -722,7 +965,7 @@ def render():
                         try:
                             from src.backend.connectors import get_connector_service
                             svc = get_connector_service()
-                            catalog_param = level1_value if is_databricks else None
+                            catalog_param = level1_value if (is_databricks or active_connector_type == "sqlserver") else None
                             metadata = svc.fetch_schemas_for_connection(
                                 loaded_config.connection_id,
                                 catalog=catalog_param
@@ -739,32 +982,33 @@ def render():
                 if st.session_state.get("inspector_schema_metadata"):
                     metadata = st.session_state["inspector_schema_metadata"]
                     
-                    st.markdown(f"""
-                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 12px;">
-                        Select {hierarchy[2]}s &amp; Configure Load
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Summary stats
-                    _insp_selected = st.session_state.get("inspector_selected_tables", {})
-                    _sel_count = sum(len(tbls) for tbls in _insp_selected.values()) if _insp_selected else 0
-                    
-                    st.markdown(f"""
-                    <div style="display:flex; gap:16px; margin-bottom:16px;">
-                        <div style="background:#f0f9ff; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#0369a1;">{metadata.total_schemas}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">{hierarchy[1]}s</span>
+                    st.markdown(clean_html(f"""
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                             <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #CBD5E1;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2">
+                                        <path d="M3 3h18v18H3zM3 9h18M9 21V9"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #0F172A; font-size: 16px;">Select Tables & Configure Load</div>
+                                    <div style="color: #64748B; font-size: 13px;">Choose tables to ingest and define load strategies</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <div style="background: #F8FAFC; padding: 6px 12px; border-radius: 8px; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase;">Schemas</span>
+                                    <span style="font-size: 14px; font-weight: 700; color: #0F172A;">{metadata.total_schemas}</span>
+                                </div>
+                                <div style="background: #F8FAFC; padding: 6px 12px; border-radius: 8px; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase;">Tables</span>
+                                    <span style="font-size: 14px; font-weight: 700; color: #0F172A;">{metadata.total_tables}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div style="background:#f0fdf4; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#15803d;">{metadata.total_tables}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">{hierarchy[2]}s</span>
-                        </div>
-                        <div style="background:#fef3c7; padding:8px 16px; border-radius:8px;">
-                            <span style="font-size:20px; font-weight:700; color:#b45309;">{_sel_count}</span>
-                            <span style="color:#6b7280; font-size:13px; margin-left:6px;">Selected</span>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
                     
                     # Initialize selected tables state
                     if "inspector_selected_tables" not in st.session_state:
@@ -777,133 +1021,199 @@ def render():
                         tables = metadata.schemas[schema_name]
                         sel_tables = st.session_state.get("inspector_selected_tables", {}).get(schema_name, [])
                         
-                        with st.expander(f"**{schema_name}** — {len(sel_tables)}/{len(tables)} {hierarchy[2].lower()}s selected", expanded=False):
-                            # Select All / Deselect All
-                            sa_col, da_col, _ = st.columns([1.5, 1.5, 5])
-                            with sa_col:
+                        # Integrated Config Header (Professional SVG Icon via CSS + Badge)
+                        # Format: SchemaName `X/Y selected`
+                        # The CSS injects the folder icon before the text and styles the `code` block as a badge
+                        header_label = f"**{schema_name}** `{len(sel_tables)}/{len(tables)} selected`"
+                        
+                        with st.expander(header_label, expanded=True):
+                             # Select All / Deselect All Bar - Consistent Width Buttons
+                            c_act1, c_act2, _ = st.columns([0.15, 0.15, 0.7], gap="small")
+                            with c_act1:
                                 if st.button("Select All", key=f"insp_sa_{schema_name}", use_container_width=True):
                                     st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = tables.copy()
                                     for t in tables:
                                         st.session_state[f"insp_tbl_{schema_name}_{t}"] = True
                                     st.rerun()
-                            with da_col:
-                                if st.button("Deselect All", key=f"insp_da_{schema_name}", use_container_width=True):
+                            with c_act2:
+                                if st.button("Clear Selection", key=f"insp_da_{schema_name}", use_container_width=True):
                                     st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = []
                                     for t in tables:
                                         st.session_state[f"insp_tbl_{schema_name}_{t}"] = False
                                     st.rerun()
                             
-                            st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+                            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+                            # Header Row
+                            # [Checkbox, Name, LoadType, Watermark, Spacer]
+                            # Increased Name width (1.5 -> 2.5) and decreased Spacer (3.8 -> 2.8) to accommodate longer names
+                            h_cols = st.columns([0.2, 2.5, 2.0, 2.5, 2.8])
+                            with h_cols[1]:
+                                st.markdown("<div style='font-size: 12px; font-weight: 600; color: #64748B;'>Table</div>", unsafe_allow_html=True)
+                            with h_cols[2]:
+                                st.markdown("<div style='font-size: 12px; font-weight: 600; color: #64748B;'>Load Type</div>", unsafe_allow_html=True)
+                            with h_cols[3]:
+                                st.markdown("<div style='font-size: 12px; font-weight: 600; color: #64748B;'>Watermark Column</div>", unsafe_allow_html=True)
                             
-                            for table_name in sorted(tables):
-                                chk_key = f"insp_tbl_{schema_name}_{table_name}"
-                                is_selected = table_name in sel_tables
-                                if chk_key not in st.session_state:
-                                    st.session_state[chk_key] = is_selected
-                                
-                                tbl_col, lt_col, wm_col = st.columns([3, 1.5, 2.5])
-                                with tbl_col:
-                                    checked = st.checkbox(table_name, key=chk_key)
-                                
-                                # Sync checkbox to session
-                                if schema_name not in st.session_state.get("inspector_selected_tables", {}):
-                                    st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = []
-                                cur_list = st.session_state["inspector_selected_tables"][schema_name]
-                                if checked and table_name not in cur_list:
-                                    cur_list.append(table_name)
-                                elif not checked and table_name in cur_list:
-                                    cur_list.remove(table_name)
-                                
-                                # Per-table load config (only if selected)
-                                if checked:
-                                    cfg_key = f"{schema_name}.{table_name}"
-                                    existing_cfg = st.session_state.get("inspector_table_configs", {}).get(cfg_key, {})
+                            st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+                            
+                            # Table List - Scrollable Container to save space
+                            with st.container(height=600, border=False):
+                                for table_name in sorted(tables):
+                                    chk_key = f"insp_tbl_{schema_name}_{table_name}"
+                                    is_selected = table_name in sel_tables
+                                    if chk_key not in st.session_state:
+                                        st.session_state[chk_key] = is_selected
                                     
-                                    with lt_col:
-                                        lt = st.selectbox(
-                                            "Load",
-                                            options=["Full Load", "Incremental Load"],
-                                            index=0 if existing_cfg.get("load_type", "full") == "full" else 1,
-                                            key=f"insp_lt_{schema_name}_{table_name}",
-                                            label_visibility="collapsed",
-                                        )
+                                    # Use a container for the row styling
+                                    row_container = st.container()
                                     
-                                    wm_val = ""
-                                    with wm_col:
-                                        if "Incremental" in lt:
-                                            # Fetch columns for this table (cached per table)
-                                            col_cache_key = f"insp_cols_{schema_name}_{table_name}"
-                                            if col_cache_key not in st.session_state:
-                                                try:
-                                                    from src.backend.connectors import get_connector_service
-                                                    svc = get_connector_service()
-                                                    catalog_param = st.session_state.get("ingestion_selected_catalog") if is_databricks else None
-                                                    all_cols = svc.fetch_all_columns_for_table(
-                                                        loaded_config.connection_id,
-                                                        schema_name,
-                                                        table_name,
-                                                        catalog=catalog_param
-                                                    )
-                                                    # Filter to trackable columns (timestamp/date/numeric)
-                                                    wm_cols = []
-                                                    for c in all_cols:
-                                                        ctype = c['type'].lower()
-                                                        if any(x in ctype for x in ['time', 'date', 'int', 'numeric', 'long', 'decimal', 'bigint']):
-                                                            wm_cols.append(f"{c['name']} ({c['type']})")
-                                                    if not wm_cols:
-                                                        # Fallback: show all columns
-                                                        wm_cols = [f"{c['name']} ({c['type']})" for c in all_cols]
-                                                    st.session_state[col_cache_key] = wm_cols
-                                                except Exception as col_err:
-                                                    st.session_state[col_cache_key] = []
-                                                    st.warning(f"Could not fetch columns for {table_name}: {col_err}")
-                                            
-                                            wm_options = st.session_state.get(col_cache_key, [])
-                                            if wm_options:
-                                                # Smart default: prefer updated_at, modified_at, etc.
-                                                default_idx = 0
-                                                for i, opt in enumerate(wm_options):
-                                                    if any(k in opt.lower() for k in ['updat', 'modif', 'last', 'timestamp', 'changed']):
-                                                        default_idx = i
-                                                        break
-                                                prev_wm = existing_cfg.get("watermark_column", "")
-                                                if prev_wm:
-                                                    for i, opt in enumerate(wm_options):
-                                                        if prev_wm in opt:
-                                                            default_idx = i
-                                                            break
+                                    # Visual grouping
+                                    bg_color = "#F8FAFC" if is_selected else "white"
+                                    border_color = "#CBD5E1" if is_selected else "#E2E8F0"
+                                    
+                                    # Matched columns to header with tighter gap for Checkbox->Name
+                                    try:
+                                        row_cols = row_container.columns([0.2, 2.5, 2.0, 2.5, 2.8], gap="small", vertical_alignment="center")
+                                    except TypeError:
+                                        row_cols = row_container.columns([0.2, 2.5, 2.0, 2.5, 2.8], gap="small")
+
+                                    with row_cols[0]:
+                                        # Checkbox strictly for selection
+                                        checked = st.checkbox("Select", key=chk_key, label_visibility="collapsed")
+                                    
+                                    with row_cols[1]:
+                                        # Table Name - Standard line-height alignment
+                                        # Removed manual padding and flexbox to rely on consistent 42px height
+                                        t_color = "#0F172A" if checked else "#64748B"
+                                        t_weight = "600" if checked else "500"
+                                        st.markdown(f"""
+                                        <div style='height: 42px; line-height: 42px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: "Inter", sans-serif; font-size: 14px; font-weight: {t_weight}; color: {t_color};' title='{table_name}'>
+                                            {table_name}
+                                        </div>
+                                        """, unsafe_allow_html=True)
+
+                                    # Sync selection
+                                    if schema_name not in st.session_state.get("inspector_selected_tables", {}):
+                                        st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = []
+                                    cur_list = st.session_state["inspector_selected_tables"][schema_name]
+                                    if checked and table_name not in cur_list:
+                                        cur_list.append(table_name)
+                                    elif not checked and table_name in cur_list:
+                                        cur_list.remove(table_name)
+                                    
+                                    # Configuration Controls (Only if selected)
+                                    if checked:
+                                        cfg_key = f"{schema_name}.{table_name}"
+                                        existing_cfg = st.session_state.get("inspector_table_configs", {}).get(cfg_key, {})
+                                        
+                                        with row_cols[2]:
+                                            lt = st.selectbox(
+                                                " ",  # Empty label to force alignment with Watermark
+                                                options=["Full Load", "Incremental Load"],
+                                                index=0 if existing_cfg.get("load_type", "full") == "full" else 1,
+                                                key=f"insp_lt_{schema_name}_{table_name}",
+                                                label_visibility="collapsed"
+                                            )
+                                        
+                                        wm_val = ""
+                                        with row_cols[3]:
+                                            if "Incremental" in lt:
+                                                 # Fetch columns for this table (cached per table)
+                                                col_cache_key = f"insp_cols_{schema_name}_{table_name}"
+                                                if col_cache_key not in st.session_state:
+                                                    try:
+                                                        # Use existing service import if available
+                                                        if 'src.backend.connectors' not in sys.modules:
+                                                            from src.backend.connectors import get_connector_service
+                                                        svc = get_connector_service()
+                                                        catalog_param = st.session_state.get("ingestion_selected_catalog") if is_databricks else None
+                                                        all_cols = svc.fetch_all_columns_for_table(
+                                                            loaded_config.connection_id,
+                                                            schema_name,
+                                                            table_name,
+                                                            catalog=catalog_param
+                                                        )
+                                                        # Filter to trackable columns (timestamp/date/numeric)
+                                                        wm_cols = []
+                                                        for c in all_cols:
+                                                            ctype = c['type'].lower()
+                                                            if any(x in ctype for x in ['time', 'date', 'int', 'numeric', 'long', 'decimal', 'bigint']):
+                                                                wm_cols.append(f"{c['name']} ({c['type']})")
+                                                        if not wm_cols:
+                                                            # Fallback: show all columns
+                                                            wm_cols = [f"{c['name']} ({c['type']})" for c in all_cols]
+                                                        st.session_state[col_cache_key] = wm_cols
+                                                    except Exception as col_err:
+                                                        st.session_state[col_cache_key] = []
+                                                        st.warning(f"Could not fetch columns for {table_name}: {col_err}")
                                                 
-                                                wm_selected = st.selectbox(
-                                                    "Watermark Column *",
-                                                    options=wm_options,
-                                                    index=default_idx,
-                                                    key=f"insp_wm_{schema_name}_{table_name}",
-                                                    label_visibility="collapsed",
-                                                )
-                                                # Extract just the column name (before the parenthesis)
-                                                wm_val = wm_selected.split(" (")[0] if wm_selected else ""
+                                                wm_options = st.session_state.get(col_cache_key, [])
+                                                
+                                                if wm_options:
+                                                    # Smart default
+                                                    default_idx = 0
+                                                    prev_wm = existing_cfg.get("watermark_column", "")
+                                                    # ... matching logic ...
+                                                    
+                                                    # Try to match previous selection first
+                                                    if prev_wm:
+                                                        for i, opt in enumerate(wm_options):
+                                                            if prev_wm in opt:
+                                                                default_idx = i
+                                                                break
+                                                    else:
+                                                        # Try smart matching
+                                                        for i, opt in enumerate(wm_options):
+                                                            if any(k in opt.lower() for k in ['updat', 'modif', 'last', 'timestamp', 'changed']):
+                                                                default_idx = i
+                                                                break
+                                                    
+                                                    wm_selected = st.selectbox(
+                                                        " ",  # Empty to ensure no phantom label
+                                                        options=wm_options,
+                                                        index=default_idx,
+                                                        key=f"insp_wm_{schema_name}_{table_name}",
+                                                        label_visibility="collapsed",
+                                                        placeholder="Watermark Column"
+                                                    )
+                                                    wm_val = wm_selected.split(" (")[0] if wm_selected else ""
+                                                else:
+                                                    wm_val = st.text_input(
+                                                        " ",  # Empty to ensure no phantom label
+                                                        value=existing_cfg.get("watermark_column", ""),
+                                                        placeholder="e.g. updated_at",
+                                                        key=f"insp_wm_{schema_name}_{table_name}",
+                                                        label_visibility="collapsed"
+                                                    )
                                             else:
-                                                wm_val = st.text_input(
-                                                    "Watermark Col *",
-                                                    value=existing_cfg.get("watermark_column", ""),
-                                                    placeholder="e.g. updated_at",
-                                                    key=f"insp_wm_{schema_name}_{table_name}",
-                                                    label_visibility="collapsed",
+                                                # Show disabled text input when Full Load is selected
+                                                st.text_input(
+                                                    " ",
+                                                    value="N/A - Full Load",
+                                                    disabled=True,
+                                                    key=f"insp_wm_disabled_{schema_name}_{table_name}",
+                                                    label_visibility="collapsed"
                                                 )
+
+                                        # Save config to state
+                                        st.session_state.setdefault("inspector_table_configs", {})[cfg_key] = {
+                                            "load_type": "full" if "Full" in lt else "incremental",
+                                            "watermark_column": wm_val or "",
+                                        }
                                     
-                                    # Save per-table config to session
-                                    st.session_state.setdefault("inspector_table_configs", {})[cfg_key] = {
-                                        "load_type": "full" if "Full" in lt else "incremental",
-                                        "watermark_column": wm_val or "",
-                                    }
+                                    st.markdown(f"<div style='border-bottom: 1px solid {border_color}; margin-bottom: 0px; padding-bottom: 4px; margin-top: -12px;'></div>", unsafe_allow_html=True)
+
+
+                    st.markdown("</div>", unsafe_allow_html=True) # End Main Card
                     
-                    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+                    st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
                     
                     # --- Save Table Configuration Button ---
                     _, save_tbl_col = st.columns([3, 1.5])
                     with save_tbl_col:
                         save_tbl_btn = st.button(
-                            "Save Table Config",
+                            "Save Table Configuration",
                             key="inspector_save_table_config_btn",
                             type="primary",
                             use_container_width=True,
@@ -913,7 +1223,7 @@ def render():
                         sel_tables = st.session_state.get("inspector_selected_tables", {})
                         tbl_configs = st.session_state.get("inspector_table_configs", {})
                         
-                        # Build the selected_tables dict: {schema: [{table_name, load_type, watermark_column}]}
+                        # Build the selected_tables dict
                         final_tables = {}
                         has_validation_error = False
                         for schema, tables_list in sel_tables.items():
@@ -923,7 +1233,7 @@ def render():
                                     cfg_key = f"{schema}.{tbl}"
                                     cfg = tbl_configs.get(cfg_key, {"load_type": "full", "watermark_column": ""})
                                     
-                                    # Validate: incremental must have watermark
+                                    # Validate incremental
                                     if cfg["load_type"] == "incremental" and not cfg["watermark_column"]:
                                         st.error(f"⚠️ Table '{schema}.{tbl}' is set to Incremental but has no watermark column.")
                                         has_validation_error = True
@@ -947,7 +1257,6 @@ def render():
                                     success = svc.update_table_configuration(loaded_config.connection_id, final_tables)
                                     if success:
                                         st.success(f"Saved configuration for {total_tables} tables!")
-                                        # Refresh config
                                         st.session_state["ingestion_force_refresh"] = True
                                         st.rerun()
                                     else:

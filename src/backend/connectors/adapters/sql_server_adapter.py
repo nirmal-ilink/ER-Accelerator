@@ -39,6 +39,49 @@ class SQLServerAdapter(BaseConnectorAdapter):
     def required_fields(self) -> List[str]:
         return ["Server", "Database", "User", "Password"]
     
+    def fetch_catalogs(self, spark, config: Dict[str, Any]) -> List[str]:
+        """
+        Fetches available databases from SQL Server.
+        
+        Args:
+            spark: Active SparkSession
+            config: Connection configuration
+            
+        Returns:
+            List of database names
+        """
+        # Validate configuration
+        is_valid, error_msg = self.validate_config(config)
+        if not is_valid:
+            raise ValueError(error_msg)
+        
+        jdbc_url = self.build_jdbc_url(config)
+        jdbc_props = self.get_jdbc_properties(config)
+        
+        try:
+            # Query system catalog for databases
+            # Filter out system databases to keep the list clean
+            query = """
+            SELECT name 
+            FROM master.sys.databases 
+            WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')
+            ORDER BY name
+            """
+            
+            df = spark.read.jdbc(
+                url=jdbc_url,
+                table=f"({query}) as dbs",
+                properties=jdbc_props
+            )
+            
+            rows = df.collect()
+            return [row['name'] for row in rows]
+            
+        except Exception as e:
+            print(f"Error fetching databases: {e}")
+            # Fallback: return the configured database if discovery fails
+            return [config.get('database')] if config.get('database') else []
+    
     def build_jdbc_url(self, config: Dict[str, Any]) -> str:
         """
         Builds SQL Server JDBC URL.
@@ -86,8 +129,8 @@ class SQLServerAdapter(BaseConnectorAdapter):
             Dictionary with authentication and driver properties
         """
         return {
-            "user": config.get('user', ''),
-            "password": config.get('password', ''),
+            "user": str(config.get('user', '')).strip(),
+            "password": str(config.get('password', '')).strip(),
             "driver": self.get_jdbc_driver_class(),
             # Performance optimizations
             "fetchsize": "1000",
@@ -127,6 +170,24 @@ class SQLServerAdapter(BaseConnectorAdapter):
         jdbc_props = self.get_jdbc_properties(config)
         
         try:
+            # === DEBUG: Log connection details (masked) ===
+            _pwd = jdbc_props.get('password', '')
+            _user = jdbc_props.get('user', '')
+            print(f"DEBUG JDBC URL: {jdbc_url}")
+            print(f"DEBUG JDBC user: '{_user}'")
+            print(f"DEBUG JDBC password length: {len(_pwd)}")
+            if len(_pwd) >= 2:
+                print(f"DEBUG JDBC password first/last char: '{_pwd[0]}...{_pwd[-1]}'")
+            print(f"DEBUG JDBC password repr: {repr(_pwd)}")
+            try:
+                with open("sql_debug_auth.log", "a") as _f:
+                    import datetime as _dt
+                    _f.write(f"[{_dt.datetime.now()}] URL={jdbc_url}\n")
+                    _f.write(f"[{_dt.datetime.now()}] user='{_user}', pwd_len={len(_pwd)}, pwd_repr={repr(_pwd)}\n")
+            except:
+                pass
+            # === END DEBUG ===
+            
             # Use direct table reference instead of subquery for SQL Server compatibility
             # SQL Server doesn't allow ORDER BY in derived tables
             df = spark.read.jdbc(
@@ -166,9 +227,18 @@ class SQLServerAdapter(BaseConnectorAdapter):
             error_msg = str(e)
             
             # Provide user-friendly error messages
+            print(f"DEBUG: Raw SQL Server Error: {error_msg}")
+            try:
+                # Log to file for persistence
+                with open("sql_debug_auth.log", "a") as f:
+                    import datetime
+                    f.write(f"[{datetime.datetime.now()}] ERROR: {error_msg}\n")
+            except:
+                pass
+
             if "Login failed" in error_msg:
                 raise ConnectionError(
-                    "Authentication failed. Please check your username and password."
+                    f"Authentication failed. Raw error: {error_msg}"
                 ) from e
             elif "Cannot open database" in error_msg:
                 raise ConnectionError(
@@ -203,27 +273,24 @@ class SQLServerAdapter(BaseConnectorAdapter):
         jdbc_url = self.build_jdbc_url(config)
         properties = self.get_jdbc_properties(config)
         
-        query = f"""
-            SELECT COLUMN_NAME, DATA_TYPE 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
-            ORDER BY ORDINAL_POSITION
-        """
-        
         try:
-            # Execute query via Spark JDBC
+            # Use direct table reference and filter in Spark to avoid
+            # SQL Server restriction on ORDER BY in derived tables
             df = spark.read.jdbc(
                 url=jdbc_url,
-                table=f"({query}) as cols",
+                table="INFORMATION_SCHEMA.COLUMNS",
                 properties=properties
-            )
+            ).filter(
+                f"TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+            ).select("COLUMN_NAME", "DATA_TYPE", "ORDINAL_POSITION")
             
             rows = df.collect()
-            return [{"name": row["COLUMN_NAME"], "type": row["DATA_TYPE"]} for row in rows]
+            # Sort by ordinal position in Python
+            sorted_rows = sorted(rows, key=lambda r: r["ORDINAL_POSITION"])
+            return [{"name": row["COLUMN_NAME"], "type": row["DATA_TYPE"]} for row in sorted_rows]
             
         except Exception as e:
             print(f"Error fetching columns for {schema}.{table}: {e}")
-            # If query fails, we might return empty list or raise
             raise ConnectionError(f"Failed to fetch columns: {str(e)}")
     
     def test_connection(self, spark, config: Dict[str, Any]) -> ConnectionTestResult:

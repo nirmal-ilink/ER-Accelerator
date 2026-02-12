@@ -28,11 +28,21 @@ import datetime # Added for cache timestamp
 import uuid  # Added for unique IDs
 import threading # Added for async save
 import streamlit as st
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, asdict
+import functools
+import time
 
 # Constants
 CACHE_FILE_NAME = "connector_cache.json"
+TRACE_LOG = "trace.log"
+
+def _log_trace(msg):
+    try:
+        with open(TRACE_LOG, "a") as f:
+            f.write(f"[{datetime.datetime.now()}] {msg}\n")
+    except:
+        pass
 
 # Module-level singleton instance
 _service_instance = None
@@ -44,28 +54,56 @@ from src.backend.audit.logger import AuditLogger
 from .adapters import SQLServerAdapter, DatabricksAdapter
 from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, SchemaMetadata
 
+def _with_retry(func):
+    """Decorator to retry methods on Spark session loss."""
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            error_msg = str(e)
+            # Check for common Spark session loss errors
+            # 1. [NO_ACTIVE_SESSION] - Databricks Connect session expired
+            # 2. INVALID_HANDLE_VALUE - Windows socket issue with Databricks Connect
+            # 3. Connection refused - Spark/Java process died
+            if any(err in error_msg for err in ["[NO_ACTIVE_SESSION]", "INVALID_HANDLE_VALUE", "Connection refused"]):
+                print(f"WARNING: Detected Spark session loss in {func.__name__}: {error_msg}")
+                
+                # Attempt recovery if method exists
+                if hasattr(self, '_retry_recovery'):
+                    try:
+                        self._retry_recovery()
+                        print(f"INFO: Retrying {func.__name__} after recovery...")
+                        return func(self, *args, **kwargs)
+                    except Exception as recovery_error:
+                        print(f"ERROR: Retry failed: {recovery_error}")
+                        raise e  # Raise original error if recovery fails
+                else:
+                    print("WARNING: _retry_recovery method not found on object.")
+            
+            raise e
+    return wrapper
+
 
 @dataclass
 class ConnectorConfig:
-    """Stored connector configuration."""
+    """Stored connector configuration (maps to configuration_metadata table)."""
     connection_id: str  # Unique ID
     connector_type: str
     connector_name: str
     connection_name: str  # User-given name (unique per user)
-    config: Dict[str, Any]
-    selected_tables: Dict[str, Any]  # schema -> {table: {load_type, watermark_column}} or legacy list
+    config: Dict[str, Any]  # source_configuration column (JSON)
+    selected_tables: Dict[str, Any]  # tbl_configuration column (JSON) — per-schema table list with load_type/watermark
     status: str  # 'active', 'inactive', 'error'
     created_by: str = "System"  # Username who created this connection
-    # Load configuration
-    load_type: str = "full"  # 'full' or 'incremental'
-    watermark_column: Optional[str] = None  # e.g., 'updated_at'
-    last_sync_time: Optional[str] = None  # ISO timestamp
+    last_sync_time: Optional[str] = None  # ISO timestamp from updated_at
     # Scheduling
     schedule_enabled: bool = False
     schedule_cron: Optional[str] = None  # e.g., '0 2 * * *'
     schedule_timezone: str = "UTC"
-    # Sync tracking
-    sync_status: str = "pending"  # 'pending', 'running', 'success', 'failed'
+    # Extended configuration (nullable, populated later)
+    bronze_configuration: Optional[str] = None
+    silver_configuration: Optional[str] = None
 
 
 class ConnectorService:
@@ -94,7 +132,19 @@ class ConnectorService:
         self._secret_manager = None
         self.audit_logger = AuditLogger()
         self._register_adapters()
-        
+
+    def _retry_recovery(self):
+        """Attempts to recover a lost Spark session."""
+        print("WARNING: Attempting to recover Spark session...")
+        try:
+            from src.backend.bootstrapper import get_bootstrapper
+            # Resetting via bootstrapper returns the new session
+            self._spark = get_bootstrapper().reset_spark()
+            print("INFO: Spark session recovered successfully.")
+        except Exception as e:
+            print(f"ERROR: Failed to recover Spark session: {e}")
+            raise e
+
     def _get_cache_path(self):
         """Returns key for local cache file."""
         # Use a specific directory for cache, or current directory
@@ -124,13 +174,34 @@ class ConnectorService:
     
     def _register_adapters(self):
         """Register all available connector adapters."""
-        # SQL Server
-        sql_adapter = SQLServerAdapter()
-        self._adapters[sql_adapter.connector_type] = sql_adapter
+        import importlib
         
-        # Databricks / Unity Catalog
-        databricks_adapter = DatabricksAdapter()
-        self._adapters[databricks_adapter.connector_type] = databricks_adapter
+        try:
+            # Import modules directly to allow reloading
+            from .adapters import sql_server_adapter, databricks_adapter
+            
+            # Reload modules to pick up changes (hot-fix support)
+            importlib.reload(sql_server_adapter)
+            importlib.reload(databricks_adapter)
+            
+            # SQL Server
+            sql_adapter = sql_server_adapter.SQLServerAdapter()
+            self._adapters[sql_adapter.connector_type] = sql_adapter
+            
+            # Databricks / Unity Catalog
+            databricks_adapter = databricks_adapter.DatabricksAdapter()
+            self._adapters[databricks_adapter.connector_type] = databricks_adapter
+            
+        except Exception as e:
+            print(f"WARNING: Failed to hot-reload adapters: {e}")
+            # Fallback to standard registration if reload fails
+            from .adapters import SQLServerAdapter, DatabricksAdapter
+            
+            sql_adapter = SQLServerAdapter()
+            self._adapters[sql_adapter.connector_type] = sql_adapter
+            
+            databricks_adapter = DatabricksAdapter()
+            self._adapters[databricks_adapter.connector_type] = databricks_adapter
         
         # Future: Add more adapters here
         # self._adapters['snowflake'] = SnowflakeAdapter()
@@ -191,6 +262,7 @@ class ConnectorService:
             for adapter in self._adapters.values()
         ]
 
+    @_with_retry
     def test_connection(self, connector_type: str, config: Dict[str, Any]) -> ConnectionTestResult:
         """
         Test connection using the appropriate adapter.
@@ -245,6 +317,7 @@ class ConnectorService:
         adapter = self.get_adapter(connector_type)
         return adapter.fetch_schemas_and_tables(self.spark, resolved_config)
 
+    @_with_retry
     def fetch_catalogs(self, connector_type: str, config: Dict[str, Any]) -> List[str]:
         """
         Fetch available catalogs from a data source (Databricks only).
@@ -257,8 +330,18 @@ class ConnectorService:
             List of catalog names
         """
         adapter = self.get_adapter(connector_type)
+        
+        # Hot-reload support: if adapter instance is stale (missing new method), re-register
+        if not hasattr(adapter, 'fetch_catalogs'):
+            print(f"DEBUG: Adapter {connector_type} missing fetch_catalogs. Reloading adapters...")
+            self._adapters = {}
+            self._register_adapters()
+            adapter = self.get_adapter(connector_type)
+
         if hasattr(adapter, 'fetch_catalogs'):
-            return adapter.fetch_catalogs(self.spark, config)
+            # Resolve secrets before fetching catalogs
+            resolved_config = self._resolve_secrets(config)
+            return adapter.fetch_catalogs(self.spark, resolved_config)
         else:
             raise NotImplementedError(f"Connector '{connector_type}' does not support catalog discovery")
 
@@ -298,11 +381,39 @@ class ConnectorService:
             Configuration with secrets resolved
         """
         resolved = {}
+        
+        # Temporary file logger for debugging
+        debug_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_auth.log")
+        def log_debug(msg):
+            try:
+                with open(debug_log_path, "a") as f:
+                    timestamp = datetime.datetime.now().isoformat()
+                    f.write(f"[{timestamp}] {msg}\n")
+            except:
+                pass
+
+        log_debug(f"Resolving secrets for keys: {list(config.keys())}")
+        
         for key, value in config.items():
             if isinstance(value, str) and value.startswith("databricks://secrets/"):
-                # This is a pointer - secrets are read at runtime by Spark
-                # For now, keep the pointer as-is (Spark reads from secrets)
-                resolved[key] = value
+                log_debug(f"Found secret pointer for '{key}': {value}")
+                
+                # Resolve explicitly using SecretManager because JDBC properties 
+                # do not support Spark secret syntax (they are passed to driver)
+                secret_val = self.secret_manager.get_secret(value)
+                
+                if secret_val:
+                    # CRITICAL: Strip whitespace/newlines that Databricks Secrets
+                    # may include (common cause of JDBC Login failures)
+                    stripped_val = secret_val.strip()
+                    if len(stripped_val) != len(secret_val):
+                        log_debug(f"STRIPPED secret for '{key}': original_len={len(secret_val)}, stripped_len={len(stripped_val)}")
+                    resolved[key] = stripped_val
+                    log_debug(f"Resolved secret for '{key}' (Length: {len(stripped_val)})")
+                else:
+                    log_debug(f"WARNING: Failed to resolve secret for '{key}'")
+                    print(f"WARNING: Failed to resolve secret pointer: {value}")
+                    resolved[key] = value
             else:
                 resolved[key] = value
         return resolved
@@ -340,6 +451,7 @@ class ConnectorService:
         
         return processed_config
     
+    @_with_retry
     def save_configuration(
         self,
         connector_type: str,
@@ -349,19 +461,19 @@ class ConnectorService:
         created_by: str = "System",
         selected_tables: Optional[Dict[str, Any]] = None,
         status: str = "active",
-        load_type: str = "full",
-        watermark_column: Optional[str] = None,
         schedule_enabled: bool = False,
         schedule_cron: Optional[str] = None,
         schedule_timezone: str = "UTC"
     ) -> str:
         """
-        Save connector configuration to ingestion_metadata table.
-        Optimized for UI responsiveness:
-        1. Stores secrets (Synchronous - fast)
-        2. Saves to local cache (Synchronous - fast)
-        3. Writes to Delta Table (Asynchronous - background thread)
-        Returns connection_id immediately.
+        Save connector configuration to configuration_metadata table.
+        
+        Steps:
+        1. Stores secrets (fast)
+        2. Saves to local cache (fast)
+        3. Writes to Delta Table (synchronous — ensures data is persisted)
+        
+        Returns connection_id after successful persistence.
         """
         if selected_tables is None:
             selected_tables = {}
@@ -373,13 +485,13 @@ class ConnectorService:
         connection_id = str(uuid.uuid4())
         source_type = connector_type
         
-        # Filter out meta fields from config json
-        meta_fields = ['selected_tables', 'load_type', 'watermark_column', 'schedule_enabled', 'schedule_cron', 'schedule_timezone']
-        configuration = {k: v for k, v in safe_config.items() if k not in meta_fields and k != 'selected_tables'}
+        # Filter out meta fields from source_configuration json
+        meta_fields = ['selected_tables', 'schedule_enabled', 'schedule_cron', 'schedule_timezone']
+        source_configuration = {k: v for k, v in safe_config.items() if k not in meta_fields and k != 'selected_tables'}
         
         # JSON serialization
-        configuration_json = json.dumps(configuration).replace("'", "''")
-        selected_tables_json = json.dumps(selected_tables).replace("'", "''")
+        source_configuration_json = json.dumps(source_configuration).replace("'", "''")
+        tbl_configuration_json = json.dumps(selected_tables).replace("'", "''")
         
         # Update Local Cache - IMMEDIATE UI FEEDBACK
         cache_data = {
@@ -388,10 +500,8 @@ class ConnectorService:
             "source_name": connector_name,
             "connection_name": connection_name,
             "created_by": created_by,
-            "configuration": configuration_json,
-            "selected_tables": selected_tables_json,
-            "load_type": load_type,
-            "watermark_column": watermark_column,
+            "source_configuration": source_configuration_json,
+            "tbl_configuration": tbl_configuration_json,
             "schedule_enabled": schedule_enabled,
             "schedule_cron": schedule_cron,
             "schedule_timezone": schedule_timezone,
@@ -400,43 +510,33 @@ class ConnectorService:
         }
         self._save_to_cache(cache_data)
         
-        # Launch background thread for heavy Spark write
-        # This prevents the UI from freezing
-        thread = threading.Thread(
-            target=self._persist_to_delta_async,
-            kwargs={
-                "connection_id": connection_id,
-                "connector_type": connector_type,
-                "connector_name": connector_name,
-                "connection_name": connection_name,
-                "created_by": created_by,
-                "configuration_json": configuration_json,
-                "selected_tables_json": selected_tables_json,
-                "load_type": load_type,
-                "watermark_column": watermark_column,
-                "schedule_enabled": schedule_enabled,
-                "schedule_cron": schedule_cron,
-                "schedule_timezone": schedule_timezone,
-                "status": status,
-                "user": created_by
-            }
+        # Persist to Delta Table SYNCHRONOUSLY
+        self._persist_to_delta_sync(
+            connection_id=connection_id,
+            connector_type=connector_type,
+            connector_name=connector_name,
+            connection_name=connection_name,
+            created_by=created_by,
+            source_configuration_json=source_configuration_json,
+            tbl_configuration_json=tbl_configuration_json,
+            schedule_enabled=schedule_enabled,
+            schedule_cron=schedule_cron,
+            schedule_timezone=schedule_timezone,
+            status=status,
+            user=created_by
         )
-        thread.daemon = True # Ensure thread doesn't block app exit
-        thread.start()
         
         return connection_id
 
-    def _persist_to_delta_async(
+    def _persist_to_delta_sync(
         self,
         connection_id: str,
         connector_type: str,
         connector_name: str,
         connection_name: str,
         created_by: str,
-        configuration_json: str,
-        selected_tables_json: str,
-        load_type: str,
-        watermark_column: Optional[str],
+        source_configuration_json: str,
+        tbl_configuration_json: str,
         schedule_enabled: bool,
         schedule_cron: Optional[str],
         schedule_timezone: str,
@@ -444,15 +544,15 @@ class ConnectorService:
         user: str
     ):
         """
-        Background worker to write configuration to Delta Checkpoint.
+        Write configuration to Delta table (configuration_metadata) synchronously.
+        Raises on failure so the caller can surface errors to the user.
         """
-        print(f"INFO: [Async Save] Starting background persistence for {connection_id}...")
+        print(f"INFO: [Save] Persisting connection {connection_id} to Delta table...")
         
-        # Get target table location
-        # NOTE: st.secrets might handle threading differently, but usually works if read-only
+        # Read catalog/schema config in the main thread (st.secrets works here)
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         def escape_sql(v):
             if v is None:
@@ -460,17 +560,21 @@ class ConnectorService:
             val = str(v).replace("'", "''")
             return f"'{val}'"
         
-        # Insert new record (Immutable Ledger style)
+        # Insert new record
         insert_sql = f"""
             INSERT INTO {target_table} (
-                connection_id, source_type, source_name, connection_name, configuration, selected_tables,
-                load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                created_by, status, created_at, updated_at
+                connection_id, connection_name, source_type, source_name,
+                created_by, source_configuration, tbl_configuration,
+                schedule_enabled, schedule_cron, schedule_timezone,
+                status, bronze_configuration, silver_configuration,
+                created_at, updated_at
             )
             VALUES (
-                '{connection_id}', '{connector_type}', {escape_sql(connector_name)}, {escape_sql(connection_name)}, '{configuration_json}', '{selected_tables_json}',
-                {escape_sql(load_type)}, {escape_sql(watermark_column)}, {str(schedule_enabled).lower()}, {escape_sql(schedule_cron)}, {escape_sql(schedule_timezone)},
-                {escape_sql(created_by)}, '{status}', current_timestamp(), current_timestamp()
+                '{connection_id}', {escape_sql(connection_name)}, '{connector_type}', {escape_sql(connector_name)},
+                {escape_sql(created_by)}, '{source_configuration_json}', '{tbl_configuration_json}',
+                {str(schedule_enabled).lower()}, {escape_sql(schedule_cron)}, {escape_sql(schedule_timezone)},
+                '{status}', NULL, NULL,
+                current_timestamp(), current_timestamp()
             )
         """
         
@@ -479,16 +583,16 @@ class ConnectorService:
             
             self.audit_logger.log_event(
                 user=user,
-                action=f"Saved Configuration (Async)",
+                action="Saved Configuration",
                 module="Connectors",
                 status="Success",
                 details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
             )
-            print(f"INFO: [Async Save] Successfully wrote {connection_id} to Delta table.")
+            print(f"INFO: [Save] Successfully wrote {connection_id} to Delta table.")
             
         except Exception as e:
             error_msg = str(e)
-            print(f"ERROR: [Async Save] Failed to write {connection_id}: {error_msg}")
+            print(f"ERROR: [Save] Failed to write {connection_id}: {error_msg}")
             
             # CASE 1: Session Death (Databricks Connect timeout)
             if "[NO_ACTIVE_SESSION]" in error_msg:
@@ -501,100 +605,28 @@ class ConnectorService:
                     
                     self.spark.sql(insert_sql).collect()
                     
-                    # Log recovery success
                     self.audit_logger.log_event(
                         user=user,
-                        action=f"Saved Configuration (Async)",
+                        action="Saved Configuration",
                         module="Connectors",
                         status="Success",
                         details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id}) after session recovery"
                     )
-                    print(f"INFO: [Async Save] Recovered and wrote {connection_id}.")
+                    print(f"INFO: [Save] Recovered and wrote {connection_id}.")
                 except Exception as retry_e:
-                    # Check if retry failed due to missing table (corner case)
-                    retry_msg = str(retry_e)
-                    if "TABLE_OR_VIEW_NOT_FOUND" in retry_msg or "does not exist" in retry_msg.lower():
-                        self._create_metadata_table(target_catalog, target_schema, target_table)
-                        self.spark.sql(insert_sql).collect()
-                        print(f"INFO: [Async Save] Created table and wrote {connection_id}.")
-                    else:
-                        print(f"ERROR: [Async Save] Recovery failed for {connection_id}: {retry_e}")
-
-            # CASE 2: Missing Table (First run)
-            elif "TABLE_OR_VIEW_NOT_FOUND" in error_msg or "does not exist" in error_msg.lower():
-                self._create_metadata_table(target_catalog, target_schema, target_table)
-                # Retry the insert
-                self.spark.sql(insert_sql).collect()
-                
-                # Log success after retry
-                self.audit_logger.log_event(
-                    user=user,
-                    action=f"Saved Configuration (Async)",
-                    module="Connectors",
-                    status="Success",
-                    details=f"Saved {connector_type} configuration '{connector_name}' (ID: {connection_id})"
-                )
-                print(f"INFO: [Async Save] Created table and wrote {connection_id}.")
+                    print(f"ERROR: [Save] Recovery failed for {connection_id}: {retry_e}")
+                    raise retry_e
             
             else:
-                # Log failure
+                # Log failure and re-raise so UI can show the error
                 self.audit_logger.log_event(
                     user=user,
-                    action=f"Saved Configuration (Async)",
+                    action="Saved Configuration",
                     module="Connectors",
                     status="Failed",
                     details=f"Failed to save {connector_type} configuration: {error_msg}"
                 )
-    
-    def _create_metadata_table(
-        self, 
-        catalog: str, 
-        schema: str, 
-        table: str
-    ):
-        """
-        Create the ingestion_metadata table if it doesn't exist.
-        """
-        # Ensure schema exists
-        self.spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
-        
-        # Create the table with enhanced schema
-        create_sql = f"""
-            CREATE TABLE IF NOT EXISTS {table} (
-                connection_id STRING COMMENT 'Unique identifier for the connection',
-                source_type STRING COMMENT 'Type of data source (e.g. sqlserver)',
-                source_name STRING COMMENT 'Display name of the source',
-                connection_name STRING COMMENT 'User-given connection name, unique per user',
-                configuration STRING COMMENT 'Connection parameters in JSON format',
-                selected_tables STRING COMMENT 'Selected schemas and tables in JSON format',
-                load_type STRING COMMENT 'full or incremental',
-                watermark_column STRING,
-                schedule_enabled BOOLEAN,
-                schedule_cron STRING,
-                schedule_timezone STRING,
-                created_by STRING COMMENT 'Username who created this connection',
-                status STRING COMMENT 'active, inactive',
-                created_at TIMESTAMP,
-                updated_at TIMESTAMP
-            ) 
-            USING DELTA
-            COMMENT 'Stores metadata and configuration for data ingestion pipelines'
-            TBLPROPERTIES (
-                'delta.enableChangeDataFeed' = 'true',
-                'delta.autoOptimize.optimizeWrite' = 'true'
-            )
-        """
-        self.spark.sql(create_sql)
-        
-        # Add new columns to existing tables (ALTER TABLE is idempotent for IF NOT EXISTS-like behavior)
-        try:
-            self.spark.sql(f"ALTER TABLE {table} ADD COLUMNS (connection_name STRING COMMENT 'User-given connection name')")
-        except Exception:
-            pass  # Column already exists
-        try:
-            self.spark.sql(f"ALTER TABLE {table} ADD COLUMNS (created_by STRING COMMENT 'Username who created this connection')")
-        except Exception:
-            pass  # Column already exists
+                raise
     
     def load_configuration(
         self, 
@@ -611,49 +643,53 @@ class ConnectorService:
         """
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         try:
+            try:
+                self.spark.sql(f"REFRESH TABLE {target_table}")
+            except Exception as e:
+                print(f"WARNING: REFRESH TABLE failed: {e}")
+
             # Query the latest configuration for this source_type
-            df = self.spark.sql(f"""
-                SELECT 
-                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
-                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    created_by, status, updated_at
-                FROM {target_table}
-                WHERE source_type = '{connector_type}'
-                ORDER BY updated_at DESC
-                LIMIT 1
-            """)
+            df = self.spark.sql(f"SELECT * FROM {target_table} WHERE source_type = '{connector_type}' ORDER BY updated_at DESC LIMIT 1")
             
             rows = df.collect()
             if not rows:
                 return None
             
             row = rows[0]
+            row_dict = row.asDict()
             
-            # Parse JSON fields
-            config_dict = json.loads(row['configuration'])
+            # Helper to safely get value from row
+            def safe_get(row_dict, key, default=None):
+                return row_dict.get(key, default)
+
+            # Parse JSON fields (new column names)
+            config_dict = json.loads(safe_get(row_dict, 'source_configuration', '{}'))
             try:
-                selected_tables = json.loads(row['selected_tables'])
+                selected_tables = json.loads(safe_get(row_dict, 'tbl_configuration', '{}'))
             except:
                 selected_tables = {}
             
+            updated_at = safe_get(row_dict, 'updated_at')
+            last_sync = updated_at.isoformat() if updated_at else None
+
             return ConnectorConfig(
-                connection_id=row['connection_id'],
-                connector_type=row['source_type'],
-                connector_name=row['source_name'],
-                connection_name=row.get('connection_name') or '',
+                connection_id=safe_get(row_dict, 'connection_id'),
+                connector_type=safe_get(row_dict, 'source_type'),
+                connector_name=safe_get(row_dict, 'source_name'),
+                connection_name=safe_get(row_dict, 'connection_name', ""),
                 config=config_dict,
                 selected_tables=selected_tables,
-                status=row['status'] or 'inactive',
-                created_by=row.get('created_by') or 'System',
-                load_type=row['load_type'],
-                watermark_column=row['watermark_column'],
-                last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
-                schedule_enabled=row['schedule_enabled'],
-                schedule_cron=row['schedule_cron'],
-                schedule_timezone=row['schedule_timezone']
+                status=safe_get(row_dict, 'status', 'inactive'),
+                created_by=safe_get(row_dict, 'created_by', 'System'),
+                last_sync_time=last_sync,
+                schedule_enabled=safe_get(row_dict, 'schedule_enabled', False),
+                schedule_cron=safe_get(row_dict, 'schedule_cron'),
+                schedule_timezone=safe_get(row_dict, 'schedule_timezone', 'UTC'),
+                bronze_configuration=safe_get(row_dict, 'bronze_configuration'),
+                silver_configuration=safe_get(row_dict, 'silver_configuration')
             )
             
         except Exception as e:
@@ -675,18 +711,20 @@ class ConnectorService:
         """
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         # 1. Try Local Cache First (Fast Path)
         cached_data = self._read_from_cache()
         if cached_data:
             try:
-                config_dict = json.loads(cached_data['configuration']) if isinstance(cached_data['configuration'], str) else cached_data['configuration']
+                # Support both old and new cache key names for compatibility
+                config_raw = cached_data.get('source_configuration') or cached_data.get('configuration', '{}')
+                config_dict = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
                 
                 selected_tables = {}
-                if 'selected_tables' in cached_data:
-                     st_val = cached_data['selected_tables']
-                     selected_tables = json.loads(st_val) if isinstance(st_val, str) else st_val
+                tbl_raw = cached_data.get('tbl_configuration') or cached_data.get('selected_tables')
+                if tbl_raw:
+                     selected_tables = json.loads(tbl_raw) if isinstance(tbl_raw, str) else tbl_raw
 
                 print("INFO: Loaded connector configuration from local cache.")
                 return ConnectorConfig(
@@ -698,8 +736,6 @@ class ConnectorService:
                     selected_tables=selected_tables,
                     status=cached_data.get('status', 'active'),
                     created_by=cached_data.get('created_by', 'System'),
-                    load_type=cached_data.get('load_type', 'full'),
-                    watermark_column=cached_data.get('watermark_column'),
                     last_sync_time=cached_data.get('updated_at'),
                     schedule_enabled=cached_data.get('schedule_enabled', False),
                     schedule_cron=cached_data.get('schedule_cron'),
@@ -713,9 +749,11 @@ class ConnectorService:
             # Query across ALL connector types, ordered by most recent
             df = self.spark.sql(f"""
                 SELECT 
-                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
-                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    created_by, status, updated_at
+                    connection_id, connection_name, source_type, source_name,
+                    created_by, source_configuration, tbl_configuration,
+                    schedule_enabled, schedule_cron, schedule_timezone,
+                    status, bronze_configuration, silver_configuration,
+                    updated_at
                 FROM {target_table}
                 ORDER BY updated_at DESC
                 LIMIT 1
@@ -728,9 +766,9 @@ class ConnectorService:
             row = rows[0]
             
             # Parse JSON fields
-            config_dict = json.loads(row['configuration'])
+            config_dict = json.loads(row['source_configuration'] or '{}')
             try:
-                selected_tables = json.loads(row['selected_tables'])
+                selected_tables = json.loads(row['tbl_configuration'] or '{}')
             except:
                 selected_tables = {}
             
@@ -738,17 +776,17 @@ class ConnectorService:
                 connection_id=row['connection_id'],
                 connector_type=row['source_type'],
                 connector_name=row['source_name'],
-                connection_name=row.get('connection_name') or '',
+                connection_name=row['connection_name'] or '',
                 config=config_dict,
                 selected_tables=selected_tables,
                 status=row['status'] or 'inactive',
-                created_by=row.get('created_by') or 'System',
-                load_type=row['load_type'],
-                watermark_column=row['watermark_column'],
+                created_by=row['created_by'] or 'System',
                 last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
                 schedule_enabled=row['schedule_enabled'],
                 schedule_cron=row['schedule_cron'],
-                schedule_timezone=row['schedule_timezone']
+                schedule_timezone=row['schedule_timezone'],
+                bronze_configuration=row['bronze_configuration'],
+                silver_configuration=row['silver_configuration']
             )
             
         except Exception as e:
@@ -758,6 +796,7 @@ class ConnectorService:
             print(f"Error loading latest configuration: {e}")
             return None
 
+    @_with_retry
     def get_configuration_by_id(self, connection_id: str) -> Optional[ConnectorConfig]:
         """
         Retrieves a connector configuration by its unique connection_id.
@@ -775,9 +814,11 @@ class ConnectorService:
             print("DEBUG: get_configuration_by_id - Empty connection_id provided")
             return None
             
+        _log_trace(f"Entering get_configuration_by_id for {connection_id}")
+        
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         # Sanitize the connection_id to prevent SQL injection
         safe_id = connection_id.strip().replace("'", "''")
@@ -785,27 +826,13 @@ class ConnectorService:
         print(f"DEBUG: Looking for connection_id='{safe_id}' in {target_table}")
         
         try:
-            # First, let's see what connection IDs exist in the table
-            all_ids_df = self.spark.sql(f"""
-                SELECT connection_id, source_name, updated_at
-                FROM {target_table}
-                ORDER BY updated_at DESC
-                LIMIT 10
-            """)
-            all_ids = all_ids_df.collect()
-            print(f"DEBUG: Available connection IDs in database:")
-            for row in all_ids:
-                print(f"  - {row['connection_id']} ({row['source_name']})")
-            
-            df = self.spark.sql(f"""
-                SELECT 
-                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
-                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    created_by, status, updated_at
-                FROM {target_table}
-                WHERE connection_id = '{safe_id}'
-                LIMIT 1
-            """)
+            # Refresh table metadata to ensure cache is fresh
+            try:
+                self.spark.sql(f"REFRESH TABLE {target_table}")
+            except Exception as e:
+                print(f"WARNING: REFRESH TABLE failed: {e}")
+
+            df = self.spark.sql(f"SELECT * FROM {target_table} WHERE connection_id = '{safe_id}' LIMIT 1")
             
             rows = df.collect()
             if not rows:
@@ -813,29 +840,37 @@ class ConnectorService:
                 return None
             
             row = rows[0]
+            row_dict = row.asDict()
+
+            # Helper to safely get value from row
+            def safe_get(row_dict, key, default=None):
+                return row_dict.get(key, default)
             
-            # Parse JSON fields
-            config_dict = json.loads(row['configuration'])
+            # Parse JSON fields (new column names)
+            config_dict = json.loads(safe_get(row_dict, 'source_configuration', '{}'))
             try:
-                selected_tables = json.loads(row['selected_tables'])
+                selected_tables = json.loads(safe_get(row_dict, 'tbl_configuration', '{}'))
             except:
                 selected_tables = {}
             
+            updated_at = safe_get(row_dict, 'updated_at')
+            last_sync = updated_at.isoformat() if updated_at else None
+
             return ConnectorConfig(
-                connection_id=row['connection_id'],
-                connector_type=row['source_type'],
-                connector_name=row['source_name'],
-                connection_name=row.get('connection_name') or '',
+                connection_id=safe_get(row_dict, 'connection_id'),
+                connector_type=safe_get(row_dict, 'source_type'),
+                connector_name=safe_get(row_dict, 'source_name'),
+                connection_name=safe_get(row_dict, 'connection_name', ""),
                 config=config_dict,
                 selected_tables=selected_tables,
-                status=row['status'] or 'inactive',
-                created_by=row.get('created_by') or 'System',
-                load_type=row['load_type'],
-                watermark_column=row['watermark_column'],
-                last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
-                schedule_enabled=row['schedule_enabled'],
-                schedule_cron=row['schedule_cron'],
-                schedule_timezone=row['schedule_timezone']
+                status=safe_get(row_dict, 'status', 'inactive'),
+                created_by=safe_get(row_dict, 'created_by', 'System'),
+                last_sync_time=last_sync,
+                schedule_enabled=safe_get(row_dict, 'schedule_enabled', False),
+                schedule_cron=safe_get(row_dict, 'schedule_cron'),
+                schedule_timezone=safe_get(row_dict, 'schedule_timezone', 'UTC'),
+                bronze_configuration=safe_get(row_dict, 'bronze_configuration'),
+                silver_configuration=safe_get(row_dict, 'silver_configuration')
             )
             
         except Exception as e:
@@ -864,12 +899,14 @@ class ConnectorService:
             
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         safe_name = connection_name.strip().replace("'", "''")
         safe_user = created_by.strip().replace("'", "''")
         
         try:
+            # If the column doesn't exist, this query will fail with AnalysisException.
+            # In that case, we return False (name doesn't exist/can't be checked).
             df = self.spark.sql(f"""
                 SELECT COUNT(*) as cnt
                 FROM {target_table}
@@ -878,80 +915,161 @@ class ConnectorService:
             """)
             rows = df.collect()
             return rows[0]['cnt'] > 0 if rows else False
-        except Exception as e:
-            error_msg = str(e)
-            if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
-                return False
-            print(f"WARNING: check_connection_name_exists failed: {e}")
+        except Exception:
             return False
 
+    @_with_retry
     def get_user_connections(self, username: str) -> List[ConnectorConfig]:
         """
-        Fetch all connections created by a specific user.
-        
-        Args:
-            username: The username to filter by
-            
-        Returns:
-            List of ConnectorConfig objects for the user's connections.
+        Fetch connections created by the specific user.
         """
-        if not username:
-            return []
-            
+        safe_user = username.replace("'", "") if username else ""
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
-        safe_user = username.strip().replace("'", "''")
+        print(f"DEBUG: Querying connections from table: {target_table} for user: {safe_user}")
         
         try:
-            df = self.spark.sql(f"""
-                SELECT 
-                    connection_id, source_type, source_name, connection_name, configuration, selected_tables,
-                    load_type, watermark_column, schedule_enabled, schedule_cron, schedule_timezone,
-                    created_by, status, updated_at
-                FROM {target_table}
-                WHERE LOWER(created_by) = LOWER('{safe_user}')
-                ORDER BY updated_at DESC
-            """)
-            
+            # Refresh table metadata to ensure cache is fresh
+            try:
+                self.spark.sql(f"REFRESH TABLE {target_table}")
+            except Exception as e:
+                print(f"WARNING: REFRESH TABLE failed: {e}")
+
+            df = self.spark.sql(f"SELECT * FROM {target_table}")
             rows = df.collect()
+            
+            # Helper to safely get value from row
+            def safe_get(row_dict, key, default=None):
+                return row_dict.get(key, default)
+
             connections = []
             for row in rows:
+                row_dict = row.asDict()
+                
+                # Filter by user (case-insensitive)
+                created_by = safe_get(row_dict, 'created_by', 'System')
+                if str(created_by).lower() != safe_user.lower():
+                    continue
+
                 try:
-                    config_dict = json.loads(row['configuration'])
+                    config_dict = json.loads(safe_get(row_dict, 'source_configuration', '{}'))
                 except:
                     config_dict = {}
                 try:
-                    selected_tables = json.loads(row['selected_tables'])
+                    selected_tables = json.loads(safe_get(row_dict, 'tbl_configuration', '{}'))
                 except:
                     selected_tables = {}
                 
+                updated_at = safe_get(row_dict, 'updated_at')
+                last_sync = updated_at.isoformat() if updated_at else None
+
                 connections.append(ConnectorConfig(
-                    connection_id=row['connection_id'],
-                    connector_type=row['source_type'],
-                    connector_name=row['source_name'],
-                    connection_name=row.get('connection_name') or '',
+                    connection_id=safe_get(row_dict, 'connection_id'),
+                    connector_type=safe_get(row_dict, 'source_type'),
+                    connector_name=safe_get(row_dict, 'source_name'),
+                    connection_name=safe_get(row_dict, 'connection_name', ""),
                     config=config_dict,
                     selected_tables=selected_tables,
-                    status=row['status'] or 'inactive',
-                    created_by=row.get('created_by') or 'System',
-                    load_type=row['load_type'],
-                    watermark_column=row['watermark_column'],
-                    last_sync_time=row['updated_at'].isoformat() if row['updated_at'] else None,
-                    schedule_enabled=row['schedule_enabled'],
-                    schedule_cron=row['schedule_cron'],
-                    schedule_timezone=row['schedule_timezone']
+                    status=safe_get(row_dict, 'status', 'inactive'),
+                    created_by=created_by,
+                    last_sync_time=last_sync,
+                    schedule_enabled=safe_get(row_dict, 'schedule_enabled', False),
+                    schedule_cron=safe_get(row_dict, 'schedule_cron'),
+                    schedule_timezone=safe_get(row_dict, 'schedule_timezone', 'UTC'),
+                    bronze_configuration=safe_get(row_dict, 'bronze_configuration'),
+                    silver_configuration=safe_get(row_dict, 'silver_configuration')
                 ))
+            
+            # Sort by updated_at desc
+            connections.sort(key=lambda x: x.last_sync_time or "", reverse=True)
+            return connections
+            
+        except Exception as e:
+            # If table doesn't exist, return empty list
+            if "not found" in str(e).lower() or "does not exist" in str(e).lower():
+                return []
+            print(f"Error fetching user connections: {e}")
+            return []
+
+    def get_all_connections(self) -> List[ConnectorConfig]:
+        """
+        Fetch all saved connections regardless of user.
+        Used as a fallback when user-specific connections are not found.
+        """
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
+        
+        try:
+            # Refresh table metadata to ensure cache is fresh
+            try:
+                self.spark.sql(f"REFRESH TABLE {target_table}")
+            except Exception as e:
+                print(f"WARNING: REFRESH TABLE failed: {e}")
+
+            df = self.spark.sql(f"SELECT * FROM {target_table}")
+            
+            rows = df.collect()
+            
+            # Helper to safely get value from row
+            def safe_get(row_dict, key, default=None):
+                return row_dict.get(key, default)
+
+            connections = []
+            for row in rows:
+                try:
+                    row_dict = row.asDict()
+                    
+                    try:
+                        config_dict = json.loads(safe_get(row_dict, 'source_configuration', '{}'))
+                    except:
+                        config_dict = {}
+                    try:
+                        selected_tables = json.loads(safe_get(row_dict, 'tbl_configuration', '{}'))
+                    except:
+                        selected_tables = {}
+                    
+                    # Handle potential missing timestamp
+                    updated_at = safe_get(row_dict, 'updated_at')
+                    last_sync = updated_at.isoformat() if updated_at else None
+
+                    connections.append(ConnectorConfig(
+                        connection_id=safe_get(row_dict, 'connection_id'),
+                        connector_type=safe_get(row_dict, 'source_type'),
+                        connector_name=safe_get(row_dict, 'source_name'),
+                        connection_name=safe_get(row_dict, 'connection_name', ""),
+                        config=config_dict,
+                        selected_tables=selected_tables,
+                        status=safe_get(row_dict, 'status', 'inactive'),
+                        created_by=safe_get(row_dict, 'created_by', 'System'),
+                        last_sync_time=last_sync,
+                        schedule_enabled=safe_get(row_dict, 'schedule_enabled', False),
+                        schedule_cron=safe_get(row_dict, 'schedule_cron'),
+                        schedule_timezone=safe_get(row_dict, 'schedule_timezone', 'UTC'),
+                        bronze_configuration=safe_get(row_dict, 'bronze_configuration'),
+                        silver_configuration=safe_get(row_dict, 'silver_configuration')
+                    ))
+                except Exception as row_e:
+                    print(f"Skipping invalid connection record in get_all_connections: {row_e}")
+                    continue
+            
+            # Sort by last updated (descending) in Python
+            connections.sort(key=lambda x: x.last_sync_time or "", reverse=True)
             
             return connections
             
         except Exception as e:
             error_msg = str(e)
             if "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+                if "column" in error_msg.lower():
+                    print(f"CRITICAL ERROR: Schema mismatch in configuration_metadata. Missing column? {e}")
+                    return []
                 return []
-            print(f"Error loading user connections: {e}")
-            return []
+            
+            print(f"Error loading all connections: {e}")
+            raise e
 
     def update_table_configuration(
         self,
@@ -974,15 +1092,15 @@ class ConnectorService:
             
         target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
         target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-        target_table = f"{target_catalog}.{target_schema}.ingestion_metadata"
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
         
         safe_id = connection_id.strip().replace("'", "''")
-        selected_tables_json = json.dumps(selected_tables).replace("'", "''")
+        tbl_configuration_json = json.dumps(selected_tables).replace("'", "''")
         
         try:
             update_sql = f"""
                 UPDATE {target_table}
-                SET selected_tables = '{selected_tables_json}',
+                SET tbl_configuration = '{tbl_configuration_json}',
                     updated_at = current_timestamp()
                 WHERE connection_id = '{safe_id}'
             """
@@ -991,7 +1109,7 @@ class ConnectorService:
             # Also update local cache if it matches
             cached_data = self._read_from_cache()
             if cached_data and cached_data.get('connection_id') == connection_id:
-                cached_data['selected_tables'] = selected_tables_json
+                cached_data['tbl_configuration'] = tbl_configuration_json
                 cached_data['updated_at'] = datetime.datetime.now().isoformat()
                 self._save_to_cache(cached_data)
             
@@ -1002,6 +1120,7 @@ class ConnectorService:
             print(f"ERROR: Failed to update table configuration: {e}")
             return False
 
+    @_with_retry
     def fetch_schemas_for_connection(self, connection_id: str, catalog: str = None) -> 'SchemaMetadata':
         """
         Fetch schema/table metadata for an existing connection by its ID.
@@ -1020,14 +1139,23 @@ class ConnectorService:
         if not config:
             raise ValueError(f"Connection '{connection_id}' not found.")
         
+        _log_trace(f"Config loaded for {connection_id}, resolving secrets...")
         resolved = self._resolve_secrets(config.config)
         
         # Inject catalog for Databricks if provided
-        if catalog and config.connector_type == "databricks":
-            resolved["catalog"] = catalog
+        if catalog:
+            if config.connector_type == "databricks":
+                resolved["catalog"] = catalog
+            elif config.connector_type == "sqlserver":
+                resolved["database"] = catalog
         
         adapter = self.get_adapter(config.connector_type)
-        return adapter.fetch_schemas_and_tables(self.spark, resolved)
+        _log_trace(f"Calling adapter.fetch_schemas_and_tables for {config.connector_type}...")
+        try:
+            return adapter.fetch_schemas_and_tables(self.spark, resolved)
+        except Exception as e:
+            _log_trace(f"Adapter fetch failed: {e}")
+            raise e
 
     def fetch_all_columns_for_table(
         self,
@@ -1056,8 +1184,11 @@ class ConnectorService:
         
         resolved = self._resolve_secrets(config.config)
         
-        if catalog and config.connector_type == "databricks":
-            resolved["catalog"] = catalog
+        if catalog:
+            if config.connector_type == "databricks":
+                resolved["catalog"] = catalog
+            elif config.connector_type == "sqlserver":
+                resolved["database"] = catalog
         
         adapter = self.get_adapter(config.connector_type)
         return adapter.fetch_columns(self.spark, resolved, schema, table)
