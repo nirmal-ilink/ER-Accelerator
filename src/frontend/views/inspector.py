@@ -166,25 +166,31 @@ def render():
         div[data-baseweb="select"] > div {{
             background-color: #FFFFFF !important;
             color: #0F172A !important;
-            border: 1.5px solid #CBD5E1 !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: 8px !important;
-            height: 40px !important;
-            min-height: 40px !important;
-            max-height: 40px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
             display: flex !important;
             align-items: center !important;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-            padding: 0 10px !important;
-            font-size: 13px !important;
-            line-height: 18px !important;
+            padding: 0 12px !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
+            transition: all 0.2s ease !important;
         }}
         
+        div[data-baseweb="select"] > div:hover {{
+            border-color: #CBD5E1 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        }}
+
         /* Selectbox text */
         div[data-baseweb="select"] span {{
-            font-size: 13px !important;
-            line-height: 18px !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
             color: #0F172A !important;
-            font-weight: 400 !important;
+            font-weight: 500 !important;
         }}
         
         /* === TEXT INPUT STYLING === */
@@ -210,15 +216,16 @@ def render():
         div[data-testid="stTextInput"] div[data-baseweb="input"] > div {{
             background-color: #FFFFFF !important;
             color: #0F172A !important;
-            border: 1.5px solid #CBD5E1 !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: 8px !important;
-            height: 40px !important;
-            min-height: 40px !important;
-            max-height: 40px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
             display: flex !important;
             align-items: center !important;
             padding: 0 !important;
+            transition: all 0.2s ease !important;
         }}
         
         /* Text input actual input element */
@@ -227,11 +234,11 @@ def render():
              background-color: transparent !important;
              border: none !important;
              outline: none !important;
-             height: 40px !important;
-             padding: 0 10px !important;
-             font-size: 13px !important;
-             line-height: 18px !important;
-             font-weight: 400 !important;
+             height: 38px !important;
+             padding: 0 12px !important;
+             font-size: 14px !important;
+             line-height: 20px !important;
+             font-weight: 500 !important;
              width: 100% !important;
         }}
         
@@ -255,40 +262,47 @@ def render():
         /* === DISABLED TEXT INPUT STYLING === */
         /* Style disabled text inputs (for N/A indicators) */
         div[data-testid="stTextInput"] input:disabled {{
-            background-color: #F1F5F9 !important;
+            background-color: #F8FAFC !important;
             color: #94A3B8 !important;
             font-style: italic !important;
             cursor: not-allowed !important;
         }}
         
         div[data-testid="stTextInput"] input:disabled + div {{
-            background-color: #F1F5F9 !important;
+            background-color: #F8FAFC !important;
         }}
         
         div[data-testid="stTextInput"]:has(input:disabled) div[data-baseweb="input"] > div {{
-            background-color: #F1F5F9 !important;
+            background-color: #F8FAFC !important;
             border-color: #E2E8F0 !important;
         }}
-
+        
         div[data-baseweb="popover"] div[data-baseweb="menu"] {{
             background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+            border-radius: 10px !important;
+            padding: 4px !important;
         }}
+        
         div[data-testid="stSelectbox"] label p {{
             font-weight: 600 !important;
             color: #334155 !important;
+            font-size: 13px !important;
+            margin-bottom: 4px !important;
         }}
 
         /* --- PROFESSIONAL EXPANDER STYLING (Folder Icon + Badges) --- */
         /* Badge Styling inside Expander: Use code blocks as pills */
         div[data-testid="stExpander"] summary code {{
-            background-color: #E2E8F0 !important;
+            background-color: #F1F5F9 !important;
             color: #475569 !important;
-            border-radius: 12px !important;
+            border-radius: 99px !important;
             padding: 2px 10px !important;
             font-family: var(--font, "Source Sans Pro", sans-serif) !important; /* Override monospace */
             font-size: 12px !important;
             font-weight: 600 !important;
-            border: none !important;
+            border: 1px solid #E2E8F0 !important;
             display: inline-block !important;
             vertical-align: middle !important;
             margin-left: 8px !important;
@@ -323,14 +337,14 @@ def render():
         }}
 
         /* --- PREMIUM BUTTON DESIGN --- */
-        /* Stage Navigation Buttons in Left Column (Not sidebar) */
-        [data-testid="stMain"] div.stButton > button[kind="secondary"] {{
+        /* Primary Button (Active Stage) in Main Area */
+        [data-testid="stMain"] button[data-testid="stBaseButton-secondary"] {{
             background-color: #FFFFFF !important;
             color: #475569 !important;
             border: 1px solid #E2E8F0 !important;
             border-radius: 12px !important;
             height: auto !important;
-            padding: 18px 20px !important;
+            padding: 16px 20px !important;
             width: 100% !important;
             justify-content: flex-start !important;
             text-align: left !important;
@@ -340,7 +354,7 @@ def render():
             font-weight: 600 !important;
             letter-spacing: -0.2px !important;
         }}
-        [data-testid="stMain"] div.stButton > button[kind="secondary"]:hover {{
+        [data-testid="stMain"] button[data-testid="stBaseButton-secondary"]:hover {{
             background-color: #FFFFFF !important;
             border-color: {COLORS['brand']}30 !important;
             color: {COLORS['brand']} !important;
@@ -611,6 +625,123 @@ def render():
             height: 44px !important;
             font-weight: 600 !important;
         }}
+
+        /* --- NEW PREMIUM UI ADDITIONS --- */
+        
+        /* 1. Enhanced Glassmorphism Card for Connection Select */
+        .connection-select-card {{
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.02), 
+                0 2px 4px -1px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }}
+        
+        .connection-select-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.04), 
+                0 4px 6px -2px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            border-color: rgba(209, 31, 65, 0.15); /* Brand color hint */
+        }}
+        
+        .connection-select-card::before {{
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #D11F41 0%, #E11D48 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }}
+        
+        .connection-select-card:hover::before {{
+            opacity: 1;
+        }}
+
+        /* 2. Refined Icon Container */
+        .icon-box-premium {{
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+            border: 1px solid #FECDD3;
+            color: #D11F41;
+            box-shadow: 0 2px 4px rgba(209, 31, 65, 0.05);
+        }}
+
+        /* 3. Status Badge refined */
+        .status-badge {{
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .status-badge.success {{
+            background-color: #ECFDF5;
+            color: #059669;
+            border: 1px solid #D1FAE5;
+        }}
+        .status-badge.warning {{
+            background-color: #FFFBEB;
+            color: #D97706;
+            border: 1px solid #FEF3C7;
+        }}
+        
+        /* 4. Animated 'Live' Pulse */
+        @keyframes pulse-ring {{
+            0% {{ transform: scale(0.33); }}
+            80%, 100% {{ opacity: 0; }}
+        }}
+        @keyframes pulse-dot {{
+            0% {{ transform: scale(0.8); }}
+            50% {{ transform: scale(1); }}
+            100% {{ transform: scale(0.8); }}
+        }}
+        .live-dot-ring {{
+            position: relative;
+            width: 12px; height: 12px;
+        }}
+        .live-dot-ring::before {{
+            content: '';
+            position: absolute;
+            display: block;
+            width: 200%; height: 200%;
+            box-sizing: border-box;
+            margin-left: -50%; margin-top: -50%;
+            border-radius: 50%;
+            background-color: #10B981;
+            animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            opacity: 0.6;
+        }}
+        .live-dot-ring::after {{
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            display: block;
+            width: 100%; height: 100%;
+            background-color: #10B981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            animation: pulse-dot 1.8s cubic-bezier(0.455, 0.03, 0.515, 0.955) -0.4s infinite;
+        }}
     </style>
     """), unsafe_allow_html=True)
 
@@ -669,25 +800,26 @@ def render():
         s_color = COLORS['success'] if active_stage['status'] == "done" else COLORS['brand'] if active_stage['status'] == "active" else COLORS['muted']
         s_fill = "fill-done" if active_stage['status'] == "done" else "fill-active" if active_stage['status'] == "active" else ""
         
-        st.markdown(clean_html(f"""
-        <div class="detail-card">
-            <div class="dc-header">
-                <div class="dc-title">
-                    <div style="background: {s_color}10; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        {get_svg_icon(active_stage['icon'], s_color)}
+        if active_stage['name'] != "Ingestion":
+            st.markdown(clean_html(f"""
+            <div class="detail-card">
+                <div class="dc-header">
+                    <div class="dc-title">
+                        <div style="background: {s_color}10; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            {get_svg_icon(active_stage['icon'], s_color)}
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: {s_color}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;">Component Status: {active_stage['status']}</div>
+                            {active_stage['name']}
+                        </div>
                     </div>
-                    <div>
-                        <div style="font-size: 12px; font-weight: 700; color: {s_color}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;">Component Status: {active_stage['status']}</div>
-                        {active_stage['name']}
+                    <div style="background: {s_color}10; color: {s_color}; padding: 6px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; border: 1px solid {s_color}20;">
+                        {active_stage['meta']}
                     </div>
                 </div>
-                <div style="background: {s_color}10; color: {s_color}; padding: 6px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; border: 1px solid {s_color}20;">
-                    {active_stage['meta']}
-                </div>
-            </div>
-            
-            <p style="color: #64748B; font-size: 15px; margin-bottom: 32px; line-height: 1.6;">{active_stage['desc']}</p>
-        """), unsafe_allow_html=True)
+                
+                <p style="color: #64748B; font-size: 15px; margin-bottom: 32px; line-height: 1.6;">{active_stage['desc']}</p>
+            """), unsafe_allow_html=True)
         
         # Check if this is the Ingestion stage - show Load Configuration
         if active_stage['name'] == "Ingestion":
@@ -708,122 +840,289 @@ def render():
             }
             
             # ================================================================
-            # STEP 1: SELECT SAVED CONNECTION (Connection Name Only)
+            # STEP 0 & 1: UNIFIED CONNECTION & STATUS CARD
             # ================================================================
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                    <div style="background: linear-gradient(135deg, {COLORS['brand']}15 0%, {COLORS['brand']}08 100%); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid {COLORS['brand']}20;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{COLORS['brand']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div style="font-weight: 700; color: #0F172A; font-size: 15px;">Select Connection</div>
-                        <div style="color: #64748B; font-size: 12px;">Choose a saved connection to begin ingestion setup</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _loaded_conf = st.session_state.get("ingestion_connector_config")
             
-            # --- Fetch saved connections from backend ---
-            current_user = st.session_state.get("user_name", "")
-            connection_options = ["-- Select a saved connection --"]
-            connection_map = {}
-            
-            # Cache connections in session state to avoid blocking Spark query on every rerun
-            # Initialize Service ONCE at the top of this block
-            from src.backend.connectors import get_connector_service as _get_conn_svc
-            _conn_svc = _get_conn_svc()
+            # CSS for the unified card components - INJECTED HERE TO SCOPE IT LOCALLY
+            st.markdown(clean_html(f"""
+            <style>
+                /* PREMIUM UI CARD STYLING - REFINED EDITION */
+                
+                /* Main Container for the Card Header */
+                .uic-card-header {{
+                    position: relative;
+                    padding: 24px 28px;
+                    border-radius: 12px 12px 0 0;
+                    margin: -16px -16px 20px -16px; /* Negative margin to fill st.container */
+                    border-bottom: 1px solid #F1F5F9;
+                }}
 
-            # Force refresh by changing key (v2) to clear stale empty states
-            cache_key = "_cached_saved_connections_v2"
-            if cache_key not in st.session_state:
-                try:
-                    with st.spinner("Loading saved connections..."):
-                        import time # Added for start_time
-                        
-                        start_time = time.time()
-                        # 1. Try fetching user-specific connections
-                        st.toast(f"Checking connections for user: {current_user}...")
-                        print(f"DEBUG: Fetching connections for user: '{current_user}'")
-                        user_connections = _conn_svc.get_user_connections(current_user)
-                        
-                        # 2. Fallback: If no user connections, fetch ALL connections (visibility safety net)
-                        # This handles cases where 'created_by' column is missing or default 'System' was used
-                        if not user_connections:
-                            st.toast("No user connections found. Checking system-wide...")
-                            print("DEBUG: No user-specific connections found. Falling back to fetching ALL connections.")
-                            all_connections = _conn_svc.get_all_connections()
-                            user_connections = all_connections
-                        
-                        st.session_state[cache_key] = user_connections
-                        
-                        duration = time.time() - start_time
-                        if user_connections:
-                            st.toast(f"Loaded {len(user_connections)} connections in {duration:.2f}s")
-                        else:
-                            st.toast("No saved connections found.")
+                /* Live Header Theme */
+                .uic-header-live {{
+                    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+                }}
+
+                /* Setup Header Theme */
+                .uic-header-setup {{
+                    background: linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%);
+                }}
+
+                /* Icon Box Styling - Clean & Modern */
+                .uic-icon-box {{
+                    width: 48px; height: 48px; 
+                    border-radius: 12px; 
+                    display: flex; align-items: center; justify-content: center;
+                    background: #FFFFFF;
+                    border: 1px solid #E2E8F0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                }}
+                
+                /* Typography */
+                .uic-super-title {{
+                    font-size: 20px; 
+                    font-weight: 700; 
+                    color: #0F172A; 
+                    letter-spacing: -0.5px;
+                    line-height: 1.2;
+                    font-family: 'Inter', sans-serif;
+                }}
+                .uic-sub-label {{
+                    font-size: 11px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 4px;
+                    display: flex; align-items: center; gap: 6px;
+                }}
+                
+                /* Static Dot (No Ripple) */
+                .uic-dot {{
+                    width: 6px; height: 6px; 
+                    border-radius: 50%;
+                }}
+                
+                /* Metrics & Badges */
+                .uic-badge {{
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.3px;
+                }}
+                .uic-metric {{
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 12px;
+                    color: #64748B;
+                    font-weight: 500;
+                    background: #F8FAFC;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1px solid #F1F5F9;
+                }}
+
+                /* Small 'Manage' Button in Connection Card (Targeted via Tooltip presence) */
+                div.stButton:has([data-testid="stTooltipIcon"]) button[data-testid="stBaseButton-secondary"] {{
+                     border-radius: 8px !important;
+                     padding: 0 16px !important;
+                     height: 38px !important;
+                     margin-top: -2px !important; /* Move up to align with input */
+                     line-height: 1 !important;
+                     border: 1px solid #E2E8F0 !important;
+                     display: flex !important;
+                     align-items: center !important;
+                     justify-content: center !important;
+                     color: #475569 !important;
+                     background-color: #FFFFFF !important;
+                     font-weight: 600 !important;
+                     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+                }}
+                
+                div.stButton:has([data-testid="stTooltipIcon"]) button[data-testid="stBaseButton-secondary"]:hover {{
+                     border-color: #DC2626 !important;
+                     color: #DC2626 !important;
+                     background-color: #FFFFFF !important;
+                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+                     transform: translateY(-1px) !important;
+                }}
+                
+                div.stButton:has([data-testid="stTooltipIcon"]) button[data-testid="stBaseButton-secondary"]:active {{
+                     transform: translateY(0) !important;
+                     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+                }}
+                
+                /* Light Theme Tooltip for Manage Button */
+                [data-testid="stTooltipContent"] {{
+                     background-color: #FFFFFF !important;
+                     color: #0F172A !important;
+                     border: 1px solid #E2E8F0 !important;
+                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+                     font-weight: 500 !important;
+                }}
+
+            </style>
+            """), unsafe_allow_html=True)
+
+            with st.container(border=True):
+                # --- HEADER SECTION (HTML) ---
+                if _loaded_conf:
+                    # LIVE / CONNECTED STATE
+                    _act_type = _loaded_conf.connector_type
+                    _disp_name = _loaded_conf.connection_name or _loaded_conf.connector_name or (_act_type.upper() if _act_type else "Unknown")
+                    _l_sync = _loaded_conf.last_sync_time[:16].replace("T", " ") if _loaded_conf.last_sync_time else "Just now"
+                    
+                    st.markdown(clean_html(f"""
+                    <div class="uic-card-header uic-header-live">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="display: flex; align-items: center; gap: 20px;">
+                                <!-- Live Icon -->
+                                <div class="uic-icon-box" style="color: #10B981;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 6L9 17l-5-5"/>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Connection Info -->
+                                <div>
+                                    <div class="uic-sub-label" style="color: #10B981;">
+                                        <div class="uic-dot" style="background-color: #10B981;"></div>
+                                        Live Connection
+                                    </div>
+                                    <div class="uic-super-title">
+                                        {_disp_name}
+                                    </div>
+                                    <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                                        <span class="uic-badge" style="background: #ECFDF5; color: #047857; border: 1px solid #D1FAE5;">
+                                            {_act_type.upper() if _act_type else 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            # Show which table was queried to help debug
-                            target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
-                            target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
-                            table_path = f"{target_catalog}.{target_schema}.configuration_metadata"
-                            st.warning(f"No connections found in `{table_path}` for user `{current_user}`. Please verify your `DATABRICKS_CATALOG` and `DATABRICKS_SCHEMA` secrets.")
+                            <!-- Metadata -->
+                            <div style="text-align: right;">
+                                <div style="font-size: 10px; font-weight: 600; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">Last Sync</div>
+                                <div class="uic-metric">{_l_sync}</div>
+                            </div>
+                        </div>
+                    </div>
+                    """), unsafe_allow_html=True)
+                else:
+                    # SETUP REQUIRED STATE
+                    st.markdown(clean_html(f"""
+                    <div class="uic-card-header uic-header-setup">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 20px;">
+                                <div class="uic-icon-box" style="color: #F59E0B;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="uic-sub-label" style="color: #D97706;">
+                                        Action Required
+                                    </div>
+                                    <div class="uic-super-title">
+                                        Connection Setup
+                                    </div>
+                                    <div style="font-size: 13px; color: #64748B; margin-top: 4px;">
+                                        Select a connection profile below to start.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="uic-badge" style="background: #FFFBEB; color: #B45309; border: 1px solid #FEF3C7;">
+                                Select Profile
+                            </div>
+                        </div>
+                    </div>
+                    """), unsafe_allow_html=True)
+
+                # --- BODY SECTION (WIDGETS) ---
+                # Fetch saved connections logic...
+                current_user = st.session_state.get("user_name", "")
+                connection_options = ["-- Select a saved connection --"]
+                connection_map = {}
+                
+                from src.backend.connectors import get_connector_service as _get_conn_svc
+                _conn_svc = _get_conn_svc()
+
+                cache_key = "_cached_saved_connections_v2"
+                if cache_key not in st.session_state:
+                    try:
+                        with st.spinner("Loading saved connections..."):
+                            import time 
+                            start_time = time.time()
+                            user_connections = _conn_svc.get_user_connections(current_user)
                             
-                except Exception as e:
-                    st.error(f"Failed to load connections: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    st.session_state[cache_key] = []
-            
-                except Exception as e:
-                    st.error(f"Failed to load connections: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    st.session_state[cache_key] = []
-            
-            # Build dropdown options from cached connections
-            for uc in st.session_state.get(cache_key, []):
-                source_label = uc.connector_type.upper() if uc.connector_type else "UNKNOWN"
-                label = f"{uc.connection_name or uc.connector_name} ({source_label})"
-                connection_options.append(label)
-                connection_map[label] = uc
-            
-            # Auto-select if there's already a loaded config
-            default_index = 0
-            loaded_config = st.session_state.get("ingestion_connector_config")
-            if loaded_config:
-                for idx, label in enumerate(connection_options):
-                    if label in connection_map and connection_map[label].connection_id == loaded_config.connection_id:
-                        default_index = idx
-                        break
-            
-            selected_conn_label = st.selectbox(
-                "Saved Connections",
-                options=connection_options,
-                index=default_index,
-                key="ingestion_conn_dropdown",
-                label_visibility="collapsed",
-            )
-            
-            # Handle dropdown selection
-            if selected_conn_label != "-- Select a saved connection --" and selected_conn_label in connection_map:
-                selected_conn = connection_map[selected_conn_label]
-                prev_config = st.session_state.get("ingestion_connector_config")
-                if not prev_config or prev_config.connection_id != selected_conn.connection_id:
-                    st.session_state["ingestion_connector_config"] = selected_conn
-                    st.session_state["ingestion_config_cached"] = True
-                    st.session_state["ingestion_connector_type"] = selected_conn.connector_type
-                    st.session_state["ingestion_is_databricks"] = selected_conn.connector_type == "databricks"
-                    # Clear cached metadata when connection changes
-                    st.session_state.pop("inspector_schema_metadata", None)
-                    st.session_state.pop("inspector_selected_tables", None)
-                    st.session_state.pop("inspector_table_configs", None)
-                    st.session_state.pop("ingestion_catalogs", None)
-                    st.session_state.pop("ingestion_selected_catalog", None)
-                    st.rerun()
-            
+                            if not user_connections:
+                                all_connections = _conn_svc.get_all_connections()
+                                user_connections = all_connections
+                            
+                            st.session_state[cache_key] = user_connections
+                            
+                            duration = time.time() - start_time
+                            if user_connections:
+                                st.toast(f"Loaded {len(user_connections)} connections in {duration:.2f}s")
+                            else:
+                                st.toast("No saved connections found.")
+                    except Exception as e:
+                        st.error(f"Failed to load connections: {e}")
+                        st.session_state[cache_key] = []
+                
+                for uc in st.session_state.get(cache_key, []):
+                    source_label = uc.connector_type.upper() if uc.connector_type else "UNKNOWN"
+                    label = f"{uc.connection_name or uc.connector_name} ({source_label})"
+                    connection_options.append(label)
+                    connection_map[label] = uc
+                
+                default_index = 0
+                loaded_config = st.session_state.get("ingestion_connector_config")
+                if loaded_config:
+                    for idx, label in enumerate(connection_options):
+                        if label in connection_map and connection_map[label].connection_id == loaded_config.connection_id:
+                            default_index = idx
+                            break
+                
+                # Layout: Select Area with cleaner containment
+                # st.markdown('<div class="uic-select-area">', unsafe_allow_html=True)
+                
+                c_sel, c_act = st.columns([0.88, 0.12], gap="small")
+                
+                with c_sel:
+                    selected_conn_label = st.selectbox(
+                        "Saved Connections",
+                        options=connection_options,
+                        index=default_index,
+                        key="ingestion_conn_dropdown",
+                        label_visibility="collapsed",
+                        placeholder="Choose a connection profile..."
+                    )
+                
+                with c_act:
+                    # Settings / Edit button (Refined visual - Text based)
+                    if st.button("Manage", help="Manage Connections", use_container_width=True):
+                         st.session_state['current_page'] = "Connectors"
+                         st.rerun()
+                
+                # st.markdown('</div>', unsafe_allow_html=True) # End uic-select-area
+
+                # Handle Selection
+                if selected_conn_label != "-- Select a saved connection --" and selected_conn_label in connection_map:
+                    selected_conn = connection_map[selected_conn_label]
+                    prev_config = st.session_state.get("ingestion_connector_config")
+                    if not prev_config or prev_config.connection_id != selected_conn.connection_id:
+                        st.session_state["ingestion_connector_config"] = selected_conn
+                        st.session_state["ingestion_config_cached"] = True
+                        st.session_state["ingestion_connector_type"] = selected_conn.connector_type
+                        st.session_state["ingestion_is_databricks"] = selected_conn.connector_type == "databricks"
+                        st.session_state.pop("inspector_schema_metadata", None)
+                        st.session_state.pop("inspector_selected_tables", None)
+                        st.session_state.pop("inspector_table_configs", None)
+                        st.session_state.pop("ingestion_catalogs", None)
+                        st.session_state.pop("ingestion_selected_catalog", None)
+                        st.rerun()
+
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             
             # ================================================================
@@ -838,39 +1137,14 @@ def render():
                 last_sync = loaded_config.last_sync_time[:16].replace("T", " ") if loaded_config.last_sync_time else "Just now"
                 hierarchy = SOURCE_HIERARCHY.get(active_connector_type, ("Database", "Schema", "Table"))
                 
-                # --- Source Summary Card ---
-                st.markdown(f"""
-                <div class="source-card-premium">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="display: flex; align-items: center; gap: 18px;">
-                            <div style="background: linear-gradient(135deg, {COLORS['success']}18 0%, {COLORS['success']}08 100%); width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid {COLORS['success']}25;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{COLORS['success']}" stroke-width="2">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <span class="live-indicator"></span>
-                                    <span style="font-size: 11px; font-weight: 700; color: {COLORS['success']}; text-transform: uppercase; letter-spacing: 0.8px;">Source Active</span>
-                                </div>
-                                <div style="font-weight: 700; color: #0F172A; font-size: 20px; letter-spacing: -0.4px;">{connector_display_name}</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
-                                    <span style="color: #94A3B8;">Last sync:</span> {last_sync}
-                                    &nbsp;&bull;&nbsp;
-                                    <span style="color: #94A3B8;">Type:</span> {active_connector_type.upper() if active_connector_type else 'N/A'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+
                 
                 # --- Hierarchical Metadata Browser ---
-                st.markdown(f"""
+                st.markdown(clean_html(f"""
                 <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 12px;">
                     {hierarchy[0]} / {hierarchy[1]} / {hierarchy[2]} Browser
                 </div>
-                """, unsafe_allow_html=True)
+                """), unsafe_allow_html=True)
                 
                 # Level 1: Catalog / Database / Lakehouse
                 level1_label = hierarchy[0]
@@ -907,11 +1181,11 @@ def render():
                                 pass
                     
                     # Custom HTML Layout for Selectbox Label
-                    st.markdown(f"""
+                    st.markdown(clean_html(f"""
                     <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
                         {level1_label}
                     </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
                                 
                     level1_value = st.selectbox(level1_label, options=catalogs, index=default_idx, key="ingestion_selected_catalog", label_visibility="collapsed")
                 else:
@@ -920,7 +1194,7 @@ def render():
                     
                     # Custom HTML Layout to fix "DATABASE" alignment issue
                     # We render the label and value as a single HTML block
-                    st.markdown(f"""
+                    st.markdown(clean_html(f"""
                     <div style="margin-bottom: 20px;">
                         <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
                             {level1_label}
@@ -940,7 +1214,7 @@ def render():
                             {db_name}
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
                     
                     # Hidden input to maintain state if needed (though level1_value is just read)
                     level1_value = db_name

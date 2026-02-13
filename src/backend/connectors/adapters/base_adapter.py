@@ -44,7 +44,7 @@ class BaseConnectorAdapter(ABC):
         Returns the unique identifier for this connector type.
         Example: 'sqlserver', 'snowflake', 'oracle'
         """
-        pass
+        ...
     
     @property
     @abstractmethod
@@ -53,7 +53,7 @@ class BaseConnectorAdapter(ABC):
         Returns the human-readable name for this connector.
         Example: 'SQL Server', 'Snowflake', 'Oracle DB'
         """
-        pass
+        ...
     
     @property
     @abstractmethod
@@ -62,7 +62,7 @@ class BaseConnectorAdapter(ABC):
         Returns list of required configuration fields.
         Example: ['server', 'database', 'user', 'password']
         """
-        pass
+        ...
     
     @property
     def requires_spark_for_test(self) -> bool:
@@ -83,7 +83,7 @@ class BaseConnectorAdapter(ABC):
         Returns:
             JDBC URL string (e.g., 'jdbc:sqlserver://server:1433;database=db')
         """
-        pass
+        ...
     
     @abstractmethod
     def get_jdbc_properties(self, config: Dict[str, Any]) -> Dict[str, str]:
@@ -96,7 +96,7 @@ class BaseConnectorAdapter(ABC):
         Returns:
             Dictionary of JDBC properties for Spark JDBC reader
         """
-        pass
+        ...
     
     @abstractmethod
     def get_jdbc_driver_class(self) -> str:
@@ -104,7 +104,7 @@ class BaseConnectorAdapter(ABC):
         Returns the fully qualified JDBC driver class name.
         Example: 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
         """
-        pass
+        ...
     
     @abstractmethod
     def fetch_schemas_and_tables(self, spark, config: Dict[str, Any]) -> SchemaMetadata:
@@ -122,7 +122,7 @@ class BaseConnectorAdapter(ABC):
             ConnectionError: If unable to connect to database
             PermissionError: If user lacks read access to metadata
         """
-        pass
+        ...
     
     @abstractmethod
     def test_connection(self, spark, config: Dict[str, Any]) -> ConnectionTestResult:
@@ -136,7 +136,7 @@ class BaseConnectorAdapter(ABC):
         Returns:
             ConnectionTestResult with success status and message
         """
-        pass
+        ...
 
     @abstractmethod
     def fetch_columns(self, spark, config: Dict[str, Any], schema: str, table: str) -> List[Dict[str, str]]:
@@ -152,7 +152,7 @@ class BaseConnectorAdapter(ABC):
         Returns:
             List of dictionaries containing 'name' and 'type' keys
         """
-        pass
+        ...
     
     def validate_config(self, config: Dict[str, Any]) -> tuple[bool, str]:
         """

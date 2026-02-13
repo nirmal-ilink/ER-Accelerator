@@ -240,7 +240,7 @@ class DatabricksAdapter(BaseConnectorAdapter):
                 schemas=schemas,
                 total_schemas=len(schemas),
                 total_tables=sum(len(tables) for tables in schemas.values()),
-                fetch_time_seconds=round(fetch_time, 2)
+                fetch_time_seconds=round(float(fetch_time), 2)
             )
             
         except Exception as e:
@@ -333,7 +333,7 @@ class DatabricksAdapter(BaseConnectorAdapter):
             cursor.close()
             connection.close()
             
-            elapsed = round(time.time() - start_time, 2)
+            elapsed = round(float(time.time() - start_time), 2)
             
             return ConnectionTestResult(
                 success=True,
@@ -358,10 +358,10 @@ class DatabricksAdapter(BaseConnectorAdapter):
             elif "ModuleNotFoundError" in error_msg or "No module named 'databricks'" in error_msg:
                 user_msg = "Missing package: databricks-sql-connector. Add to requirements.txt."
             else:
-                user_msg = f"Connection failed: {error_msg[:150]}"
+                user_msg = f"Connection failed: {str(error_msg)[:150]}"
             
             return ConnectionTestResult(
                 success=False,
                 message=user_msg,
-                details={"raw_error": error_msg[:500]}
+                details={"raw_error": str(error_msg)[:500]}
             )

@@ -83,10 +83,10 @@ def generate_match_data(num_clusters=15):
             phone = base_phone if random.random() > 0.1 else None
             
             # Confidence score
-            conf = round(random.uniform(0.70, 0.99), 2)
+            conf = round(float(random.uniform(0.70, 0.99)), 2)
             
             rec = {
-                "unique_id": f"{src[:3].upper()}{random.randint(100, 999)}",
+                "unique_id": f"{str(src)[:3].upper()}{random.randint(100, 999)}",
                 "npi": base_npi if random.random() > 0.1 else str(int(base_npi) + 1), # Occasional typo
                 "first_name": first_name,
                 "last_name": last_name,

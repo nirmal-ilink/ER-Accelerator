@@ -1235,7 +1235,7 @@ class ConnectorService:
             print(f"DEBUG: Using existing_cluster_id={cluster_id} for ingestion task")
             
             run = w.jobs.submit(
-                run_name=f"Ingestion_Trigger_{connection_id[:8]}",
+                run_name=f"Ingestion_Trigger_{str(connection_id)[:8]}",
                 tasks=[
                     Task(
                         task_key="ingestion_task",
@@ -1323,7 +1323,7 @@ class ConnectorService:
                 raise ValueError("DATABRICKS_CLUSTER_ID not configured. Set it in .streamlit/secrets.toml or Databricks secret scope.")
             
             run_output = w.jobs.submit(
-                run_name=f"Profiling_Trigger_{connection_id[:8]}",
+                run_name=f"Profiling_Trigger_{str(connection_id)[:8]}",
                 tasks=[
                     Task(
                         task_key="profiling_task",

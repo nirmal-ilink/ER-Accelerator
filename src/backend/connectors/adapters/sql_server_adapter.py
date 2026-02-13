@@ -80,7 +80,7 @@ class SQLServerAdapter(BaseConnectorAdapter):
         except Exception as e:
             print(f"Error fetching databases: {e}")
             # Fallback: return the configured database if discovery fails
-            return [config.get('database')] if config.get('database') else []
+            return [str(config.get('database'))] if config.get('database') else []
     
     def build_jdbc_url(self, config: Dict[str, Any]) -> str:
         """
@@ -220,7 +220,7 @@ class SQLServerAdapter(BaseConnectorAdapter):
                 schemas=schemas,
                 total_schemas=len(schemas),
                 total_tables=sum(len(tables) for tables in schemas.values()),
-                fetch_time_seconds=round(fetch_time, 2)
+                fetch_time_seconds=round(float(fetch_time), 2)
             )
             
         except Exception as e:
@@ -334,7 +334,7 @@ class SQLServerAdapter(BaseConnectorAdapter):
             )
             
             row = df.first()
-            elapsed = round(time.time() - start_time, 2)
+            elapsed = round(float(time.time() - start_time), 2)
             
             # Extract SQL Server version info
             version_info = row['version'] if row else "Unknown"
@@ -367,10 +367,10 @@ class SQLServerAdapter(BaseConnectorAdapter):
             elif "[NO_ACTIVE_SESSION]" in error_msg:
                 user_msg = "Databricks Cluster is not reachable or Spark Session is inactive. Since you are running locally with Databricks Connect, Spark operations require an active cluster. Please ensure your Databricks cluster is running and accessible."
             else:
-                user_msg = f"Connection failed: {error_msg[:100]}"
+                user_msg = f"Connection failed: {str(error_msg)[:100]}"
             
             return ConnectionTestResult(
                 success=False,
                 message=user_msg,
-                details={"raw_error": error_msg[:500]}
+                details={"raw_error": str(error_msg)[:500]}
             )

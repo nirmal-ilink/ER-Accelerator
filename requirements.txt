@@ -8,3 +8,5 @@ databricks-connect
 databricks-sdk
 databricks-sql-connector
 pyarrow
+
+toml

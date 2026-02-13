@@ -605,3 +605,16 @@ org.apache.spark.sql.AnalysisException
 2026-02-12 18:58:43,admin,User Login,Auth,Success,Session started for admin
 2026-02-12 19:01:59,admin,User Login,Auth,Success,Session started for admin
 2026-02-12 19:05:56,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 10:52:17,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 11:30:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 14:04:12,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 14:17:04,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 14:17:23,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 14:27:09,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 14:58:47,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-13 15:03:36,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 15:06:48,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-13 15:19:53,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 15:27:56,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-13 15:28:57,admin,User Login,Auth,Success,Session started for admin
+2026-02-13 18:00:31,admin,User Login,Auth,Success,Session started for admin
