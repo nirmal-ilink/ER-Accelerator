@@ -4,6 +4,7 @@ import random
 import datetime
 import textwrap
 import sys
+import time
 from src.backend.connectors import get_connector_service, reset_connector_service
 
 # --- UTILS ---
@@ -860,7 +861,7 @@ def render():
 
                 /* Live Header Theme */
                 .uic-header-live {{
-                    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+                    background: #FFFFFF;
                 }}
 
                 /* Setup Header Theme */
@@ -1116,11 +1117,51 @@ def render():
                         st.session_state["ingestion_config_cached"] = True
                         st.session_state["ingestion_connector_type"] = selected_conn.connector_type
                         st.session_state["ingestion_is_databricks"] = selected_conn.connector_type == "databricks"
+                        
+                        # Reset metadata state initially
                         st.session_state.pop("inspector_schema_metadata", None)
-                        st.session_state.pop("inspector_selected_tables", None)
-                        st.session_state.pop("inspector_table_configs", None)
                         st.session_state.pop("ingestion_catalogs", None)
                         st.session_state.pop("ingestion_selected_catalog", None)
+                        
+                        # RESTORE STATE: If selected_tables exist in the config, populate the UI state
+                        if selected_conn.selected_tables:
+                            # 1. Restore selected tables map (Schema -> List[Table])
+                            restored_selection = {}
+                            # 2. Restore table configs (Schema.Table -> {load_type, watermark})
+                            restored_configs = {}
+                            
+                            for schema, tables in selected_conn.selected_tables.items():
+                                restored_selection[schema] = []
+                                for tbl_obj in tables:
+                                    # Handle both dict (new format) and string (legacy format) if any
+                                    if isinstance(tbl_obj, dict):
+                                        t_name = tbl_obj["table_name"]
+                                        t_load = tbl_obj.get("load_type", "full")
+                                        t_watermark = tbl_obj.get("watermark_column", "")
+                                        
+                                        restored_selection[schema].append(t_name)
+                                        restored_configs[f"{schema}.{t_name}"] = {
+                                            "load_type": t_load,
+                                            "watermark_column": t_watermark
+                                        }
+                                        # Set checkbox state
+                                        st.session_state[f"insp_tbl_{schema}_{t_name}"] = True
+                                    else:
+                                        # Fallback for simple string list
+                                        restored_selection[schema].append(tbl_obj)
+                                        st.session_state[f"insp_tbl_{schema}_{tbl_obj}"] = True
+
+                            st.session_state["inspector_selected_tables"] = restored_selection
+                            st.session_state["inspector_table_configs"] = restored_configs
+                            
+                            # Enable Ingestion Button immediately since we have a valid saved config
+                            st.session_state["ingestion_config_saved"] = True
+                        else:
+                            # Verify if no existing config, ensure state is clear
+                            st.session_state.pop("inspector_selected_tables", None)
+                            st.session_state.pop("inspector_table_configs", None)
+                            st.session_state["ingestion_config_saved"] = False
+
                         st.rerun()
 
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
@@ -1140,84 +1181,87 @@ def render():
 
                 
                 # --- Hierarchical Metadata Browser ---
-                st.markdown(clean_html(f"""
-                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 12px;">
-                    {hierarchy[0]} / {hierarchy[1]} / {hierarchy[2]} Browser
-                </div>
-                """), unsafe_allow_html=True)
-                
-                # Level 1: Catalog / Database / Lakehouse
-                level1_label = hierarchy[0]
-                level1_value = None
-                
-                if is_databricks or active_connector_type == "sqlserver":
-                    # Databricks: Fetch catalogs live
-                    # SQL Server: Fetch databases live
-                    if "ingestion_catalogs" not in st.session_state:
-                        try:
-                            from src.backend.connectors import get_connector_service
-                            svc = get_connector_service()
-                            resolved_cfg = svc._resolve_secrets(loaded_config.config)
-                            catalogs = svc.fetch_catalogs(active_connector_type, resolved_cfg)
-                            st.session_state["ingestion_catalogs"] = catalogs if catalogs else ["default"]
-                        except Exception as cat_err:
-                            st.warning(f"Failed to fetch {hierarchy[0].lower()}s: {cat_err}")
-                            # Fallback to configured database for SQL Server
-                            if active_connector_type == "sqlserver":
-                                st.session_state["ingestion_catalogs"] = [loaded_config.config.get("database", "default")]
-                            else:
-                                st.session_state["ingestion_catalogs"] = ["default"]
-                    
-                    catalogs = st.session_state.get("ingestion_catalogs", ["default"])
-                    
-                    # Pre-select configured database for SQL Server if available in the list
-                    default_idx = 0
-                    if active_connector_type == "sqlserver":
-                        config_db = loaded_config.config.get("database")
-                        if config_db and config_db in catalogs:
-                            try:
-                                default_idx = catalogs.index(config_db)
-                            except:
-                                pass
-                    
-                    # Custom HTML Layout for Selectbox Label
+                # Layout Adjustment: Match dropdown width (1% offset)
+                _, c_browser = st.columns([0.01, 0.99])
+                with c_browser:
                     st.markdown(clean_html(f"""
-                    <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
-                        {level1_label}
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 12px;">
+                        {hierarchy[0]} / {hierarchy[1]} / {hierarchy[2]} Browser
                     </div>
                     """), unsafe_allow_html=True)
-                                
-                    level1_value = st.selectbox(level1_label, options=catalogs, index=default_idx, key="ingestion_selected_catalog", label_visibility="collapsed")
-                else:
-                    # Others: Database/Container is part of config, show as read-only info
-                    db_name = loaded_config.config.get("database", "N/A")
                     
-                    # Custom HTML Layout to fix "DATABASE" alignment issue
-                    # We render the label and value as a single HTML block
-                    st.markdown(clean_html(f"""
-                    <div style="margin-bottom: 20px;">
+                    # Level 1: Catalog / Database / Lakehouse
+                    level1_label = hierarchy[0]
+                    level1_value = None
+                    
+                    if is_databricks or active_connector_type == "sqlserver":
+                        # Databricks: Fetch catalogs live
+                        # SQL Server: Fetch databases live
+                        if "ingestion_catalogs" not in st.session_state:
+                            try:
+                                from src.backend.connectors import get_connector_service
+                                svc = get_connector_service()
+                                resolved_cfg = svc._resolve_secrets(loaded_config.config)
+                                catalogs = svc.fetch_catalogs(active_connector_type, resolved_cfg)
+                                st.session_state["ingestion_catalogs"] = catalogs if catalogs else ["default"]
+                            except Exception as cat_err:
+                                st.warning(f"Failed to fetch {hierarchy[0].lower()}s: {cat_err}")
+                                # Fallback to configured database for SQL Server
+                                if active_connector_type == "sqlserver":
+                                    st.session_state["ingestion_catalogs"] = [loaded_config.config.get("database", "default")]
+                                else:
+                                    st.session_state["ingestion_catalogs"] = ["default"]
+                        
+                        catalogs = st.session_state.get("ingestion_catalogs", ["default"])
+                        
+                        # Pre-select configured database for SQL Server if available in the list
+                        default_idx = 0
+                        if active_connector_type == "sqlserver":
+                            config_db = loaded_config.config.get("database")
+                            if config_db and config_db in catalogs:
+                                try:
+                                    default_idx = catalogs.index(config_db)
+                                except:
+                                    pass
+                        
+                        # Custom HTML Layout for Selectbox Label
+                        st.markdown(clean_html(f"""
                         <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
                             {level1_label}
                         </div>
-                        <div style="
-                            background-color: #F0F2F6; 
-                            color: #31333F; 
-                            padding: 10px 12px; 
-                            border-radius: 8px; 
-                            border: 1px solid #E2E8F0; 
-                            font-size: 14px;
-                            width: 100%;
-                            display: flex;
-                            align-items: center;
-                            height: 42px;
-                        ">
-                            {db_name}
+                        """), unsafe_allow_html=True)
+                                    
+                        level1_value = st.selectbox(level1_label, options=catalogs, index=default_idx, key="ingestion_selected_catalog", label_visibility="collapsed")
+                    else:
+                        # Others: Database/Container is part of config, show as read-only info
+                        db_name = loaded_config.config.get("database", "N/A")
+                        
+                        # Custom HTML Layout to fix "DATABASE" alignment issue
+                        # We render the label and value as a single HTML block
+                        st.markdown(clean_html(f"""
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 13px; color: #31333F; font-weight: 600; margin-bottom: 6px;">
+                                {level1_label}
+                            </div>
+                            <div style="
+                                background-color: #F0F2F6; 
+                                color: #31333F; 
+                                padding: 10px 12px; 
+                                border-radius: 8px; 
+                                border: 1px solid #E2E8F0; 
+                                font-size: 14px;
+                                width: 100%;
+                                display: flex;
+                                align-items: center;
+                                height: 42px;
+                            ">
+                                {db_name}
+                            </div>
                         </div>
-                    </div>
-                    """), unsafe_allow_html=True)
-                    
-                    # Hidden input to maintain state if needed (though level1_value is just read)
-                    level1_value = db_name
+                        """), unsafe_allow_html=True)
+                        
+                        # Hidden input to maintain state if needed (though level1_value is just read)
+                        level1_value = db_name
                 
                 # Fetch Metadata button
                 fetch_col1, fetch_col2, fetch_col3 = st.columns([3, 1, 1])
@@ -1239,16 +1283,61 @@ def render():
                         try:
                             from src.backend.connectors import get_connector_service
                             svc = get_connector_service()
+                            
+                            conn_id = loaded_config.connection_id
+                            print(f"DEBUG: Frontend requesting metadata for INTENTIONAL_ID='{conn_id}' (len={len(conn_id)})")
+                            
                             catalog_param = level1_value if (is_databricks or active_connector_type == "sqlserver") else None
                             metadata = svc.fetch_schemas_for_connection(
-                                loaded_config.connection_id,
+                                conn_id,
                                 catalog=catalog_param
                             )
                             st.session_state["inspector_schema_metadata"] = metadata
                             st.success(f"Found {metadata.total_schemas} {hierarchy[1].lower()}s with {metadata.total_tables} {hierarchy[2].lower()}s")
+                            
+                            # ROBUST RESTORATION: Check if we have a saved config but no current selection state
+                            # This handles the case where the user clicks "Fetch Metadata" on a previously configured connection
+                            if loaded_config and loaded_config.selected_tables and not st.session_state.get("inspector_selected_tables"):
+                                print("DEBUG: Restoring configuration after metadata fetch...")
+                                restored_selection = {}
+                                restored_configs = {}
+                                
+                                for schema, tables in loaded_config.selected_tables.items():
+                                    restored_selection[schema] = []
+                                    for tbl_obj in tables:
+                                        if isinstance(tbl_obj, dict):
+                                            t_name = tbl_obj["table_name"]
+                                            t_load = tbl_obj.get("load_type", "full")
+                                            t_watermark = tbl_obj.get("watermark_column", "")
+                                            
+                                            restored_selection[schema].append(t_name)
+                                            # Case-insensitive restoration might happen later in the render loop matches
+                                            restored_configs[f"{schema}.{t_name}"] = {
+                                                "load_type": t_load,
+                                                "watermark_column": t_watermark
+                                            }
+                                            # We don't set checkboxes here (insp_tbl_...) because they are dynamically generated 
+                                            # from inspector_selected_tables during render, but we need to ensure keys match.
+                                        else:
+                                            restored_selection[schema].append(str(tbl_obj))
+                                
+                                st.session_state["inspector_selected_tables"] = restored_selection
+                                st.session_state["inspector_table_configs"] = restored_configs
+                                st.session_state["ingestion_config_saved"] = True
+                                
                             st.rerun()
                         except Exception as e:
-                            st.error(f"Failed to fetch metadata: {e}")
+                            errMsg = str(e)
+                            if "not found" in errMsg.lower() or "connection" in errMsg.lower() and "found" in errMsg.lower():
+                                st.warning("Connection not found in backend. Refreshing connection list...")
+                                # Clear failure-causing cache
+                                st.session_state.pop("_cached_saved_connections_v2", None)
+                                st.session_state.pop("ingestion_connector_config", None)
+                                # Force rerun to reload connections
+                                time.sleep(1) # Give user time to see warning
+                                st.rerun()
+                            else:
+                                st.error(f"Failed to fetch metadata: {errMsg}")
                 
                 # ================================================================
                 # STEP 3: TABLE SELECTION WITH PER-TABLE LOAD CONFIG
@@ -1293,8 +1382,22 @@ def render():
                     sorted_schemas = sorted(metadata.schemas.keys())
                     for schema_name in sorted_schemas:
                         tables = metadata.schemas[schema_name]
-                        sel_tables = st.session_state.get("inspector_selected_tables", {}).get(schema_name, [])
                         
+                        # DEBUG: Trace matching logic
+                        current_selection = st.session_state.get("inspector_selected_tables", {})
+                        sel_tables = current_selection.get(schema_name, [])
+                        
+                        # Try case-insensitive fallback if empty
+                        if not sel_tables:
+                            for k, v in current_selection.items():
+                                if k.lower() == schema_name.lower() and v:
+                                    print(f"DEBUG: Found case-insensitive match for schema '{schema_name}': using '{k}'")
+                                    sel_tables = v
+                                    # Auto-correct the key in session state for future consistency
+                                    if schema_name not in current_selection:
+                                        st.session_state["inspector_selected_tables"][schema_name] = v
+                                    break
+                                    
                         # Integrated Config Header (Professional SVG Icon via CSS + Badge)
                         # Format: SchemaName `X/Y selected`
                         # The CSS injects the folder icon before the text and styles the `code` block as a badge
@@ -1532,6 +1635,7 @@ def render():
                                     if success:
                                         st.success(f"Saved configuration for {total_tables} tables!")
                                         st.session_state["ingestion_force_refresh"] = True
+                                        st.session_state["ingestion_config_saved"] = True
                                         st.rerun()
                                     else:
                                         st.error("Failed to save table configuration.")
@@ -1728,56 +1832,61 @@ def render():
             render_console(st.session_state["ingestion_console_logs"])
 
             with btn_col:
-                if st.button("Start Ingestion", type="primary", use_container_width=True, key="start_ingestion_btn"):
-                    config = st.session_state.get("ingestion_connector_config")
-                    
-                    if config and config.connection_id:
-                        try:
-                            # Clear logs for new run
-                            st.session_state["ingestion_console_logs"] = []
-                            import datetime
-                            
-                            def log(msg):
-                                ts = datetime.datetime.now().strftime("%H:%M:%S")
-                                st.session_state["ingestion_console_logs"].append((ts, msg))
+                # Button to trigger ingestion
+                # We use the connection ID from the currently loaded configuration
+                # Only show if configuration has been saved/restored
+                if st.session_state.get("ingestion_config_saved", False):
+                    if st.button("Start Ingestion", type="primary", use_container_width=True, key="start_ingestion_btn"):
+                        config = st.session_state.get("ingestion_connector_config")
+                        
+                        if config and config.connection_id:
+                            try:
+                                # Clear logs for new run
+                                st.session_state["ingestion_console_logs"] = []
+                                import datetime
+                                
+                                def log(msg):
+                                    ts = datetime.datetime.now().strftime("%H:%M:%S")
+                                    st.session_state["ingestion_console_logs"].append((ts, msg))
+                                    render_console(st.session_state["ingestion_console_logs"])
+                                
+                                log(f"[INFO] Initializing ingestion job...")
+                                log(f"[INFO] Targeted Connection ID: {config.connection_id}")
+                                
+                                with st.spinner("Triggering ingestion notebook..."):
+                                    from src.backend.connectors import get_connector_service, reset_connector_service
+                                    
+                                    # Force reset to ensure we use the updated method (SDK based) instead of cached old class (DBUtils based)
+                                    reset_connector_service()
+                                    svc = get_connector_service()
+                                    
+                                    # Simulate steps since notebook run is blocking/opaque
+                                    log("[INFO] Connecting to data source...")
+                                    import time
+                                    time.sleep(0.5) 
+                                    
+                                    log("[INFO] Validating schema compatibility...")
+                                    time.sleep(0.5)
+                                    
+                                    log("[INFO] Submitting job to Databricks...")
+                                    result = svc.trigger_ingestion_notebook(config.connection_id)
+                                    
+                                    log(f"[INFO] Notebook execution completed successfully")
+                                    log(f"[INFO] Result: {result}")
+                                    
+                                st.toast("Ingestion job completed successfully!")
+                                
+                                # Optional: Wait a bit before moving so user sees the success
+                                time.sleep(2)
+                                st.session_state['inspector_active_stage'] = 1  # Move to Profiling
+                                st.rerun()
+                                
+                            except Exception as e:
+                                st.error(f"Failed to trigger ingestion: {e}")
+                                st.session_state["ingestion_console_logs"].append((datetime.datetime.now().strftime("%H:%M:%S"), f"[ERROR] {str(e)}"))
                                 render_console(st.session_state["ingestion_console_logs"])
-                            
-                            log(f"[INFO] Initializing ingestion job for connection ID: {config.connection_id[:8]}...")
-                            
-                            with st.spinner("Triggering ingestion notebook..."):
-                                from src.backend.connectors import get_connector_service, reset_connector_service
-                                
-                                # Force reset to ensure we use the updated method (SDK based) instead of cached old class (DBUtils based)
-                                reset_connector_service()
-                                svc = get_connector_service()
-                                
-                                # Simulate steps since notebook run is blocking/opaque
-                                log("[INFO] Connecting to data source...")
-                                import time
-                                time.sleep(0.8) 
-                                
-                                log("[INFO] Validating schema compatibility...")
-                                time.sleep(0.8)
-                                
-                                log("[INFO] Triggering notebook execution: nb_brz_ingestion")
-                                result = svc.trigger_ingestion_notebook(config.connection_id)
-                                
-                                log(f"[INFO] Notebook execution completed successfully")
-                                log(f"[INFO] Result: {result}")
-                                
-                            st.toast("Ingestion job completed successfully!", icon="🚀")
-                            
-                            # Optional: Wait a bit before moving so user sees the success
-                            time.sleep(2)
-                            st.session_state['inspector_active_stage'] = 1  # Move to Profiling
-                            st.rerun()
-                            
-                        except Exception as e:
-                            st.error(f"Failed to trigger ingestion: {e}")
-                            st.session_state["ingestion_console_logs"].append((datetime.datetime.now().strftime("%H:%M:%S"), f"[ERROR] {str(e)}"))
-                            render_console(st.session_state["ingestion_console_logs"])
-                    else:
-                        st.error("No active configuration found. Please configure a source first.")
+                        else:
+                            st.error("No active configuration found. Please configure a source first.")
         elif active_stage['name'] == "Profiling":
             # ================================================================
             # PROFILING STAGE - Data Quality Analysis

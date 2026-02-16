@@ -837,6 +837,15 @@ class ConnectorService:
             rows = df.collect()
             if not rows:
                 print(f"DEBUG: No rows found for connection_id='{safe_id}'")
+                
+                # DEEP DEBUG: Check what IS in the table
+                try:
+                    debug_df = self.spark.sql(f"SELECT connection_id, connection_name FROM {target_table} LIMIT 20")
+                    debug_rows = debug_df.collect()
+                    print(f"DEBUG: Sample existing IDs in table: {str([r['connection_id'] for r in debug_rows])}")
+                except Exception as debug_e:
+                    print(f"DEBUG: Failed to list table content: {debug_e}")
+                    
                 return None
             
             row = rows[0]

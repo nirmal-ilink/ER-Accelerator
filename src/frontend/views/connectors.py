@@ -1127,7 +1127,7 @@ def _handle_save_configuration(conn_key: str, connector_data: dict):
             st.session_state["last_saved_connection_id"] = connection_id
             
             # Invalidate Inspector Cache so the dropdown refreshes
-            for key in ["ingestion_config_cached", "ingestion_connector_config", "_cached_saved_connections"]:
+            for key in ["ingestion_config_cached", "ingestion_connector_config", "_cached_saved_connections", "_cached_saved_connections_v2"]:
                 st.session_state.pop(key, None)
             
         except Exception as e:
