@@ -626,3 +626,13 @@ org.apache.spark.sql.AnalysisException
 2026-02-16 13:04:30,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
 2026-02-16 13:13:02,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
 2026-02-16 13:16:24,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 147607742189773
+2026-02-16 13:29:25,admin,User Login,Auth,Success,Session started for admin
+2026-02-16 15:01:19,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 325226145552962
+2026-02-16 15:08:43,admin,User Login,Auth,Success,Session started for admin
+2026-02-16 16:03:31,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-02-16 16:14:58,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-02-16 19:25:52,admin,User Login,Auth,Success,Session started for admin
+2026-02-16 19:56:58,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-02-16 20:03:20,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-02-16 20:14:23,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-02-16 21:50:38,admin,User Login,Auth,Success,Session started for admin

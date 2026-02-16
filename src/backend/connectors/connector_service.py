@@ -1298,6 +1298,19 @@ class ConnectorService:
 
 
 
+        except Exception as e:
+            error_msg = str(e)
+            print(f"ERROR: Failed to trigger profiling notebook: {error_msg}")
+            
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action="Triggered Profiling",
+                module="Connectors",
+                status="Failed",
+                details=f"Failed to trigger {notebook_path}: {error_msg}"
+            )
+            raise e
+
     def trigger_profiling_notebook(self, connection_id: str) -> Dict[str, Any]:
         """
         Triggers the profiling notebook for a specific connection and returns the metrics.
@@ -1349,12 +1362,6 @@ class ConnectorService:
             
             if run_output.state.result_state and run_output.state.result_state.name == "SUCCESS":
                 # Retrieve the notebook output
-                # The run_output object from .result() contains the run_id, but to get the output we need to call get_run_output
-                # However, for single-task runs, the run_id of the task run is what we need for get_run_output?
-                # Actually w.jobs.submit returns a Run object representing the *job run*.
-                # We need the task run ID to get the output.
-                
-                # Fetch the detailed run info to get task run IDs
                 job_run = w.jobs.get_run(run_output.run_id)
                 task_run_id = job_run.tasks[0].run_id
                 
@@ -1363,7 +1370,7 @@ class ConnectorService:
                 # Check for notebook output
                 if output.notebook_output and output.notebook_output.result:
                     result_json = output.notebook_output.result
-                    print(f"INFO: Notebook returned: {result_json}")
+                    print(f"INFO: Notebook returned: {result_json[:500]}...") # Truncate for logging
                     
                      # Log success
                     self.audit_logger.log_event(
@@ -1374,7 +1381,12 @@ class ConnectorService:
                         details=f"Triggered {notebook_path} for ID {connection_id}. Run ID: {run_output.run_id}"
                     )
                     
-                    return json.loads(result_json)
+                    try:
+                        return json.loads(result_json)
+                    except json.JSONDecodeError as je:
+                        print(f"ERROR: Failed to decode notebook output: {je}")
+                        return {"status": "error", "message": "Invalid JSON from notebook", "raw": result_json}
+                        
                 else:
                     print("WARN: Notebook completed but returned no output.")
                     return {"status": "success", "message": "No output returned"}

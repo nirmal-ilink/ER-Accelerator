@@ -136,9 +136,80 @@ def render():
         {"id": 5, "name": "Publishing", "pct": 0, "status": "pending", "icon": "publish",  "meta": "PENDING", "desc": "Downstream sync"},
     ]
     
+    # --- DYNAMIC NAVIGATOR CSS ---
+    current_idx = st.session_state.get('inspector_active_stage', 0)
+    nav_css = ""
+    for i in range(len(stages)):
+        key = f"nav_{i}"
+        if i == current_idx:
+            # ACTIVE STYLE
+            nav_css += f"""
+            .st-key-{key} button {{
+                background: linear-gradient(135deg, {COLORS['brand']} 0%, #E11D48 100%) !important;
+                color: #FFFFFF !important;
+                border: none !important;
+                box-shadow: 0 10px 20px -5px rgba(209, 31, 65, 0.4) !important;
+                font-weight: 700 !important;
+                transform: scale(1.02) !important;
+                z-index: 10 !important;
+                padding-left: 20px !important;
+            }}
+            .st-key-{key} button p {{
+                font-size: 15px !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.3px !important;
+            }}
+            .st-key-{key} button:hover {{
+                box-shadow: 0 14px 28px -5px rgba(209, 31, 65, 0.5) !important;
+                transform: scale(1.03) !important;
+            }}
+            """
+        elif stages[i]['status'] == 'done':
+            # DONE STYLE (Light Rose)
+            nav_css += f"""
+            .st-key-{key} button {{
+                background: #FFF1F2 !important;
+                border: 1px solid #FECDD3 !important;
+                color: #9F1239 !important;
+                font-weight: 600 !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                padding-left: 16px !important;
+            }}
+            .st-key-{key} button:hover {{
+                background: #FFE4E6 !important;
+                border-color: #FDA4AF !important;
+                color: #881337 !important;
+                transform: translateX(4px) !important;
+                box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1) !important;
+                padding-left: 20px !important;
+            }}
+            """
+        else:
+            # INACTIVE STYLE
+            nav_css += f"""
+            .st-key-{key} button {{
+                background: rgba(255, 255, 255, 0.5) !important;
+                backdrop-filter: blur(8px) !important;
+                border: 1px solid transparent !important;
+                color: {COLORS['muted']} !important;
+                font-weight: 600 !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                padding-left: 16px !important;
+            }}
+            .st-key-{key} button:hover {{
+                background: #FFFFFF !important;
+                border-color: {COLORS['brand']}30 !important;
+                color: {COLORS['brand']} !important;
+                transform: translateX(6px) !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+                padding-left: 20px !important;
+            }}
+            """
+
     # --- CSS STYLES ---
     st.markdown(clean_html(f"""
     <style>
+        {nav_css}
         .inspector-container {{ max_width: 1200px; margin: 0 auto; padding: 20px 0; }}
         
         /* CLUSTER BAR */
@@ -781,8 +852,8 @@ def render():
         for i, stage in enumerate(stages):
             # Professional Icons based on status
             status_ico = ""
-            if stage['status'] == 'done': status_ico = "✓ "
-            elif stage['status'] == 'active': status_ico = "● "
+            if stage['status'] == 'done': status_ico = "" 
+            elif stage['status'] == 'active': status_ico = ""
             else: status_ico = "  "
             
             label = f"{status_ico}{stage['name']}"
@@ -1897,29 +1968,68 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
-            # Quality Metrics Grid
-            q1, q2, q3, q4 = st.columns(4)
+            # Retrieve metrics from session
+            metrics_data = st.session_state.get("profiling_metrics", {})
             
-            # Default/Placeholder metrics
-            metrics = st.session_state.get("profiling_metrics", {})
+            # Initialize vars
+            selected_table_name = None
+            current_summary = {}
+            current_cols = []
             
-            # Parse metrics (handle string percentages if needed, but notebook returns floats 0.0-1.0)
+            # Retrieve list of all ingested tables from config
+            ingest_config = st.session_state.get("ingestion_connector_config")
+            all_ingested_tables = []
+            if ingest_config and ingest_config.selected_tables:
+                for schema, tables in ingest_config.selected_tables.items():
+                    for t in tables:
+                        # Handle both dict (new format) and string (legacy format)
+                        t_name = t["table_name"] if isinstance(t, dict) else t
+                        all_ingested_tables.append(t_name)
+            
+            # Allow user to select table BEFORE checking for metrics
+            if all_ingested_tables:
+                col_sel, _ = st.columns([1, 2])
+                with col_sel:
+                    selected_table_name = st.selectbox("Select Table", sorted(all_ingested_tables), key="profile_table_selector")
+            else:
+                st.info("No tables configured for ingestion.")
+
+            if metrics_data and isinstance(metrics_data, dict):
+                # We expect "table_summary" and "column_profile" keys
+                table_summaries = metrics_data.get("table_summary", [])
+                column_profiles = metrics_data.get("column_profile", [])
+                
+                # Filter data for selected table
+                if selected_table_name:
+                    current_summary = next((t for t in table_summaries if t.get("table") == selected_table_name), {})
+                    current_cols = [c for c in column_profiles if c.get("table") == selected_table_name]
+
+            # Parse metrics
             def fmt_pct(val):
                 if val is None: return "Pending"
                 return f"{val*100:.1f}%"
 
+            # Use current_summary data if available, else 0/Pending
+            completeness = current_summary.get("completeness")
+            uniqueness = current_summary.get("uniqueness")
+            validity = current_summary.get("validity")
+            consistency = current_summary.get("consistency")
+            
             quality_metrics = [
-                ("Completeness", fmt_pct(metrics.get("completeness", 0.982)) if metrics else "Pending", "#10B981", "Non-null values"),
-                ("Uniqueness", fmt_pct(metrics.get("uniqueness", 0.947)) if metrics else "Pending", "#0369A1", "Distinct records"),
-                ("Validity", fmt_pct(metrics.get("validity", 0.991)) if metrics else "Pending", "#7C3AED", "Format compliance"),
-                ("Consistency", fmt_pct(metrics.get("consistency", 0.968)) if metrics else "Pending", "#F59E0B", "Cross-field accuracy")
+                ("Completeness", fmt_pct(completeness) if completeness is not None else "Pending", "#10B981", "Non-null values"),
+                ("Uniqueness", fmt_pct(uniqueness) if uniqueness is not None else "Pending", "#0369A1", "Distinct records"),
+                ("Validity", fmt_pct(validity) if validity is not None else "Pending", "#7C3AED", "Format compliance"),
+                ("Consistency", fmt_pct(consistency) if consistency is not None else "Pending", "#F59E0B", "Cross-field accuracy")
             ]
             
-            if metrics:
+            if current_summary:
                 # Update stage description if we have real metrics
-                total_rows = metrics.get("total_rows", 0)
-                stages[1]['desc'] = f"scanned {total_rows:,} rows. Quality Score: {metrics.get('dq_score', 0):.2f}"
+                total_rows = current_summary.get("total_rows", 0)
+                dq_score = current_summary.get("dq_score", 0)
+                stages[1]['desc'] = f"scanned {total_rows:,} rows. Quality Score: {dq_score:.2f}"
             
+            # Quality Metrics Grid
+            q1, q2, q3, q4 = st.columns(4)
             for col, (label, value, color, desc) in zip([q1, q2, q3, q4], quality_metrics):
                 col.markdown(f"""
                 <div style="background: {color}08; border: 1px solid {color}20; border-radius: 12px; padding: 16px; text-align: center;">
@@ -1938,7 +2048,7 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
-            # Sample column data table
+            # Define header manually then loop rows
             st.markdown("""
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
                 <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; background: #F1F5F9; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -1946,31 +2056,39 @@ def render():
                     <span>Type</span>
                     <span>Null %</span>
                     <span>Distinct</span>
-                    <span>Sample Values</span>
+                    <span>Status</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; font-size: 13px;">
-                    <span style="font-weight: 600; color: #0F172A;">customer_id</span>
-                    <span style="color: #64748B;">VARCHAR</span>
-                    <span style="color: #10B981;">0.0%</span>
-                    <span style="color: #0F172A;">1.2M</span>
-                    <span style="color: #64748B; font-family: monospace; font-size: 12px;">CUS-001, CUS-002...</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; font-size: 13px;">
-                    <span style="font-weight: 600; color: #0F172A;">email</span>
-                    <span style="color: #64748B;">VARCHAR</span>
-                    <span style="color: #F59E0B;">2.3%</span>
-                    <span style="color: #0F172A;">1.18M</span>
-                    <span style="color: #64748B; font-family: monospace; font-size: 12px;">john@example.com...</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; padding: 12px 16px; font-size: 13px;">
-                    <span style="font-weight: 600; color: #0F172A;">phone</span>
-                    <span style="color: #64748B;">VARCHAR</span>
-                    <span style="color: #EF4444;">5.1%</span>
-                    <span style="color: #0F172A;">980K</span>
-                    <span style="color: #64748B; font-family: monospace; font-size: 12px;">+1-555-0123...</span>
-                </div>
-            </div>
             """, unsafe_allow_html=True)
+            
+            if current_cols:
+                for col_data in current_cols:
+                    c_name = col_data.get("column_name", "Unknown")
+                    c_null_pct = col_data.get("null_percentage", 0)
+                    c_distinct = col_data.get("distinct_count", 0)
+                    
+                    # Color logic for nulls
+                    null_color = "#10B981" # Green
+                    if c_null_pct > 5: null_color = "#F59E0B" # Orange
+                    if c_null_pct > 20: null_color = "#EF4444" # Red
+                    
+                    st.markdown(f"""
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; font-size: 13px;">
+                        <span style="font-weight: 600; color: #0F172A;">{c_name}</span>
+                        <span style="color: #64748B;">--</span>
+                        <span style="color: {null_color};">{c_null_pct:.1f}%</span>
+                        <span style="color: #0F172A;">{c_distinct:,}</span>
+                        <span style="color: #64748B; font-family: monospace; font-size: 12px;">Analyzed</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                # Placeholder if no data yet
+                st.markdown("""
+                <div style="padding: 24px; text-align: center; color: #94A3B8; font-size: 13px;">
+                    No profiling data available. Click "Run Profiling" to generate analytics.
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
             
             st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
             
