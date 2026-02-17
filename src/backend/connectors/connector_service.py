@@ -1408,6 +1408,122 @@ class ConnectorService:
             raise e
 
 
+
+    def fetch_system_databricks_columns(self, catalog: str, table_name: str, schema: str = None) -> List[Dict[str, str]]:
+        """
+        Fetch column definitions directly from Databricks System Catalog via Spark.
+        Uses DESCRIBE TABLE if schema is provided for precise types.
+        Fallbacks to information_schema if schema is unknown or DESCRIBE fails.
+        
+        Args:
+            catalog: The Databricks catalog name (e.g., 'main')
+            table_name: The table name (e.g., 'my_table' or 'my_table_bronze')
+            schema: Optional schema name for more precise lookup
+            
+        Returns:
+            List of dicts with 'name' and 'type' keys
+        """
+        try:
+            if not self.spark:
+                print("WARN: Spark session not available for system column fetch.")
+                return []
+
+            if not catalog or not table_name:
+                return []
+            
+            # clean table name
+            # clean table name
+            t_clean = table_name.strip()
+            
+            # Helper to execute query safely
+            def _exec_query(q):
+                print(f"DEBUG: Executing system column fetch: {q}")
+                return self.spark.sql(q).collect()
+
+            # Auto-discover schema if missing
+            if not schema:
+                try:
+                    q_schema = f"SELECT table_schema FROM {catalog}.information_schema.tables WHERE lower(table_name) = lower('{t_clean}') LIMIT 1"
+                    s_rows = _exec_query(q_schema)
+                    if s_rows:
+                        schema = s_rows[0]['table_schema']
+                        print(f"DEBUG: Found schema {schema} for table {t_clean}")
+                except Exception as e:
+                    print(f"WARN: Failed to auto-discover schema: {e}")
+
+            # Priority 1: DESCRIBE TABLE (Most accurate for types like varchar(50))
+            if schema:
+                try:
+                    # Try with 3-level namespace first: catalog.schema.table
+                    full_table_ref = f"{catalog}.{schema}.{t_clean}"
+                    print(f"DEBUG: Attempting DESCRIBE on {full_table_ref}")
+                    
+                    # DESCRIBE returns: col_name, data_type, comment
+                    # data_type here is typically the full string e.g. 'varchar(50)'
+                    rows = _exec_query(f"DESCRIBE {full_table_ref}") # simple DESCRIBE works
+                    
+                    columns = []
+                    for row in rows:
+                        # Skip partition info rows if any (usually start with #)
+                        c_name = row['col_name']
+                        if c_name and not c_name.startswith('#') and c_name != '':
+                             columns.append({
+                                "name": c_name,
+                                "type": row['data_type']
+                            })
+                    
+                    if columns:
+                        return columns
+                        
+                except Exception as e:
+                    print(f"WARN: DESCRIBE failed for {full_table_ref}: {e}")
+
+            # Priority 2: info schema with full_data_type
+            try:
+                query = f"""
+                SELECT column_name, full_data_type, ordinal_position
+                FROM {catalog}.information_schema.columns 
+                WHERE lower(table_name) = lower('{t_clean}')
+                ORDER BY ordinal_position
+                """
+                rows = _exec_query(query)
+                
+                columns = []
+                for row in rows:
+                    columns.append({
+                        "name": row['column_name'],
+                        "type": row['full_data_type'] 
+                    })
+                
+                if columns:
+                    return columns
+                    
+            except Exception as e:
+                print(f"WARN: Failed to fetch full_data_type: {e}")
+
+            # Priority 3: Fallback to standard data_type
+            query = f"""
+            SELECT column_name, data_type, ordinal_position
+            FROM {catalog}.information_schema.columns 
+            WHERE lower(table_name) = lower('{t_clean}')
+            ORDER BY ordinal_position
+            """
+            rows = _exec_query(query)
+            
+            columns = []
+            for row in rows:
+                columns.append({
+                    "name": row['column_name'],
+                    "type": row['data_type']
+                })
+                
+            return columns
+
+        except Exception as e:
+            print(f"ERROR: Failed to fetch system Databricks columns: {e}")
+            return []
+
+
 def get_connector_service(spark=None) -> ConnectorService:
     """
     Get the connector service instance (singleton pattern).

@@ -291,7 +291,7 @@ class DatabricksAdapter(BaseConnectorAdapter):
                     
                     # Skip partition info and empty rows
                     if col_name and not col_name.startswith('#') and col_name.strip():
-                        columns.append({"name": col_name, "type": data_type})
+                        columns.append({"name": col_name.strip(), "type": data_type})
             
             cursor.close()
             connection.close()

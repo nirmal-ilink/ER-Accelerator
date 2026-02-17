@@ -636,3 +636,22 @@ org.apache.spark.sql.AnalysisException
 2026-02-16 20:03:20,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
 2026-02-16 20:14:23,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
 2026-02-16 21:50:38,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 11:32:52,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 11:41:48,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 154753733279055
+2026-02-17 11:42:47,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1054731046333279
+2026-02-17 11:49:27,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1114120870310800
+2026-02-17 11:50:31,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 11:51:18,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1056396518109753
+2026-02-17 12:03:06,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 461775204665086
+2026-02-17 12:35:41,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 12:36:41,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 954983692241283
+2026-02-17 13:14:45,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 130420772735435
+2026-02-17 13:27:15,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 13:28:16,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 410032939639493
+2026-02-17 13:31:16,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 722523571781830
+2026-02-17 13:33:42,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 13:34:39,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1056160704736662
+2026-02-17 13:46:16,<MagicMock name='mock.session_state.get()' id='2063475611968'>,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID test-conn-id. Run ID: 12345
+2026-02-17 13:46:43,<MagicMock name='mock.session_state.get()' id='1991286266176'>,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID test-conn-id. Run ID: 12345
+2026-02-17 13:47:14,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 13:47:51,admin,User Login,Auth,Success,Session started for admin

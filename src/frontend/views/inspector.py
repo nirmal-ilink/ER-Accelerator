@@ -1999,10 +1999,22 @@ def render():
                 table_summaries = metrics_data.get("table_summary", [])
                 column_profiles = metrics_data.get("column_profile", [])
                 
-                # Filter data for selected table
+                # Filter data for selected table (Robust Case-Insensitive & Suffix Match)
                 if selected_table_name:
-                    current_summary = next((t for t in table_summaries if t.get("table") == selected_table_name), {})
-                    current_cols = [c for c in column_profiles if c.get("table") == selected_table_name]
+                    sel_clean = selected_table_name.strip().lower()
+                    
+                    def is_match(t_name):
+                        if not t_name: return False
+                        t_clean = t_name.strip().lower()
+                        # Exact match
+                        if t_clean == sel_clean: return True
+                        # Suffix match (common in medallion architecture)
+                        if t_clean == f"{sel_clean}_bronze": return True
+                        if sel_clean == f"{t_clean}_bronze": return True
+                        return False
+
+                    current_summary = next((t for t in table_summaries if is_match(t.get("table"))), {})
+                    current_cols = [c for c in column_profiles if is_match(c.get("table"))]
 
             # Parse metrics
             def fmt_pct(val):
@@ -2047,16 +2059,109 @@ def render():
                 Column Analysis
             </div>
             """, unsafe_allow_html=True)
+
+            # Fetch column types for selected table
+            # We need the schema first
+            current_schema = None
+            if ingest_config and ingest_config.selected_tables and selected_table_name:
+                # Find schema for the selected table
+                # selected_table_name is just "table_name"
+                # selected_table can be string or dict
+                # First try exact match
+                for schema, tables in ingest_config.selected_tables.items():
+                    for t in tables:
+                        t_name = t["table_name"] if isinstance(t, dict) else t
+                        if t_name == selected_table_name:
+                            current_schema = schema
+                            break
+                    if current_schema:
+                        break
+            
+            # Retrieve column types if we have schema and table
+            col_types_map = {}
+            if current_schema and selected_table_name and ingest_config:
+                # Force cache invalidation by changing key version
+                col_types_cache_key = f"profiling_col_types_v2_{current_schema}_{selected_table_name}"
+                
+                if col_types_cache_key not in st.session_state:
+                    try:
+                        from src.backend.connectors import get_connector_service
+                        svc = get_connector_service()
+                        # Reuse the fetch_all_columns_for_table method
+                        # Need catalog for Databricks? Using ingestion_selected_catalog if available
+                        catalog_param = st.session_state.get("ingestion_selected_catalog")
+                        
+                        # Fallback to config if not in session state (e.g. loaded saved config)
+                        # ConnectorConfig object has .config dict which contains source_configuration
+                        if not catalog_param:
+                             # Try to get from config dict
+                             if ingest_config.config:
+                                 catalog_param = ingest_config.config.get("catalog")
+                             
+                             # If still None, check if it's stored as attribute (unlikely but safe)
+                             if not catalog_param and hasattr(ingest_config, 'target_catalog'):
+                                 catalog_param = ingest_config.target_catalog
+
+                        # Final fallback
+                        if not catalog_param:
+                            catalog_param = "unity_catalog2" # Try the user's likely catalog first
+                            print(f"DEBUG: Defaulting to {catalog_param} for column fetch")
+                        
+                        # Priority 1: Fetch from Databricks System (Target Table)
+                        # This ensures we get system columns (_source_system, etc.) and correct types
+                        # The user might have selected "mdm_healthcare_entity_raw", which exists in target as "..._bronze"
+                        
+                        # Determine best-guess physical table name
+                        physical_table_name = selected_table_name
+                        if current_summary and current_summary.get("table"):
+                            physical_table_name = current_summary.get("table")
+                        
+                        raw_cols = []
+                        if catalog_param:
+                            try:
+                                print(f"DEBUG: INSPECTOR: Fetching cols for table={physical_table_name}, catalog={catalog_param}, schema={current_schema}")
+                                # Pass schema to allow DESCRIBE TABLE usage
+                                raw_cols = svc.fetch_system_databricks_columns(catalog_param, physical_table_name, schema=current_schema)
+                                print(f"DEBUG: INSPECTOR: Initial fetch result count: {len(raw_cols)}")
+                                
+                                # Retry with _bronze suffix if no columns found and suffix not present
+                                if not raw_cols and not physical_table_name.endswith("_bronze"):
+                                    print(f"DEBUG: Retrying with _bronze suffix")
+                                    # Also pass schema here
+                                    raw_cols = svc.fetch_system_databricks_columns(catalog_param, f"{physical_table_name}_bronze", schema=current_schema)
+                                    print(f"DEBUG: INSPECTOR: Retry fetch result count: {len(raw_cols)}")
+                                    
+                            except Exception as dbx_e:
+                                print(f"WARN: Failed to fetch from Databricks system: {dbx_e}")
+                        
+                        # Priority 2: Fallback to Source Connection
+                        if not raw_cols:
+                            print(f"DEBUG: Fallback to source connection {ingest_config.connection_id} for columns")
+                            raw_cols = svc.fetch_all_columns_for_table(
+                                ingest_config.connection_id,
+                                current_schema,
+                                selected_table_name,
+                                catalog=catalog_param
+                            )
+                        
+                        # Create map: name -> type (case-insensitive for robustness)
+                        type_map = {c['name'].strip().lower(): c['type'] for c in raw_cols}
+                        st.session_state[col_types_cache_key] = type_map
+                    except Exception as e:
+                        # Silently fail or log, don't break UI
+                        print(f"Warning: Failed to fetch column types for profiling: {e}")
+                        st.session_state[col_types_cache_key] = {}
+                
+                col_types_map = st.session_state.get(col_types_cache_key, {})
             
             # Define header manually then loop rows
             st.markdown("""
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; background: #F1F5F9; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; background: #F1F5F9; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
                     <span>Column Name</span>
                     <span>Type</span>
                     <span>Null %</span>
                     <span>Distinct</span>
-                    <span>Status</span>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -2066,18 +2171,22 @@ def render():
                     c_null_pct = col_data.get("null_percentage", 0)
                     c_distinct = col_data.get("distinct_count", 0)
                     
+                    # Fetch type from our map, fallback to '--'
+                    # use lower() for lookup key
+                    c_lookup_key = str(c_name).strip().lower()
+                    c_type = col_types_map.get(c_lookup_key, "--")
+                    
                     # Color logic for nulls
                     null_color = "#10B981" # Green
                     if c_null_pct > 5: null_color = "#F59E0B" # Orange
                     if c_null_pct > 20: null_color = "#EF4444" # Red
                     
                     st.markdown(f"""
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; font-size: 13px;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; font-size: 13px;">
                         <span style="font-weight: 600; color: #0F172A;">{c_name}</span>
-                        <span style="color: #64748B;">--</span>
+                        <span style="color: #64748B;">{c_type}</span>
                         <span style="color: {null_color};">{c_null_pct:.1f}%</span>
                         <span style="color: #0F172A;">{c_distinct:,}</span>
-                        <span style="color: #64748B; font-family: monospace; font-size: 12px;">Analyzed</span>
                     </div>
                     """, unsafe_allow_html=True)
             else:
