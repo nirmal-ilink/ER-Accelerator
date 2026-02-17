@@ -90,6 +90,14 @@ def render():
             "fields": ["Account", "Container", "Key"],
             "supports_schema_browser": False,
         },
+        "fabric": {
+            "name": "Microsoft Fabric",
+            "logo": "fabric_logo.png",
+            "status": "Inactive",
+            "desc": "Data Warehouse (Warehouse)",
+            "fields": ["Tenant ID", "Client ID", "Workspace ID", "Client Secret", "Table Name"],
+            "supports_schema_browser": True,
+        },
     }
 
     # ==========================================================================
@@ -237,10 +245,8 @@ def render():
             font-weight: inherit !important;
         }
         
-        /* REMOVE ANY DARK BORDERS/OUTLINES */
-        li[role="option"]::before,
+        /* REMOVE ANY DARK BORDERS/OUTLINES (only ::after, ::before is used for logos) */
         li[role="option"]::after,
-        .stSelectbox *::before,
         .stSelectbox *::after {
             display: none !important;
         }
@@ -557,6 +563,48 @@ def render():
     """, unsafe_allow_html=True)
 
     # ==========================================================================
+    # DYNAMIC LOGO CSS INJECTION (must come AFTER main CSS to override)
+    # ==========================================================================
+    logo_css_rules = []
+    for idx, (_, conn_data) in enumerate(CONNECTORS.items()):
+        logo_file = conn_data.get("logo")
+        if logo_file:
+            logo_path = os.path.join(assets_dir, logo_file)
+            b64_logo = get_img_as_base64(logo_path)
+            if b64_logo:
+                # nth-child is 1-based; use high-specificity selectors
+                rule = f"""
+                div[data-baseweb="popover"] ul li:nth-child({idx + 1})::before,
+                ul[data-testid="stSelectboxVirtualDropdown"] li:nth-child({idx + 1})::before,
+                ul[role="listbox"] li:nth-child({idx + 1})::before {{
+                    content: "" !important;
+                    display: inline-block !important;
+                    width: 22px !important;
+                    height: 22px !important;
+                    min-width: 22px !important;
+                    margin-right: 10px !important;
+                    background-image: url("data:image/png;base64,{b64_logo}") !important;
+                    background-size: contain !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                    vertical-align: middle !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    flex-shrink: 0 !important;
+                }}
+                div[data-baseweb="popover"] ul li:nth-child({idx + 1}),
+                ul[data-testid="stSelectboxVirtualDropdown"] li:nth-child({idx + 1}),
+                ul[role="listbox"] li:nth-child({idx + 1}) {{
+                    display: flex !important;
+                    align-items: center !important;
+                }}
+                """
+                logo_css_rules.append(rule)
+
+    if logo_css_rules:
+        st.markdown(f"<style>{''.join(logo_css_rules)}</style>", unsafe_allow_html=True)
+
+    # ==========================================================================
     # PAGE HEADER
     # ==========================================================================
     st.markdown("### Data Connectors")
@@ -681,7 +729,7 @@ def render():
         c1, c2 = st.columns(2)
         for i, f in enumerate(active_data["fields"]):
             with c1 if i % 2 == 0 else c2:
-                is_secret = any(s in f.lower() for s in ["password", "token", "key"])
+                is_secret = any(s in f.lower() for s in ["password", "token", "key", "secret"])
                 st.text_input(
                     f.upper(),
                     key=f"{conn_key}_{f.lower().replace(' ', '_')}",

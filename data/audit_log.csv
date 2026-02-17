@@ -655,3 +655,6 @@ org.apache.spark.sql.AnalysisException
 2026-02-17 13:46:43,<MagicMock name='mock.session_state.get()' id='1991286266176'>,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID test-conn-id. Run ID: 12345
 2026-02-17 13:47:14,admin,User Login,Auth,Success,Session started for admin
 2026-02-17 13:47:51,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 13:49:07,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 893387618399918
+2026-02-17 15:41:23,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 17:49:23,admin,User Login,Auth,Success,Session started for admin

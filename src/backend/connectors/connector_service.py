@@ -51,7 +51,7 @@ _service_instance = None
 from src.backend.audit.logger import AuditLogger
 
 # Import adapters
-from .adapters import SQLServerAdapter, DatabricksAdapter
+from .adapters import SQLServerAdapter, DatabricksAdapter, FabricAdapter
 from .adapters.base_adapter import BaseConnectorAdapter, ConnectionTestResult, SchemaMetadata
 
 def _with_retry(func):
@@ -189,23 +189,28 @@ class ConnectorService:
             self._adapters[sql_adapter.connector_type] = sql_adapter
             
             # Databricks / Unity Catalog
-            databricks_adapter = databricks_adapter.DatabricksAdapter()
+            databricks_adapter = DatabricksAdapter()
             self._adapters[databricks_adapter.connector_type] = databricks_adapter
+
+            # Microsoft Fabric
+            from .adapters import fabric_adapter
+            importlib.reload(fabric_adapter)
+            fabric_adapter_inst = fabric_adapter.FabricAdapter()
+            self._adapters[fabric_adapter_inst.connector_type] = fabric_adapter_inst
             
         except Exception as e:
             print(f"WARNING: Failed to hot-reload adapters: {e}")
             # Fallback to standard registration if reload fails
-            from .adapters import SQLServerAdapter, DatabricksAdapter
+            from .adapters import SQLServerAdapter, DatabricksAdapter, FabricAdapter
             
             sql_adapter = SQLServerAdapter()
             self._adapters[sql_adapter.connector_type] = sql_adapter
             
             databricks_adapter = DatabricksAdapter()
             self._adapters[databricks_adapter.connector_type] = databricks_adapter
-        
-        # Future: Add more adapters here
-        # self._adapters['snowflake'] = SnowflakeAdapter()
-        # self._adapters['oracle'] = OracleAdapter()
+
+            fabric_adapter_inst = FabricAdapter()
+            self._adapters[fabric_adapter_inst.connector_type] = fabric_adapter_inst
     
     @property
     def spark(self):
@@ -1127,6 +1132,59 @@ class ConnectorService:
             
         except Exception as e:
             print(f"ERROR: Failed to update table configuration: {e}")
+            print(f"INFO: Updated table configuration for connection {connection_id}")
+            return True
+            
+        except Exception as e:
+            print(f"ERROR: Failed to update table configuration: {e}")
+            return False
+
+    def update_cleansing_configuration(
+        self,
+        connection_id: str,
+        cleansing_config: List[Dict[str, Any]]
+    ) -> bool:
+        """
+        Update the bronze_configuration (cleansing rules) for an existing connection.
+        
+        Args:
+            connection_id: The UUID of the connection to update
+            cleansing_config: List of dicts containing table_name, staging_location, and rules
+            
+        Returns:
+            True if update was successful, False otherwise.
+        """
+        if not connection_id:
+            return False
+            
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
+        
+        safe_id = connection_id.strip().replace("'", "''")
+        bronze_config_json = json.dumps(cleansing_config).replace("'", "''")
+        
+        try:
+            update_sql = f"""
+                UPDATE {target_table}
+                SET bronze_configuration = '{bronze_config_json}',
+                    updated_at = current_timestamp()
+                WHERE connection_id = '{safe_id}'
+            """
+            self.spark.sql(update_sql).collect()
+            
+            # Also update local cache if it matches
+            cached_data = self._read_from_cache()
+            if cached_data and cached_data.get('connection_id') == connection_id:
+                cached_data['bronze_configuration'] = bronze_config_json
+                cached_data['updated_at'] = datetime.datetime.now().isoformat()
+                self._save_to_cache(cached_data)
+            
+            print(f"INFO: Updated cleansing configuration for connection {connection_id}")
+            return True
+            
+        except Exception as e:
+            print(f"ERROR: Failed to update cleansing configuration: {e}")
             return False
 
     @_with_retry

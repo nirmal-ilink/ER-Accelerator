@@ -1123,7 +1123,7 @@ def render():
                 if cache_key not in st.session_state:
                     try:
                         with st.spinner("Loading saved connections..."):
-                            import time 
+
                             start_time = time.time()
                             user_connections = _conn_svc.get_user_connections(current_user)
                             
@@ -1270,7 +1270,7 @@ def render():
                         # SQL Server: Fetch databases live
                         if "ingestion_catalogs" not in st.session_state:
                             try:
-                                from src.backend.connectors import get_connector_service
+
                                 svc = get_connector_service()
                                 resolved_cfg = svc._resolve_secrets(loaded_config.config)
                                 catalogs = svc.fetch_catalogs(active_connector_type, resolved_cfg)
@@ -1352,7 +1352,7 @@ def render():
                 if fetch_btn and loaded_config:
                     with st.spinner(f"Fetching {hierarchy[1].lower()}s and {hierarchy[2].lower()}s..."):
                         try:
-                            from src.backend.connectors import get_connector_service
+
                             svc = get_connector_service()
                             
                             conn_id = loaded_config.connection_id
@@ -1572,8 +1572,7 @@ def render():
                                                 if col_cache_key not in st.session_state:
                                                     try:
                                                         # Use existing service import if available
-                                                        if 'src.backend.connectors' not in sys.modules:
-                                                            from src.backend.connectors import get_connector_service
+
                                                         svc = get_connector_service()
                                                         catalog_param = st.session_state.get("ingestion_selected_catalog") if is_databricks else None
                                                         all_cols = svc.fetch_all_columns_for_table(
@@ -1699,7 +1698,7 @@ def render():
                         else:
                             with st.spinner("Saving table configuration..."):
                                 try:
-                                    from src.backend.connectors import get_connector_service
+
                                     svc = get_connector_service()
                                     total_tables = sum(len(t) for t in final_tables.values())
                                     success = svc.update_table_configuration(loaded_config.connection_id, final_tables)
@@ -1914,7 +1913,7 @@ def render():
                             try:
                                 # Clear logs for new run
                                 st.session_state["ingestion_console_logs"] = []
-                                import datetime
+
                                 
                                 def log(msg):
                                     ts = datetime.datetime.now().strftime("%H:%M:%S")
@@ -1925,7 +1924,7 @@ def render():
                                 log(f"[INFO] Targeted Connection ID: {config.connection_id}")
                                 
                                 with st.spinner("Triggering ingestion notebook..."):
-                                    from src.backend.connectors import get_connector_service, reset_connector_service
+
                                     
                                     # Force reset to ensure we use the updated method (SDK based) instead of cached old class (DBUtils based)
                                     reset_connector_service()
@@ -1933,7 +1932,7 @@ def render():
                                     
                                     # Simulate steps since notebook run is blocking/opaque
                                     log("[INFO] Connecting to data source...")
-                                    import time
+
                                     time.sleep(0.5) 
                                     
                                     log("[INFO] Validating schema compatibility...")
@@ -2085,7 +2084,7 @@ def render():
                 
                 if col_types_cache_key not in st.session_state:
                     try:
-                        from src.backend.connectors import get_connector_service
+
                         svc = get_connector_service()
                         # Reuse the fetch_all_columns_for_table method
                         # Need catalog for Databricks? Using ingestion_selected_catalog if available
@@ -2218,8 +2217,7 @@ def render():
             
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             
-            # Threshold slider
-            st.slider("Quality Threshold", min_value=0, max_value=100, value=95, key="profile_threshold", help="Minimum quality score required to proceed")
+
             
             st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
             
@@ -2231,7 +2229,7 @@ def render():
                     if config and config.connection_id:
                          with st.spinner("Running profiling analysis (Triggering Notebook)..."):
                             try:
-                                from src.backend.connectors import get_connector_service
+
                                 svc = get_connector_service()
                                 
                                 # Trigger notebook and get results
@@ -2257,6 +2255,95 @@ def render():
             # ================================================================
             # CLEANSING STAGE - Data Standardization
             # ================================================================
+            # Retrieve list of all ingested tables from config for multi-selection
+            ingest_config = st.session_state.get("ingestion_connector_config")
+            all_ingested_tables = []
+            if ingest_config and ingest_config.selected_tables:
+                for schema, tables in ingest_config.selected_tables.items():
+                    for t in tables:
+                        # Handle both dict (new format) and string (legacy format)
+                        t_name = t["table_name"] if isinstance(t, dict) else t
+                        all_ingested_tables.append(t_name)
+            
+            st.markdown("""
+            <style>
+                /* Multiselect Tag Styling - Darker "Iconic" Red */
+                span[data-baseweb="tag"] {
+                    background-color: #FEF2F2 !important;
+                    color: #7F1D1D !important; /* Very Dark Red (900) */
+                    border: 1px solid #991B1B !important; /* Dark Red (800) */
+                }
+                
+                /* Tag Remove 'x' Color */
+                span[data-baseweb="tag"] svg {
+                    fill: #7F1D1D !important;
+                    color: #7F1D1D !important;
+                }
+
+                /* Dropdown Menu - White Background */
+                ul[data-testid="stSelectboxVirtualDropdownEmpty"], 
+                ul[data-testid="stSelectboxVirtualDropdown"],
+                div[data-baseweb="popover"] div[data-baseweb="menu"],
+                div[data-baseweb="menu"] {
+                    background-color: #FFFFFF !important;
+                    color: #0F172A !important;
+                }
+                
+                /* List Items in Dropdown */
+                li[role="option"] {
+                    color: #0F172A !important;
+                }
+                
+                /* Empty State / No Results Text - FORCE BLACK & VISIBLE */
+                ul[data-testid="stSelectboxVirtualDropdownEmpty"] {
+                    background-color: #FFFFFF !important;
+                }
+                
+                ul[data-testid="stSelectboxVirtualDropdownEmpty"] li {
+                    color: #000000 !important;
+                    -webkit-text-fill-color: #000000 !important;
+                    caret-color: #000000 !important;
+                    font-weight: 700 !important; 
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    display: block !important;
+                    font-size: 14px !important;
+                }
+                
+                /* Hover state for options - Light Red */
+                li[role="option"][aria-selected="true"] {
+                    background-color: #FEF2F2 !important;
+                }
+                
+                li[role="option"]:hover {
+                    background-color: #F8FAFC !important;
+                }
+                
+                /* Focus State - Brand Red Border */
+                div[data-baseweb="select"] > div:first-child:focus-within {
+                    border-color: #991B1B !important;
+                    box-shadow: 0 0 0 1px #991B1B !important;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+
+            st.markdown("""
+            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                Target Tables
+            </div>
+            """, unsafe_allow_html=True)
+            
+            selected_clean_tables = st.multiselect(
+                "Select tables to apply rules to",
+                options=sorted(all_ingested_tables),
+                default=sorted(all_ingested_tables),
+                key="cleansing_selected_tables",
+                help="Rules will be applied to all selected tables",
+                label_visibility="collapsed"
+            )
+            
+            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
             st.markdown("""
             <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
                 Standardization Rules
@@ -2264,53 +2351,133 @@ def render():
             """, unsafe_allow_html=True)
             
             # Standardization rule cards
-            rules = [
-                ("Address Normalization", "Standardize street abbreviations and formatting", "STD_ADDR_01", True),
-                ("Phone Formatting", "Convert to E.164 international format", "STD_PHONE_01", True),
-                ("Email Validation", "Lowercase and validate domain structure", "STD_EMAIL_01", True),
-                ("Name Casing", "Apply proper case to person names", "STD_NAME_01", False)
-            ]
+            # Standardization rule categories
+            rule_categories = {
+                "Contact Info": [
+                    ("Phone Formatting", "Allowed: 0-9, +, -. Null if len < 7.", "STD_PHONE_01", True),
+                    ("Email Validation", "Lowercase, trim, valid pattern (else NULL).", "STD_EMAIL_01", True),
+                    ("Website Standard", "Lowercase, trim, ensure http/https.", "STD_WEBSITE_01", True),
+                ],
+                "Identifiers": [
+                    ("NPI Cleaning", "Digits only. Null if len != 10.", "STD_NPI_01", True),
+                    ("DEA Formatting", "Uppercase, trim.", "STD_DEA_01", True),
+                    ("License/Tax/DUNS", "Trim, uppercase, alphanumeric only.", "STD_IDS_01", True),
+                ],
+                "Names & Entities": [
+                    ("Entity Names", "Trim, proper case, single internal space.", "STD_NAME_ENTITY_01", True),
+                    ("Person Names", "Trim, proper case, single internal space.", "STD_NAME_PERSON_01", True),
+                ],
+                "Address & Location": [
+                    ("Address Lines", "Trim, proper case, single internal space.", "STD_ADDR_01", True),
+                    ("City/State/Country", "City: Proper; State/Country: Upper.", "STD_LOC_01", True),
+                    ("Postal Code", "Trim, remove all internal spaces.", "STD_POST_01", True),
+                ],
+                "Metadata & Status": [
+                    ("Codes & Status", "Trim, uppercase (Entity Status, Org Type, etc).", "STD_META_01", True),
+                    ("Default Fallback", "Trim spaces for all other columns.", "STD_DEFAULT_TRIM", True),
+                ]
+            }
             
-            for i in range(0, len(rules), 2):
-                cols = st.columns(2)
-                for j, col in enumerate(cols):
-                    if i + j < len(rules):
-                        rule = rules[i + j]
-                        with col:
-                            is_enabled = st.checkbox(rule[0], value=rule[3], key=f"clean_rule_{i+j}")
-                            border_color = "#10B981" if is_enabled else "#E2E8F0"
-                            col.markdown(f"""
-                            <div style="background: white; border: 1px solid {border_color}; border-radius: 10px; padding: 12px 16px; margin-top: -8px; margin-bottom: 12px;">
-                                <div style="font-size: 12px; color: #64748B;">{rule[1]}</div>
-                                <div style="font-size: 11px; color: #94A3B8; margin-top: 4px; font-family: monospace;">Rule: {rule[2]}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
+            # Render rules in a grid
+            for category, rules in rule_categories.items():
+                st.markdown(f"""
+                <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; margin-bottom: 8px;">
+                    {category}
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Dynamic columns based on number of rules in category
+                cols = st.columns(len(rules))
+                for idx, (name, desc, rule_id, default) in enumerate(rules):
+                    with cols[idx]:
+                        # Unique key for every rule
+                        is_enabled = st.checkbox(name, value=default, key=f"clean_rule_{rule_id}")
+                        border_color = "#10B981" if is_enabled else "#E2E8F0"
+                        bg_color = "#F0FDF4" if is_enabled else "#FFFFFF"
+                        
+                        st.markdown(f"""
+                        <div style="background: {bg_color}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-top: -8px; height: 100%;">
+                            <div style="font-size: 12px; font-weight: 600; color: #334155;">{desc}</div>
+                            <div style="font-size: 10px; color: #94A3B8; margin-top: 4px; font-family: monospace;">ID: {rule_id}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
             
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             
-            # Transformation Configuration
+            # Global Defaults / Transformation Configuration
             st.markdown("""
             <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Transformation Configuration
+                Global Defaults (for columns not matching rules)
             </div>
             """, unsafe_allow_html=True)
             
-            tf_col1, tf_col2, tf_col3 = st.columns(3)
+            tf_col1, tf_col2 = st.columns(2)
             with tf_col1:
-                st.selectbox("Date Format", ["YYYY-MM-DD", "MM/DD/YYYY", "DD-MM-YYYY", "ISO 8601"], key="clean_date_format")
+                st.selectbox("Date Format (for Date columns)", ["YYYY-MM-DD", "MM/DD/YYYY", "DD-MM-YYYY", "ISO 8601"], key="clean_date_format")
             with tf_col2:
-                st.selectbox("Null Handling", ["Keep as null", "Replace with default", "Remove row", "Flag for review"], key="clean_null_handling")
-            with tf_col3:
-                st.selectbox("Case Conversion", ["No change", "UPPERCASE", "lowercase", "Title Case"], key="clean_case_conv")
+                # Renamed to clarify it applies when rules don't enforce specific null handling
+                st.selectbox("Global Null Handling", ["Keep as null", "Replace with default", "Remove row", "Flag for review"], key="clean_null_handling")
+            
+            # Removed generic "Case Conversion" to avoid conflict with specific rules (e.g. State=Upper, Email=Lower)
             
             st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
             
             _, btn_col = st.columns([2.5, 1.5])
             with btn_col:
                 if st.button("Apply Cleansing", type="primary", use_container_width=True, key="apply_cleansing_btn"):
-                    st.toast("Cleansing rules applied successfully!")
-                    st.session_state['inspector_active_stage'] = 3
-                    st.rerun()
+                    if not selected_clean_tables:
+                        st.warning("Please select at least one table to apply cleansing rules.")
+                    else:
+                        # Construct Configuration Payload
+                        cleansing_config = []
+                        
+                        # Get connection ID from session state
+                        ingest_config = st.session_state.get("ingestion_connector_config")
+                        connection_id = ingest_config.connection_id if ingest_config else None
+                        
+                        if not connection_id:
+                            st.error("No active connection found. Please return to Ingestion stage.")
+                        else:
+                            for table in selected_clean_tables:
+                                # Define staging location (Hardcoded assumption based on requirements)
+                                staging_loc = f"unity_catalog2.mdm_bronze.{table}_bronze"
+                                
+                                # Gather enabled rules
+                                active_rules = []
+                                for category, rules in rule_categories.items():
+                                    for name, desc, rule_id, default in rules:
+                                        # Check if checkbox was selected (default is True)
+                                        if st.session_state.get(f"clean_rule_{rule_id}", default):
+                                            active_rules.append({
+                                                "rule_id": rule_id,
+                                                "name": name,
+                                                "category": category,
+                                                "description": desc
+                                            })
+                                
+                                # Add to config
+                                cleansing_config.append({
+                                    "table_name": table,
+                                    "staging_table_location": staging_loc,
+                                    "cleansing_rules": active_rules,
+                                    "global_settings": {
+                                        "date_format": st.session_state.get("clean_date_format"),
+                                        "null_handling": st.session_state.get("clean_null_handling")
+                                    }
+                                })
+                            
+                            # Save to Backend via ConnectorService
+                            svc = get_connector_service()
+                            if svc.update_cleansing_configuration(connection_id, cleansing_config):
+                                count = len(selected_clean_tables)
+                                st.toast(f"Cleansing configuration saved for {count} tables!", icon="✅")
+                                
+                                # Proceed to next stage
+                                time.sleep(1) # Brief pause for toast
+                                st.session_state['inspector_active_stage'] = 3
+                                st.rerun()
+                            else:
+                                st.error("Failed to save cleansing configuration. Please check logs.")
                     
         elif active_stage['name'] == "Resolution":
             # ================================================================
