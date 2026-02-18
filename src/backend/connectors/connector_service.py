@@ -633,6 +633,61 @@ class ConnectorService:
                 )
                 raise
     
+    @_with_retry
+    def update_cleansing_configuration(
+        self,
+        connection_id: str,
+        cleansing_config: list
+    ) -> bool:
+        """
+        Update the bronze_configuration column in configuration_metadata
+        for a given connection_id.
+
+        Args:
+            connection_id: The connection to update.
+            cleansing_config: List of dicts with table_name, staging_table_location,
+                              cleansing_rules, and global_settings.
+
+        Returns:
+            True on success, False on failure.
+        """
+        target_catalog = st.secrets.get("DATABRICKS_CATALOG", "unity_catalog2")
+        target_schema = st.secrets.get("DATABRICKS_SCHEMA", "mdm")
+        target_table = f"{target_catalog}.{target_schema}.configuration_metadata"
+
+        bronze_json = json.dumps(cleansing_config).replace("'", "''")
+
+        update_sql = f"""
+            UPDATE {target_table}
+            SET bronze_configuration = '{bronze_json}',
+                updated_at = current_timestamp()
+            WHERE connection_id = '{connection_id}'
+        """
+
+        try:
+            self.spark.sql(update_sql).collect()
+            print(f"INFO: [Cleansing] Updated bronze_configuration for {connection_id}")
+
+            self.audit_logger.log_event(
+                user="System",
+                action="Updated Cleansing Configuration",
+                module="Cleansing",
+                status="Success",
+                details=f"Saved cleansing config for connection {connection_id} ({len(cleansing_config)} tables)"
+            )
+            return True
+
+        except Exception as e:
+            print(f"ERROR: [Cleansing] Failed to update bronze_configuration: {e}")
+            self.audit_logger.log_event(
+                user="System",
+                action="Updated Cleansing Configuration",
+                module="Cleansing",
+                status="Failed",
+                details=f"Failed to save cleansing config: {str(e)}"
+            )
+            return False
+
     def load_configuration(
         self, 
         connector_type: str

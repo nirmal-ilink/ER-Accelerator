@@ -1665,6 +1665,10 @@ def render():
                             type="primary",
                             use_container_width=True,
                         )
+                        
+                        if st.session_state.get("show_save_success"):
+                            st.success("Configuration has been successfully saved")
+                            st.session_state["show_save_success"] = False
                     
                     if save_tbl_btn and loaded_config:
                         sel_tables = st.session_state.get("inspector_selected_tables", {})
@@ -1703,7 +1707,13 @@ def render():
                                     total_tables = sum(len(t) for t in final_tables.values())
                                     success = svc.update_table_configuration(loaded_config.connection_id, final_tables)
                                     if success:
-                                        st.success(f"Saved configuration for {total_tables} tables!")
+                                        # Update the in-memory config object so it reflects changes immediately
+                                        loaded_config.selected_tables = final_tables
+                                        st.session_state["ingestion_connector_config"] = loaded_config
+                                        
+                                        st.toast(f"Connection successfully saved! ({total_tables} tables configured)")
+                                        # Set flag to show success message after rerun
+                                        st.session_state["show_save_success"] = True
                                         st.session_state["ingestion_force_refresh"] = True
                                         st.session_state["ingestion_config_saved"] = True
                                         st.rerun()
@@ -1908,6 +1918,9 @@ def render():
                 if st.session_state.get("ingestion_config_saved", False):
                     if st.button("Start Ingestion", type="primary", use_container_width=True, key="start_ingestion_btn"):
                         config = st.session_state.get("ingestion_connector_config")
+                        print(f"DEBUG: Start Ingestion Clicked. Config: {config}")
+                        if config:
+                             print(f"DEBUG: Selected Tables in Config: {config.selected_tables}")
                         
                         if config and config.connection_id:
                             try:
@@ -1979,11 +1992,15 @@ def render():
             ingest_config = st.session_state.get("ingestion_connector_config")
             all_ingested_tables = []
             if ingest_config and ingest_config.selected_tables:
+                print(f"DEBUG: Profiling Stage - Ingest Config Selected Tables: {ingest_config.selected_tables}")
                 for schema, tables in ingest_config.selected_tables.items():
+                    print(f"DEBUG: Processing schema {schema}, tables: {tables}")
                     for t in tables:
                         # Handle both dict (new format) and string (legacy format)
                         t_name = t["table_name"] if isinstance(t, dict) else t
                         all_ingested_tables.append(t_name)
+            
+            print(f"DEBUG: Profiling Stage - All Ingested Tables: {all_ingested_tables}")
             
             # Allow user to select table BEFORE checking for metrics
             if all_ingested_tables:
@@ -2350,58 +2367,231 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
-            # Standardization rule cards
-            # Standardization rule categories
-            rule_categories = {
+            # ================================================================
+            # STATIC MANDATORY RULES — Always applied, informational only
+            # ================================================================
+            mandatory_rule_categories = {
                 "Contact Info": [
-                    ("Phone Formatting", "Allowed: 0-9, +, -. Null if len < 7.", "STD_PHONE_01", True),
-                    ("Email Validation", "Lowercase, trim, valid pattern (else NULL).", "STD_EMAIL_01", True),
-                    ("Website Standard", "Lowercase, trim, ensure http/https.", "STD_WEBSITE_01", True),
+                    ("Phone Formatting", "Allowed: 0-9, +, -. Null if len < 7."),
+                    ("Email Validation", "Lowercase, trim, valid pattern (else NULL)."),
+                    ("Website Standard", "Lowercase, trim, ensure http/https."),
                 ],
                 "Identifiers": [
-                    ("NPI Cleaning", "Digits only. Null if len != 10.", "STD_NPI_01", True),
-                    ("DEA Formatting", "Uppercase, trim.", "STD_DEA_01", True),
-                    ("License/Tax/DUNS", "Trim, uppercase, alphanumeric only.", "STD_IDS_01", True),
+                    ("NPI Cleaning", "Digits only. Null if len ≠ 10."),
+                    ("DEA Formatting", "Uppercase, trim."),
+                    ("License/Tax/DUNS", "Trim, uppercase, alphanumeric only."),
                 ],
                 "Names & Entities": [
-                    ("Entity Names", "Trim, proper case, single internal space.", "STD_NAME_ENTITY_01", True),
-                    ("Person Names", "Trim, proper case, single internal space.", "STD_NAME_PERSON_01", True),
+                    ("Entity Names", "Trim, proper case, single internal space."),
+                    ("Person Names", "Trim, proper case, single internal space."),
                 ],
                 "Address & Location": [
-                    ("Address Lines", "Trim, proper case, single internal space.", "STD_ADDR_01", True),
-                    ("City/State/Country", "City: Proper; State/Country: Upper.", "STD_LOC_01", True),
-                    ("Postal Code", "Trim, remove all internal spaces.", "STD_POST_01", True),
+                    ("Address Lines", "Trim, proper case, single internal space."),
+                    ("City/State/Country", "City: Proper; State/Country: Upper."),
+                    ("Postal Code", "Trim, remove all internal spaces."),
                 ],
                 "Metadata & Status": [
-                    ("Codes & Status", "Trim, uppercase (Entity Status, Org Type, etc).", "STD_META_01", True),
-                    ("Default Fallback", "Trim spaces for all other columns.", "STD_DEFAULT_TRIM", True),
+                    ("Codes & Status", "Trim, uppercase (Entity Status, Org Type, etc)."),
+                    ("Default Fallback", "Trim spaces for all other columns."),
                 ]
             }
             
-            # Render rules in a grid
-            for category, rules in rule_categories.items():
+            # Render mandatory rules as static informational cards
+            for category, rules in mandatory_rule_categories.items():
                 st.markdown(f"""
                 <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; margin-bottom: 8px;">
                     {category}
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Dynamic columns based on number of rules in category
                 cols = st.columns(len(rules))
-                for idx, (name, desc, rule_id, default) in enumerate(rules):
+                for idx, (name, desc) in enumerate(rules):
                     with cols[idx]:
-                        # Unique key for every rule
-                        is_enabled = st.checkbox(name, value=default, key=f"clean_rule_{rule_id}")
-                        border_color = "#10B981" if is_enabled else "#E2E8F0"
-                        bg_color = "#F0FDF4" if is_enabled else "#FFFFFF"
-                        
                         st.markdown(f"""
-                        <div style="background: {bg_color}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-top: -8px; height: 100%;">
-                            <div style="font-size: 12px; font-weight: 600; color: #334155;">{desc}</div>
-                            <div style="font-size: 10px; color: #94A3B8; margin-top: 4px; font-family: monospace;">ID: {rule_id}</div>
+                        <div style="background: #F0FDF4; border: 1px solid #10B981; border-radius: 10px; padding: 10px 14px; height: 100%;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                <span style="font-size: 13px; font-weight: 700; color: #065F46;">{name}</span>
+                            </div>
+                            <div style="font-size: 12px; font-weight: 500; color: #334155;">{desc}</div>
                         </div>
                         """, unsafe_allow_html=True)
             
+            st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+            
+            # ================================================================
+            # CONFIGURABLE ADDITIONAL RULES — User-toggled checkboxes
+            # ================================================================
+            # Standardization rule cards
+            # Additional rule categories
+            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+            # ================================================================
+            # COLUMN-LEVEL OPERATIONS
+            # ================================================================
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; margin-bottom: 8px;">
+                Column-Level Operations
+            </div>
+            """, unsafe_allow_html=True)
+            
+             # 1. Select Table
+            if not selected_clean_tables:
+                 st.info("Select at least one Target Table above to configure operations.")
+            else:
+                 # Layout: Table | Column | Operation
+                 col_rule_c1, col_rule_c2, col_rule_c3 = st.columns([1, 1, 1])
+                 
+                 with col_rule_c1:
+                     target_table_for_rule = st.selectbox(
+                         "Select Table", 
+                         options=selected_clean_tables,
+                         key="clean_col_rule_table_select"
+                     )
+                 
+                 # 2. Fetch Columns (Unified Logic)
+                 current_cols_list = []
+
+                 if target_table_for_rule:
+                     col_cache_key = f"clean_cols_v2_mdm_bronze_{target_table_for_rule}"
+                     if col_cache_key not in st.session_state:
+                         try:
+                             svc = get_connector_service()
+                             catalog_param = st.session_state.get("ingestion_selected_catalog")
+                             if not catalog_param and ingest_config.config:
+                                 catalog_param = ingest_config.config.get("catalog", "unity_catalog2")
+                             
+                             # Target is always in mdm_bronze schema with _bronze suffix per current architecture
+                             target_schema = "mdm_bronze" 
+                             target_table_bronze = f"{target_table_for_rule}_bronze"
+                             
+                             cols_data = svc.fetch_system_databricks_columns(catalog_param, target_table_bronze, schema=target_schema)
+                                 
+                             st.session_state[col_cache_key] = [c['name'] for c in cols_data]
+                         except Exception as e:
+                             print(f"Error fetching columns for cleansing rule: {e}")
+                             st.session_state[col_cache_key] = []
+                     
+                     current_cols_list = st.session_state.get(col_cache_key, [])
+
+                 # 3. Rule Configuration
+                 # Render Operation FIRST so we know what to show in Column slot
+                 with col_rule_c3:
+                     rule_type = st.selectbox(
+                         "Apply Operation",
+                         ["Datatype Conversion", "Decimal Precision", "Fill Nulls", "Text Case", "Create Calculated Column"],
+                         key="clean_col_rule_type"
+                     )
+                 
+                 # Dynamic UI based on Rule Type
+                 rule_params = {}
+                 target_col_param = None
+                 
+                 with col_rule_c2:
+                     if rule_type == "Create Calculated Column":
+                         # Special UI for new column
+                         new_col_name = st.text_input("New Column Name", placeholder="e.g. total_amount", key="clean_new_col_name")
+                         target_col_param = new_col_name # The 'target' is the new column
+                     else:
+                         # Standard Column Selection
+                         target_col_param = st.selectbox(
+                             "Select Column",
+                             options=sorted(current_cols_list),
+                             key="clean_col_rule_col_select",
+                             disabled=not current_cols_list
+                         )
+
+                 # Parameter Row (below main row)
+                 if rule_type == "Create Calculated Column":
+                     st.markdown("<div style='height: 4px'></div>", unsafe_allow_html=True)
+                     sql_expr = st.text_area("SQL Expression", placeholder="quantity * unit_price", height=100, key="clean_new_col_expr", help="Use Spark SQL syntax. Available columns: " + ", ".join(current_cols_list[:10]) + "...")
+                     rule_params["expression"] = sql_expr
+
+                 elif rule_type in ["Datatype Conversion", "Decimal Precision", "Fill Nulls", "Text Case"]:
+                      st.markdown("<div style='height: 4px'></div>", unsafe_allow_html=True)
+                      # parameters inside a container or columns
+                      p_col1, p_col2 = st.columns([1, 2])
+                      with p_col1:
+                          if rule_type == "Datatype Conversion":
+                              target_dtype = st.selectbox("Target Type", ["Integer", "Float", "String", "Date", "Boolean"], key="clean_rule_param_dtype")
+                              rule_params["target_type"] = target_dtype
+                          elif rule_type == "Decimal Precision":
+                              precision = st.number_input("Decimal Places", min_value=0, max_value=10, value=2, key="clean_rule_param_prec")
+                              rule_params["precision"] = precision
+                          elif rule_type == "Fill Nulls":
+                              fill_val = st.text_input("Replacement Value", key="clean_rule_param_fill")
+                              rule_params["fill_value"] = fill_val
+                          elif rule_type == "Text Case":
+                              case_opt = st.selectbox("Case", ["UPPERCASE", "lowercase", "Title Case"], key="clean_rule_param_case")
+                              rule_params["case"] = case_opt
+                 
+                 # Add Button
+                 st.markdown("<div style='height: 8px'></div>", unsafe_allow_html=True)
+                 _, add_btn_col = st.columns([3, 1])
+                 with add_btn_col:
+                    if st.button("Add Operation", use_container_width=True, key="add_col_rule_btn"):
+                        if target_table_for_rule and target_col_param:
+                            if "cleansing_column_rules" not in st.session_state:
+                                st.session_state["cleansing_column_rules"] = []
+                            
+                            # Validate Calculated Column
+                            if rule_type == "Create Calculated Column" and (not target_col_param or not rule_params.get("expression")):
+                                st.error("Name and Expression are required for calculated columns.")
+                            else:
+                                new_rule_entry = {
+                                    "table": target_table_for_rule,
+                                    "column": target_col_param,
+                                    "rule_type": rule_type,
+                                    "params": rule_params,
+                                    "id": str(datetime.datetime.now().timestamp())
+                                }
+                                st.session_state["cleansing_column_rules"].append(new_rule_entry)
+                                st.toast(f"Added operation for {target_col_param}", icon="✅")
+                 
+                 # 4. Display Configure Rules
+                 if "cleansing_column_rules" in st.session_state and st.session_state["cleansing_column_rules"]:
+                     st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+                     st.markdown("""
+                     <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                        Configured Operations
+                     </div>
+                     """, unsafe_allow_html=True)
+                     
+                     for i, r in enumerate(st.session_state["cleansing_column_rules"]):
+                        r_type = r['rule_type']
+                        is_calc = r_type == "Create Calculated Column"
+                        
+                        r_desc = r_type
+                        if is_calc:
+                            r_desc = f"Calculated: {r['params'].get('expression')}"
+                        elif r['params']:
+                            r_desc += f" ({', '.join([f'{k}={v}' for k,v in r['params'].items()])})"
+                        
+                        # Visual distinction for calculated columns
+                        icon = "fx" if is_calc else "::"
+                        bg_style = "background: #F0F9FF; border-color: #BAE6FD;" if is_calc else "background: #FFFFFF; border-color: #E2E8F0;"
+                            
+                        col1, col2 = st.columns([0.9, 0.1])
+                        with col1:
+                            st.markdown(f"""
+                            <div style="{bg_style} border: 1px solid; border-radius: 8px; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <span style="font-weight: 700; color: #0F172A;">{r['table']}</span>
+                                    <span style="color: #94A3B8; margin: 0 4px;">•</span>
+                                    <span style="font-weight: 600; color: #475569;">{r['column']}</span>
+                                    <span style="color: #CBD5E1; margin: 0 8px;">|</span>
+                                    <span style="color: #334155;">{r_desc}</span>
+                                </div>
+                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; background: #FFF; padding: 2px 6px; border-radius: 4px; border: 1px solid #E2E8F0;">
+                                    {icon}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            if st.button("✕", key=f"del_rule_{r['id']}", help="Remove rule"):
+                                st.session_state["cleansing_column_rules"].pop(i)
+                                st.rerun()
+
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             
             # Global Defaults / Transformation Configuration
@@ -2416,7 +2606,7 @@ def render():
                 st.selectbox("Date Format (for Date columns)", ["YYYY-MM-DD", "MM/DD/YYYY", "DD-MM-YYYY", "ISO 8601"], key="clean_date_format")
             with tf_col2:
                 # Renamed to clarify it applies when rules don't enforce specific null handling
-                st.selectbox("Global Null Handling", ["Keep as null", "Replace with default", "Remove row", "Flag for review"], key="clean_null_handling")
+                st.selectbox("Global Null Handling", ["Keep as null", "Replace with default", "Remove row"], key="clean_null_handling")
             
             # Removed generic "Case Conversion" to avoid conflict with specific rules (e.g. State=Upper, Email=Lower)
             
@@ -2438,28 +2628,66 @@ def render():
                         if not connection_id:
                             st.error("No active connection found. Please return to Ingestion stage.")
                         else:
+                            # User-configured column rules
+                            all_col_rules = st.session_state.get("cleansing_column_rules", [])
+                            
                             for table in selected_clean_tables:
                                 # Define staging location (Hardcoded assumption based on requirements)
                                 staging_loc = f"unity_catalog2.mdm_bronze.{table}_bronze"
                                 
-                                # Gather enabled rules
-                                active_rules = []
-                                for category, rules in rule_categories.items():
-                                    for name, desc, rule_id, default in rules:
-                                        # Check if checkbox was selected (default is True)
-                                        if st.session_state.get(f"clean_rule_{rule_id}", default):
-                                            active_rules.append({
-                                                "rule_id": rule_id,
-                                                "name": name,
-                                                "category": category,
-                                                "description": desc
-                                            })
+                                # Gather Column-Level Rules for this table
+                                table_col_rules = []
+                                raw_rules = [r for r in all_col_rules if r['table'] == table]
+                                
+                                for r in raw_rules:
+                                    formatted_rule = {}
+                                    rt = r['rule_type']
+                                    params = r['params']
+                                    
+                                    if rt == "Create Calculated Column":
+                                        formatted_rule["rule_type"] = "NEW_COLUMN"
+                                        formatted_rule["rule_parameters"] = {
+                                            "new_column_name": r['column'], # In our UI logic, this was the target
+                                            "expression": params.get("expression")
+                                        }
+                                        # No top-level column_name for new columns as per user example
+                                    
+                                    elif rt == "Datatype Conversion":
+                                        formatted_rule["column_name"] = r['column']
+                                        formatted_rule["rule_type"] = "DATATYPE_CONVERSION"
+                                        formatted_rule["rule_parameters"] = {
+                                            "desired_datatype": params.get("target_type")
+                                        }
+                                    
+                                    elif rt == "Decimal Precision":
+                                        formatted_rule["column_name"] = r['column']
+                                        formatted_rule["rule_type"] = "DECIMAL_PRECISION"
+                                        formatted_rule["rule_parameters"] = {
+                                            "scale": params.get("precision")
+                                        }
+                                        
+                                    elif rt == "Fill Nulls":
+                                        formatted_rule["column_name"] = r['column']
+                                        formatted_rule["rule_type"] = "DEFAULT_VALUE"
+                                        formatted_rule["rule_parameters"] = {
+                                            "default_value": params.get("fill_value")
+                                        }
+                                        
+                                    elif rt == "Text Case":
+                                        formatted_rule["column_name"] = r['column']
+                                        formatted_rule["rule_type"] = "TEXT_CASE"
+                                        formatted_rule["rule_parameters"] = {
+                                            "case_format": params.get("case")
+                                        }
+                                    
+                                    if formatted_rule:
+                                        table_col_rules.append(formatted_rule)
                                 
                                 # Add to config
                                 cleansing_config.append({
                                     "table_name": table,
-                                    "staging_table_location": staging_loc,
-                                    "cleansing_rules": active_rules,
+                                    "table_location": staging_loc, # Renamed per user request
+                                    "cleansing_rules": table_col_rules, # Merged column rules into this key
                                     "global_settings": {
                                         "date_format": st.session_state.get("clean_date_format"),
                                         "null_handling": st.session_state.get("clean_null_handling")

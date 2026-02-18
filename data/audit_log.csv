@@ -658,3 +658,16 @@ org.apache.spark.sql.AnalysisException
 2026-02-17 13:49:07,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 893387618399918
 2026-02-17 15:41:23,admin,User Login,Auth,Success,Session started for admin
 2026-02-17 17:49:23,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 18:30:52,admin,User Login,Auth,Success,Session started for admin
+2026-02-17 22:23:13,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 11:59:58,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 12:21:51,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 14:44:44,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 15:05:33,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 15:06:07,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 15:07:28,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 15:20:11,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 213826985673481
+2026-02-18 15:25:51,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 31504951624724
+2026-02-18 15:26:57,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 890070828067300
+2026-02-18 15:32:22,admin,User Login,Auth,Success,Session started for admin
+2026-02-18 15:34:27,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 116237531975474
