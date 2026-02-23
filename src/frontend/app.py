@@ -432,63 +432,166 @@ st.markdown(f"""
                     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
     
-    /* DYNAMIC MAIN CONTENT EXPANSION WHEN SIDEBAR IS COLLAPSED */
-    /* When sidebar is collapsed (aria-expanded="false"), collapse sidebar width and expand main content */
-    
-    /* FORCE SIDEBAR TO 0 WIDTH WHEN COLLAPSED */
+    /* DYNAMIC MAIN CONTENT EXPANSION WITH MINI-SIDEBAR */
     section[data-testid="stSidebar"][aria-expanded="false"] {{
-        width: 0px !important;
-        min-width: 0px !important;
-        max-width: 0px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        flex-shrink: 1 !important;
-        transform: translateX(-100%) !important;
+        width: 105px !important;
+        min-width: 105px !important;
+        max-width: 105px !important;
+        transform: translateX(0) !important;
+        margin-left: 0px !important;
+        position: relative !important;
+        overflow-x: hidden !important;
     }}
     
     section[data-testid="stSidebar"][aria-expanded="false"] > div {{
-        width: 0px !important;
-        min-width: 0px !important;
+        width: 105px !important;
+        min-width: 105px !important;
+        overflow-x: hidden !important;
+    }}
+    
+    /* Target using sibling combinators for robust main content expansion */
+    [data-testid="stAppViewContainer"]:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stMain"],
+    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stMain"],
+    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) .st-emotion-cache-6px8kg,
+    section[data-testid="stSidebar"][aria-expanded="false"] + [data-testid="stMain"],
+    section[data-testid="stSidebar"][aria-expanded="false"] ~ [data-testid="stMain"] {{
+        margin-left: 0px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    
+    [data-testid="stAppViewContainer"]:has(section[data-testid="stSidebar"][aria-expanded="false"]) .stMainBlockContainer,
+    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) .block-container,
+    section[data-testid="stSidebar"][aria-expanded="false"] + [data-testid="stMain"] .block-container,
+    section[data-testid="stSidebar"][aria-expanded="false"] ~ [data-testid="stMain"] .block-container {{
+        margin-left: auto !important;
+        margin-right: auto !important;
+        max-width: 100% !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }}
+
+    /* --- MINI-SIDEBAR ICON VISIBILITY LOGIC --- */
+    /* Hide Text for Navigation Buttons */
+    section[data-testid="stSidebar"][aria-expanded="false"] .stButton button p {{
+        font-size: 0px !important;
+        color: transparent !important;
+    }}
+    
+    /* Adjust Button Dimensions to Rounded Squares for Icons */
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton {{
+        display: flex !important;
+        justify-content: center !important;
+        margin-bottom: 8px !important;
+        width: 100% !important;
+    }}
+    
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button,
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button {{
         padding: 0 !important;
-        overflow: hidden !important;
+        background-position: center center !important; /* Force exact center */
+        background-size: 24px 24px !important; /* Perfect fit */
+        width: 44px !important; /* Compact button */
+        min-width: 44px !important;
+        max-width: 44px !important;
+        height: 44px !important; /* Compact button */
+        min-height: 44px !important;
+        max-height: 44px !important;
+        margin: 0 !important;
+        border-radius: 14px !important; /* Rounded square */
+        background-color: transparent !important; /* Let active/hover handle background colors */
+        border: none !important; /* Remove harsh default borders if any */
+        box-shadow: none !important; /* Flatten out default shadows */
+        transition: all 0.2s ease !important;
     }}
     
-    /* Target using parent container with :has() - for main content expansion */
-    [data-testid="stAppViewContainer"]:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stMain"] {{
-        margin-left: 0 !important;
+    /* Ensure hover/active states don't break the new compact shape */
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button:hover,
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button:hover {{
+        background-color: rgba(209, 31, 65, 0.06) !important; /* Very light red tint */
+        transform: scale(1.02) !important;
+        box-shadow: 0 0 0 1px rgba(209, 31, 65, 0.1) !important; /* Subtle outline */
+    }}
+    
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button[kind="primary"],
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button[data-testid*="primary"],
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button[kind="primary"],
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button[data-testid*="primary"] {{
+        background-color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(209, 31, 65, 0.12), 
+                    0 0 0 1px rgba(209, 31, 65, 0.15) !important;
+    }}
+
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button[kind="primary"]:hover,
+    section[data-testid="stSidebar"][aria-expanded="false"] div.stButton button[data-testid*="primary"]:hover,
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button[kind="primary"]:hover,
+    section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page]) + div.element-container .stButton button[data-testid*="primary"]:hover {{
+        box-shadow: 0 4px 12px rgba(209, 31, 65, 0.18), 
+                    0 0 0 1px rgba(209, 31, 65, 0.2) !important;
+        transform: scale(1.02) !important;
+    }}
+
+    /* Fix the Sign Out Button (which lacks an icon by default) */
+    section[data-testid="stSidebar"][aria-expanded="false"] div[data-testid="stVerticalBlock"] > div:last-child div.stButton > button {{
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>') !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        background-size: 26px 26px !important;
+    }}
+
+    /* --- LOGO & USER PROFILE COLLAPSED STATE --- */
+    
+    /* Hide text from Logo */
+    section[data-testid="stSidebar"][aria-expanded="false"] .sidebar-logo-text {{
+        display: none !important;
+    }}
+
+    /* Hide text from User Profile */
+    section[data-testid="stSidebar"][aria-expanded="false"] .user-profile-text {{
+        display: none !important;
+    }}
+
+    /* Re-center the Logo Image */
+    section[data-testid="stSidebar"][aria-expanded="false"] .sidebar-logo-img {{
+        width: 76px !important; /* Enlarge the logo */
+        margin: 0 auto !important;
+        display: block !important;
+    }}
+
+    /* Adjust Logo Container */
+    section[data-testid="stSidebar"][aria-expanded="false"] .sidebar-logo-container {{
+        justify-content: center !important;
+        padding-left: 0px !important;
+        gap: 0px !important;
+    }}
+
+    /* Adjust User Profile Card for Compactness */
+    section[data-testid="stSidebar"][aria-expanded="false"] .user-profile-card {{
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }}
+
+    section[data-testid="stSidebar"][aria-expanded="false"] .user-profile-content {{
+        gap: 0px !important;
+        justify-content: center !important;
+        align-items: center !important;
         width: 100% !important;
-        max-width: 100% !important;
     }}
-    
-    [data-testid="stAppViewContainer"]:has(section[data-testid="stSidebar"][aria-expanded="false"]) .stMainBlockContainer {{
-        margin-left: auto !important;
-        margin-right: auto !important;
-        max-width: 100% !important;
-        padding-left: 4rem !important;
-        padding-right: 2rem !important;
-    }}
-    
-    /* Also target the .stApp level for broader compatibility */
-    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stMain"] {{
-        margin-left: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }}
-    
-    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) .block-container {{
-        margin-left: auto !important;
-        margin-right: auto !important;
-        max-width: 100% !important;
-        padding-left: 4rem !important;
-        padding-right: 2rem !important;
-    }}
-    
-    /* Additional targeting for the main content wrapper */
-    .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) .st-emotion-cache-6px8kg {{
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-left: 0 !important;
+
+    /* Re-center User Profile Initial */
+    section[data-testid="stSidebar"][aria-expanded="false"] .user-profile-initial {{
+        margin: 0 auto !important;
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 18px !important;
+        transition: all 0.2s ease !important;
     }}
     
     /* ---------------------------------------------------------
@@ -589,51 +692,59 @@ st.markdown(f"""
         transform: scale(1.02) !important;
     }}
 
-    /* Sidebar Toggle Button (Collapsed Control - The arrow to OPEN sidebar) */
-    /* FORCE VISIBILITY AT ALL TIMES - NO HOVER NEEDED */
+    /* HIDE STREAMLIT'S DEFAULT EXTERNAL COLLAPSED CONTROL (We will use the internal one!) */
     [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stExpandSidebarButton"],
-    button[data-testid="stExpandSidebarButton"] {{
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        position: fixed !important; /* Pin to viewport */
-        top: 60px !important; /* Below standard header height if any */
-        left: 12px !important; /* Bit more left as requested */
-        z-index: 9999999 !important; /* Max z-index */
-        background-color: #ffffff !important;
-        color: #0f172a !important; /* Dark Icon */
-        border: 2px solid #cbd5e1 !important; /* Thicker Border */
-        border-radius: 8px !important;
-        height: 40px !important;
-        width: 40px !important;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
-        transition: all 0.2s ease !important;
-        opacity: 1 !important; /* Force opacity */
-        visibility: visible !important;
-    }}
-    
-    /* Ensure any animation containers don't hide it */
-    [data-testid="stSidebarCollapsedControl"] > div,
-    [data-testid="stExpandSidebarButton"] > div {{
-        display: flex !important;
-        visibility: visible !important;
+    [data-testid="collapsedControl"],
+    [data-testid="stExpandSidebarButton"] {{
+        display: none !important;
     }}
 
-    /* Override Streamlit's default behavior that might hide it */
-    section[data-testid="stSidebar"] > [data-testid="stSidebarCollapsedControl"] {{
-        opacity: 1 !important;
+    /* FORCE THE INTERNAL MENU BUTTON TO BE VISIBLE AT ALL TIMES & CENTERED IN MINI-SIDEBAR */
+    section[data-testid="stSidebar"][aria-expanded="false"] div[data-testid="stSidebarHeader"] {{
         display: flex !important;
-        visibility: visible !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        padding-top: 18px !important;
+    }}
+
+    section[data-testid="stSidebar"][aria-expanded="false"] div[data-testid="stSidebarCollapseButton"],
+    section[data-testid="stSidebar"][aria-expanded="false"] div[data-testid="stSidebarHeader"] > div {{
+        display: flex !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
+    }}
+
+    /* --- SWAP THE << ICON TO >> WHEN COLLAPSED --- */
+    /* Hide the original literal text content "keyboard_double_arrow_left" */
+    section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stIconMaterial"] {{
+        color: transparent !important; /* Hide original text */
+        position: relative;
     }}
     
-    /* When Sidebar is closed, ensuring the button remains visible */
-    [data-testid="stSidebarCollapsedControl"] > *,
-    [data-testid="stExpandSidebarButton"] > * {{
-        opacity: 1 !important;
-        visibility: visible !important;
-        color: #0f172a !important;
-        fill: #0f172a !important;
+    /* Inject the new literal text content "keyboard_double_arrow_right" */
+    section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stIconMaterial"]::after {{
+        content: "keyboard_double_arrow_right" !important;
+        color: #0f172a !important; /* Same as hover/active icon color */
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-family: inherit;
+        font-size: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        transition: color 0.2s ease !important;
+    }}
+    
+    /* Hover state for the injected expand icon */
+    div[data-testid="stSidebarCollapseButton"] button:hover span::after,
+    section[data-testid="stSidebar"][aria-expanded="false"] div[data-testid="stSidebarCollapseButton"] button:hover [data-testid="stIconMaterial"]::after {{
+        color: #d11f41 !important; /* Brand Red Icon */
     }}
 
     [data-testid="stSidebarCollapsedControl"] svg,
@@ -788,7 +899,6 @@ st.markdown(f"""
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:last-child div.stButton > button,
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:last-of-type div.stButton > button {{
         background-color: #d11f41 !important; /* Brand Red */
-        background: #d11f41 !important;
         color: #ffffff !important;
         border: none !important;
         border-radius: 24px !important; /* Rounded pill shape from image */
@@ -800,12 +910,13 @@ st.markdown(f"""
         width: 100% !important; /* Full width relative to container */
         padding-left: 0 !important; /* Reset nav padding */
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
     }}
     
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:last-child div.stButton > button:hover,
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:last-of-type div.stButton > button:hover {{
         background-color: #9f1239 !important; /* Darker Red */
-        background: #9f1239 !important;
         color: #ffffff !important;
         box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.4) !important;
         transform: translateY(-2px);
@@ -1368,9 +1479,9 @@ def sidebar_nav():
             logo_b64 = ""
             
         st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 8px; padding-top: 10px;">
-            <img src="data:image/png;base64,{logo_b64}" width="100" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
-            <div style="display: flex; flex-direction: column;">
+        <div class="sidebar-logo-container" style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 8px; padding-top: 10px;">
+            <img class="sidebar-logo-img" src="data:image/png;base64,{logo_b64}" width="100" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+            <div class="sidebar-logo-text" style="display: flex; flex-direction: column;">
                 <h3 style="margin: 0; font-size: 28px; color: #0f172a; font-weight: 800; letter-spacing: -0.5px; line-height: 1.0;">iCORE</h3>
                 <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;">iLINK DIGITAL</p>
             </div>
@@ -1381,8 +1492,14 @@ def sidebar_nav():
         role = st.session_state.get('user_role', 'Guest')
         allowed_pages = PERMISSIONS.get(role, [])
         current_page = st.session_state.get('current_page', 'Dashboard')
-        
-
+        page_icons = {
+            "Dashboard": "layout-dashboard.png",
+            "Connectors": "plug.png",
+            "Pipeline Inspector": "workflow.png",
+            "Match Review": "compare.png",
+            "Audit Logs": "file-text.png",
+            "User Management": "shield-user.png"
+        }
 
         for page in allowed_pages:
             # Determine if this is the active page
@@ -1390,6 +1507,34 @@ def sidebar_nav():
             # Use 'primary' type for active to trigger our specific CSS
             btn_type = "primary" if is_active else "secondary"
             
+            icon_filename = page_icons.get(page)
+            if icon_filename:
+                icon_path = os.path.join(os.path.dirname(__file__), f"../../assets/{icon_filename}")
+                icon_b64 = get_img_as_base64(icon_path)
+                if icon_b64:
+                    page_id = page.replace(' ', '-')
+                    st.markdown(f'''
+                    <span data-page="{page_id}"></span>
+                    <style>
+                        div.element-container:has(span[data-page="{page_id}"]) {{
+                            display: none !important;
+                        }}
+                        div.element-container:has(span[data-page="{page_id}"]) + div.element-container .stButton button {{
+                            background-image: url('data:image/png;base64,{icon_b64}') !important;
+                            background-position: 16px center !important;
+                            background-repeat: no-repeat !important;
+                            background-size: 18px 18px !important;
+                            padding-left: 44px !important;
+                            text-align: left !important;
+                            justify-content: flex-start !important;
+                        }}
+                        /* Override background position specifically when sidebar is collapsed */
+                        section[data-testid="stSidebar"][aria-expanded="false"] div.element-container:has(span[data-page="{page_id}"]) + div.element-container .stButton button {{
+                            background-position: center center !important;
+                        }}
+                    </style>
+                    ''', unsafe_allow_html=True)
+
             # Using columns to create a "full width" feel or just standard button
             if st.button(page, key=f"nav_{page}", type=btn_type, use_container_width=True):
                 st.session_state['current_page'] = page
@@ -1404,12 +1549,12 @@ def sidebar_nav():
         initial = user_name[0] if user_name else "U"
         
         st.markdown(f"""
-        <div style="background-color: #ffffff; border-radius: 8px; padding: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 700; font-size: 13px; border: 1px solid #e2e8f0;">
+        <div class="user-profile-card" style="background-color: #ffffff; border-radius: 8px; padding: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;">
+            <div class="user-profile-content" style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-profile-initial" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 700; font-size: 13px; border: 1px solid #e2e8f0; flex-shrink: 0;">
                     {initial}
                 </div>
-                <div style="overflow: hidden;">
+                <div class="user-profile-text" style="overflow: hidden;">
                     <p style="margin: 0; color: #334155; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{user_name}</p>
                     <p style="margin: 0; color: #94a3b8; font-size: 10px; text-transform: capitalize;">{role}</p>
                 </div>

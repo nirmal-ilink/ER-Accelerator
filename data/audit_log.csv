@@ -671,3 +671,16 @@ org.apache.spark.sql.AnalysisException
 2026-02-18 15:26:57,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 890070828067300
 2026-02-18 15:32:22,admin,User Login,Auth,Success,Session started for admin
 2026-02-18 15:34:27,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 116237531975474
+2026-02-18 20:03:56,admin,User Login,Auth,Success,Session started for admin
+2026-02-20 11:23:19,admin,User Login,Auth,Success,Session started for admin
+2026-02-20 13:27:30,admin,User Login,Auth,Success,Session started for admin
+2026-02-20 13:33:12,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 11:33:24,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 11:51:59,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 12:15:01,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 12:29:07,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 12:36:29,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 13:44:10,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 14:50:05,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 19:57:12,admin,User Login,Auth,Success,Session started for admin
+2026-02-23 20:35:01,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 566601456855389

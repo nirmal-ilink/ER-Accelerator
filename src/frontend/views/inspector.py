@@ -226,6 +226,17 @@ def render():
         /* --- FORM ELEMENTS (Force Light Theme & Alignment) --- */
         
         /* === SELECTBOX STYLING === */
+        /* Specific fix for "Case" selectbox to prevent truncation and add spacing */
+        .st-key-clean_rule_param_case,
+        .st-key-clean_rule_param_case div[data-testid="stSelectbox"] {{
+            gap: 40px !important;
+        }}
+        .st-key-clean_rule_param_case label p {{
+            white-space: nowrap !important;
+            min-width: fit-content !important;
+            margin-right: 10px !important;
+        }}
+
         /* Selectbox outer container */
         div[data-testid="stSelectbox"] {{
             margin-bottom: 0 !important;
@@ -1506,7 +1517,7 @@ def render():
                             st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
                             
                             # Table List - Scrollable Container to save space
-                            with st.container(height=600, border=False):
+                            with st.container(height=350, border=False):
                                 for table_name in sorted(tables):
                                     chk_key = f"insp_tbl_{schema_name}_{table_name}"
                                     is_selected = table_name in sel_tables
@@ -2341,6 +2352,125 @@ def render():
                     border-color: #991B1B !important;
                     box-shadow: 0 0 0 1px #991B1B !important;
                 }
+
+                /* Number Input Container Background */
+                div[data-testid="stNumberInputContainer"] {
+                    border: 1px solid #E2E8F0 !important;
+                    border-radius: 8px !important;
+                    overflow: hidden !important;
+                    display: flex !important;
+                    background-color: #FFFFFF !important;
+                }
+                
+                div[data-testid="stNumberInputContainer"]:focus-within {
+                    border-color: #991B1B !important;
+                    box-shadow: 0 0 0 1px #991B1B !important;
+                }
+
+                div[data-testid="stNumberInputContainer"] > div[data-baseweb="input"] {
+                    background-color: transparent !important;
+                    border: none !important;
+                }
+                
+                div[data-testid="stNumberInputContainer"] > div[data-baseweb="input"]:focus-within {
+                    box-shadow: none !important;
+                }
+                
+                /* Remove base input inner border */
+                div[data-baseweb="base-input"] {
+                    border: none !important;
+                    background-color: transparent !important;
+                }
+                
+                /* Number Text Color */
+                input[data-testid="stNumberInputField"] {
+                    color: #0F172A !important;
+                    -webkit-text-fill-color: #0F172A !important;
+                    font-weight: 600 !important;
+                }
+                
+                /* Plus and Minus Buttons */
+                button[data-testid="stNumberInputStepDown"],
+                button[data-testid="stNumberInputStepUp"] {
+                    background-color: #FEF2F2 !important;
+                    color: #7F1D1D !important;
+                }
+                
+                button[data-testid="stNumberInputStepDown"] svg,
+                button[data-testid="stNumberInputStepUp"] svg {
+                    fill: #7F1D1D !important;
+                    color: #7F1D1D !important;
+                }
+                
+                button[data-testid="stNumberInputStepDown"]:hover:not(:disabled),
+                button[data-testid="stNumberInputStepUp"]:hover:not(:disabled) {
+                    background-color: #FEE2E2 !important;
+                }
+                
+                /* Disabled Buttons */
+                button[data-testid="stNumberInputStepDown"]:disabled,
+                button[data-testid="stNumberInputStepUp"]:disabled {
+                    background-color: #F8FAFC !important;
+                }
+                
+                button[data-testid="stNumberInputStepDown"]:disabled svg,
+                button[data-testid="stNumberInputStepUp"]:disabled svg {
+                    fill: #CBD5E1 !important;
+                    color: #CBD5E1 !important;
+                }
+                /* Text Area and Text Input Styling */
+                /* Force background and borders */
+                div[data-baseweb="textarea"],
+                div[data-baseweb="base-input"],
+                div[data-baseweb="textarea"] > div,
+                div[data-baseweb="input"] > div[data-baseweb="base-input"] {
+                    background-color: #FFFFFF !important;
+                    border: 1px solid #E2E8F0 !important;
+                    border-radius: 8px !important;
+                }
+                
+                div[data-baseweb="textarea"] > div:focus-within,
+                div[data-baseweb="input"] > div[data-baseweb="base-input"]:focus-within {
+                    border-color: #991B1B !important;
+                    box-shadow: 0 0 0 1px #991B1B !important;
+                }
+                
+                /* Extreme targeting for text color */
+                textarea[aria-label="SQL Expression"],
+                textarea[aria-label="New Column Name"],
+                textarea[aria-label="Replacement Value"],
+                textarea[data-testid="stTextArea"],
+                input[data-testid="stTextInput"],
+                div[data-baseweb="textarea"] textarea,
+                div[data-baseweb="input"] input,
+                .stTextArea textarea,
+                .stTextInput input {
+                    color: #000000 !important;
+                    -webkit-text-fill-color: #000000 !important;
+                    caret-color: #000000 !important;
+                    background-color: transparent !important;
+                    opacity: 1 !important;
+                }
+                
+                /* Make all default Widget Labels visible and consistent */
+                label[data-testid="stWidgetLabel"] p,
+                label[data-testid="stWidgetLabel"] span {
+                    color: #64748B !important;
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                }
+                
+                /* Placeholder styling */
+                textarea::placeholder,
+                input::placeholder,
+                .stTextArea textarea::placeholder,
+                .stTextInput input::placeholder {
+                    color: #94A3B8 !important;
+                    -webkit-text-fill-color: #94A3B8 !important;
+                    opacity: 1 !important;
+                }
             </style>
             """, unsafe_allow_html=True)
 
@@ -2479,7 +2609,7 @@ def render():
                  with col_rule_c3:
                      rule_type = st.selectbox(
                          "Apply Operation",
-                         ["Datatype Conversion", "Decimal Precision", "Fill Nulls", "Text Case", "Create Calculated Column"],
+                         ["Datatype Conversion", "Decimal Precision", "Text Case", "Create Calculated Column"],
                          key="clean_col_rule_type"
                      )
                  
@@ -2507,7 +2637,7 @@ def render():
                      sql_expr = st.text_area("SQL Expression", placeholder="quantity * unit_price", height=100, key="clean_new_col_expr", help="Use Spark SQL syntax. Available columns: " + ", ".join(current_cols_list[:10]) + "...")
                      rule_params["expression"] = sql_expr
 
-                 elif rule_type in ["Datatype Conversion", "Decimal Precision", "Fill Nulls", "Text Case"]:
+                 elif rule_type in ["Datatype Conversion", "Decimal Precision", "Text Case"]:
                       st.markdown("<div style='height: 4px'></div>", unsafe_allow_html=True)
                       # parameters inside a container or columns
                       p_col1, p_col2 = st.columns([1, 2])
@@ -2518,9 +2648,6 @@ def render():
                           elif rule_type == "Decimal Precision":
                               precision = st.number_input("Decimal Places", min_value=0, max_value=10, value=2, key="clean_rule_param_prec")
                               rule_params["precision"] = precision
-                          elif rule_type == "Fill Nulls":
-                              fill_val = st.text_input("Replacement Value", key="clean_rule_param_fill")
-                              rule_params["fill_value"] = fill_val
                           elif rule_type == "Text Case":
                               case_opt = st.selectbox("Case", ["UPPERCASE", "lowercase", "Title Case"], key="clean_rule_param_case")
                               rule_params["case"] = case_opt
@@ -2664,13 +2791,6 @@ def render():
                                         formatted_rule["rule_type"] = "DECIMAL_PRECISION"
                                         formatted_rule["rule_parameters"] = {
                                             "scale": params.get("precision")
-                                        }
-                                        
-                                    elif rt == "Fill Nulls":
-                                        formatted_rule["column_name"] = r['column']
-                                        formatted_rule["rule_type"] = "DEFAULT_VALUE"
-                                        formatted_rule["rule_parameters"] = {
-                                            "default_value": params.get("fill_value")
                                         }
                                         
                                     elif rt == "Text Case":
