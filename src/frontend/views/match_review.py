@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import time
-import time
+import random
 import textwrap
 from src.backend.audit.logger import AuditLogger
 
@@ -46,120 +46,84 @@ HEALTHCARE_FIELDS = [
 # DATA OPERATIONS
 # =============================================================================
 def load_data():
-    """Load match review data from gold export or use healthcare mock data."""
+    """Load match review data from gold export or generate diverse 50+ healthcare mock clusters."""
     path = os.path.join(os.path.dirname(__file__), "../../../data/output/gold_export.csv")
     try:
         if os.path.exists(path):
             return pd.read_csv(path)
     except Exception:
         pass
+    
+    # Initialize deterministic random seed for consistent showcase
+    random.seed(42)
+    
+    first_names = ["Jennifer", "Sarah", "Nirmal", "Robert", "Michael", "Samantha", "David", "Emma", "John", "Olivia", "James", "Sophia", "William", "Isabella", "Richard", "Ava", "Joseph", "Mia", "Charles", "Emily", "Thomas", "Abigail", "Daniel", "Madison", "Matthew"]
+    last_names = ["Martin", "Wilson", "Pukazhen", "Chen", "Rodriguez", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Perez", "Taylor", "Anderson", "Moore", "Jackson", "Lee", "White"]
+    streets = ["Cedar Ct", "Main St", "iLink Way", "Tech Blvd", "Oak Ave", "Pine Rd", "Maple Dr", "Elm St", "Washington St", "Park Ave", "Lakeview Dr", "Hillcrest Rd", "Sunset Blvd", "Broadway", "Spring St", "Highland Ave", "River Rd", "Meadow Ln", "Willow Creek", "Forest Path", "Sunset Dr", "Ocean Ave", "Ridge Rd", "Valley View", "Mountain Pass"]
+    cities = ["Los Angeles", "San Antonio", "Houston", "Seattle", "Miami", "Chicago", "New York", "Austin", "San Francisco", "Boston", "Denver", "Atlanta", "Dallas", "Phoenix", "Philadelphia", "San Diego", "Portland", "Detroit", "Minneapolis", "Las Vegas"]
+    states = ["CA", "TX", "WA", "FL", "IL", "NY", "CO", "GA", "AZ", "PA", "OR", "MI", "MN", "NV", "OH", "NC", "VA", "MA", "NJ", "IN"]
+    specialties = ["Oncology", "Internal Medicine", "General Practice", "Cardiology", "Pediatrics", "Family Medicine", "Neurology", "Psychiatry", "Dermatology", "Surgery", "Orthopedics", "Radiology", "Anesthesiology", "Pathology", "Emergency Medicine"]
+    source_systems = ["EMR", "NPI_Registry", "Claims_DB", "Snowflake", "Delta Lake", "SAP"]
+    
+    records = []
+    
+    # Generate 55 clusters to satisfy the 50+ diverse samples requirement
+    for i in range(1, 56):
+        cluster_id = f"MOCK_CL{i:03d}"
         
-    return pd.DataFrame({
-        "unique_id": [
-            "EMR001", "NPI001", 
-            "EMR002", "NPI002", "CLM002", 
-            "EMR003", "SNOW_01", "DL_01", "SAP_01",
-            "EMR004", "NPI004",
-            "EMR005", "CLM005", "NPI005",
-            "EMR006", "NPI006"
-        ],
-        "npi": [
-            "3444587960", "3444587960", 
-            "3175087427", "3175087427", "3175087427", 
-            "4125896321", "4125896321", "4125896321", "4125890000",
-            "5151515001", "5151515001",
-            "6007008000", "6007008000", "6007008001",
-            "7474747474", "7474747474"
-        ],
-        "first_name": [
-            "Jennifer", "Jennifer", 
-            "Sarah", "Sara", "Sarah", 
-            "Nirmal", "Nirmal", "Nirmal Kumar", "Nirmal",
-            "Robert", "Rob",
-            "Michael", "Mike", "Michael",
-            "Samantha", "Sam"
-        ],
-        "last_name": [
-            "Martin", "Martin", 
-            "Wilson", "Wilson", "Willson", 
-            "Pukazhen", "Pukazhen", "Pukazhen", "Pukazhen",
-            "Chen", "Chen",
-            "Rodriguez", "Rodriges", "Rodriguez",
-            "Smith", "Smith-Jones"
-        ],
-        "address_line_1": [
-            "4484 Cedar Ct", "4484 Cedar Ct", 
-            "6940 Main Street", "6940 Main St", "6940 Main St", 
-            "123 iLink Way", "123 iLink Way", "123 iLink Way", "123 iLink Way",
-            "101 Tech Blvd", "101 Technology Boulevard",
-            "555 Oak Ave", "555 Oak St", "555 Oak Ave",
-            "888 Pine Rd", "888 Pine Road"
-        ],
-        "city": [
-            "Los Angeles", "Los Angeles", 
-            "San Antonio", "San Antonio", "San Antonio", 
-            "Houston", "Houston", "Houston", "Houston",
-            "Seattle", "Seattle",
-            "Miami", "Miami", "Miami",
-            "Chicago", "Chicago"
-        ],
-        "state": [
-            "CA", "CA", 
-            "TX", "TX", "TX", 
-            "TX", "TX", "TX", "TX",
-            "WA", "WA",
-            "FL", "FL", "FL",
-            "IL", "IL"
-        ],
-        "zip_code": [
-            "25354", "25354", 
-            "74966", "74966", "74966", 
-            "77001", "77001", "77001", "77001",
-            "98101", "98101",
-            "33101", "33101", "33101",
-            "60601", "60601"
-        ],
-        "phone": [
-            "449-632-7536", "449-632-7536", 
-            "848-211-7653", "848-211-7653", None, 
-            "713-555-0101", "713-555-0101", "713-555-0101", "713-555-0000",
-            "206-555-1234", "206-555-1234",
-            "305-555-9000", None, "305-555-9000",
-            "312-555-7777", "312-555-7777"
-        ],
-        "specialty": [
-            "Oncology", "Oncology", 
-            "Internal Medicine", "Internal Medicine", "Internal Med", 
-            "General Practice", "GP", "General Practice", "GP",
-            "Cardiology", "Cardiology",
-            "Pediatrics", "Pediatrics", "Pediatrics",
-            "Family Med", "Family Medicine"
-        ],
-        "_source_system": [
-            "EMR", "NPI_Registry", 
-            "EMR", "NPI_Registry", "Claims_DB", 
-            "EMR", "Snowflake", "Delta Lake", "SAP",
-            "EMR", "NPI_Registry",
-            "EMR", "Claims_DB", "NPI_Registry",
-            "EMR", "NPI_Registry"
-        ],
-        "cluster_id": [
-            "CL001", "CL001", 
-            "CL002", "CL002", "CL002", 
-            "CL003", "CL003", "CL003", "CL003",
-            "CL004", "CL004",
-            "CL005", "CL005", "CL005",
-            "CL006", "CL006"
-        ],
-        "confidence_score": [
-            0.95, 0.95, 
-            0.87, 0.87, 0.87, 
-            0.98, 0.70, 0.88, 0.90,
-            0.92, 0.92,
-            0.85, 0.85, 0.85,
-            0.88, 0.88
-        ]
-    })
+        # Base entity for the cluster
+        base_first = random.choice(first_names)
+        base_last = random.choice(last_names)
+        base_addr = f"{random.randint(100, 9999)} {random.choice(streets)}"
+        base_city = random.choice(cities)
+        base_state = random.choice(states)
+        base_zip = f"{random.randint(10000, 99999)}"
+        base_phone = f"{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
+        base_specialty = random.choice(specialties)
+        base_npi = f"{random.randint(1000000000, 9999999999)}"
+        
+        num_records_in_cluster = random.choice([2, 3, 4])
+        cluster_sources = random.sample(source_systems, k=num_records_in_cluster)
+        
+        for j, src in enumerate(cluster_sources):
+            # Introduce variations/noise for realistic match conflict review
+            r_first = base_first
+            r_last = base_last
+            r_addr = base_addr
+            r_city = base_city
+            r_zip = base_zip
+            r_phone = base_phone
+            r_npi = base_npi
+            r_specialty = base_specialty
+            
+            # Simulated Typos / Variations based on probability
+            if random.random() < 0.2: r_first = r_first[:-1] # Drop last letter
+            if random.random() < 0.15: r_last = r_last + ("s" if not r_last.endswith("s") else "") # Added 's'
+            if random.random() < 0.3: r_addr = r_addr.replace("St", "Street").replace("Rd", "Road").replace("Ave", "Avenue")
+            if random.random() < 0.1: r_zip = r_zip[:4] + str((int(r_zip[4]) + 1) % 10) # 1 digit zip typo
+            if random.random() < 0.2: r_phone = None # Missing phone
+            if random.random() < 0.15: r_specialty = r_specialty[:5] # Shortened specialty
+            if random.random() < 0.05: r_npi = None # Missing NPI from some sources
+            
+            confidence = round(random.uniform(0.65, 0.99), 2)
+            
+            records.append({
+                "unique_id": f"{src[:4].upper()}_{i:03d}_{j}",
+                "npi": r_npi,
+                "first_name": r_first,
+                "last_name": r_last,
+                "address_line_1": r_addr,
+                "city": r_city,
+                "state": base_state,
+                "zip_code": r_zip,
+                "phone": r_phone,
+                "specialty": r_specialty,
+                "_source_system": src,
+                "cluster_id": cluster_id,
+                "confidence_score": confidence
+            })
+            
+    return pd.DataFrame(records)
 
 def detect_discrepancies(records: pd.DataFrame, field_key: str) -> bool:
     values = []
@@ -822,7 +786,7 @@ def render():
         with c2:
             st.markdown('<span class="btn-marker-restart"></span>', unsafe_allow_html=True)
             if st.button("Restart Review Session", width="stretch"):
-                del st.session_state.review_queue
+                st.session_state.pop('review_queue', None)
                 st.session_state.match_index = 0
                 st.rerun()
         return
