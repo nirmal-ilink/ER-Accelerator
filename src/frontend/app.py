@@ -1312,6 +1312,27 @@ st.markdown(f"""
         letter-spacing: 0.5px !important;
     }}
 
+    /* ---------------------------------------------------------
+       GLOBAL TOOLTIP STYLING - CLEAN WHITE THEME
+       --------------------------------------------------------- */
+       
+    /* Tooltip Inner Container */
+    [data-baseweb="tooltip"] > div {{
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        padding: 8px 12px !important;
+    }}
+    
+    /* Tooltip Arrow */
+    [data-baseweb="tooltip"] > div > div {{
+        background-color: #ffffff !important;
+    }}
+
 </style>
 
 

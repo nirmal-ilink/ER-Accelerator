@@ -1411,13 +1411,72 @@ class ConnectorService:
 
 
 
+    def trigger_cleansing_notebook(self, connection_id: str) -> str:
+        """
+        Triggers the cleansing notebook for a specific connection.
+        
+        Args:
+            connection_id: The UUID of the connection configuration to process.
+            
+        Returns:
+            Output/Exit value of the notebook execution.
+            
+        Raises:
+            Exception: If notebook execution fails or SDK is unavailable.
+        """
+        print(f"INFO: Triggering cleansing notebook for ID: {connection_id}")
+        
+        # Determine the correct notebook path
+        notebook_path = "/Shared/ER_aligned/mdm_Silver_cleansing"
+        
+        try:
+            from databricks.sdk import WorkspaceClient
+            from databricks.sdk.service.jobs import Task, NotebookTask
+
+            w = WorkspaceClient()
+            
+            print(f"INFO: Submitting one-time run for: {notebook_path}")
+            
+            cluster_id = st.secrets.get("DATABRICKS_CLUSTER_ID")
+            if not cluster_id:
+                raise ValueError("DATABRICKS_CLUSTER_ID not configured. Set it in .streamlit/secrets.toml or Databricks secret scope.")
+            
+            run = w.jobs.submit(
+                run_name=f"Cleansing_Trigger_{str(connection_id)[:8]}",
+                tasks=[
+                    Task(
+                        task_key="cleansing_task",
+                        existing_cluster_id=cluster_id,
+                        notebook_task=NotebookTask(
+                            notebook_path=notebook_path,
+                            base_parameters={"connection_id": connection_id}
+                        )
+                    )
+                ]
+            ).result() 
+            
+            print(f"INFO: Job execution completed. State: {run.state.life_cycle_state}")
+            
+            if run.state.result_state and run.state.result_state.name == "SUCCESS":
+                self.audit_logger.log_event(
+                    user=st.session_state.get("username", "System"),
+                    action="Triggered Cleansing",
+                    module="Connectors",
+                    status="Success",
+                    details=f"Triggered {notebook_path} for ID {connection_id}. Run ID: {run.run_id}"
+                )
+                return f"Success (Run ID: {run.run_id})"
+                
+            else:
+                 raise Exception(f"Job failed with state: {run.state.result_state}")
+
         except Exception as e:
             error_msg = str(e)
-            print(f"ERROR: Failed to trigger profiling notebook: {error_msg}")
+            print(f"ERROR: Failed to trigger cleansing notebook: {error_msg}")
             
             self.audit_logger.log_event(
                 user=st.session_state.get("username", "System"),
-                action="Triggered Profiling",
+                action="Triggered Cleansing",
                 module="Connectors",
                 status="Failed",
                 details=f"Failed to trigger {notebook_path}: {error_msg}"
@@ -1634,6 +1693,44 @@ class ConnectorService:
 
         except Exception as e:
             print(f"ERROR: Failed to fetch system Databricks columns: {e}")
+            return []
+
+    def fetch_system_databricks_tables(self, catalog: str, schema: str) -> List[str]:
+        """
+        Fetch a list of table names directly from Databricks System Catalog via Spark.
+        
+        Args:
+            catalog: The Databricks catalog name (e.g., 'unity_catalog2')
+            schema: The schema name (e.g., 'mdm_silver')
+            
+        Returns:
+            List of table names
+        """
+        try:
+            if not self.spark:
+                print("WARN: Spark session not available for system table fetch.")
+                return []
+
+            if not catalog or not schema:
+                return []
+            
+            # Helper to execute query safely
+            def _exec_query(q):
+                print(f"DEBUG: Executing system table fetch: {q}")
+                return self.spark.sql(q).collect()
+
+            query = f"SHOW TABLES IN {catalog}.{schema}"
+            rows = _exec_query(query)
+            
+            tables = []
+            for row in rows:
+                if 'tableName' in row:
+                    tables.append(row['tableName'])
+                
+            return tables
+
+        except Exception as e:
+            print(f"ERROR: Failed to fetch system Databricks tables: {e}")
             return []
 
 

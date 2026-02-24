@@ -825,6 +825,158 @@ def render():
             box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
             animation: pulse-dot 1.8s cubic-bezier(0.455, 0.03, 0.515, 0.955) -0.4s infinite;
         }}
+        
+        /* --- PREMIUM TABS STYLING --- */
+        div[data-baseweb="tab-list"] {{
+            gap: 8px !important;
+            background-color: #F8FAFC !important;
+            padding: 6px !important;
+            border-radius: 12px !important;
+            border-bottom: none !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+        }}
+        button[data-baseweb="tab"] {{
+            background-color: transparent !important;
+            border-radius: 8px !important;
+            color: #64748B !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            padding: 8px 16px !important;
+            border: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin: 0 !important;
+        }}
+        button[data-baseweb="tab"]:hover {{
+            background-color: #E2E8F0 !important;
+            color: #0F172A !important;
+        }}
+        button[data-baseweb="tab"][aria-selected="true"] {{
+            background-color: #FFFFFF !important;
+            color: {COLORS['brand']} !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        }}
+        button[data-baseweb="tab"] p {{
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }}
+        div[data-baseweb="tab-highlight"] {{
+            display: none !important;
+        }}
+        div[data-baseweb="tab-panel"] {{
+            padding-top: 24px !important;
+        }}
+        
+        /* --- RESULTS TABLE STYLING --- */
+        .results-table {{
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #E2E8F0;
+            margin-bottom: 20px;
+            background: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }}
+        .results-table th {{
+            background: #F8FAFC;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }}
+        .results-table td {{
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #334155;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }}
+        .results-table tr:last-child td {{
+            border-bottom: none;
+        }}
+        .results-table tr:hover td {{
+            background: #F8FAFC;
+        }}
+        
+        .cat-dot {{
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }}
+        .dot-green {{ background: #10B981; box-shadow: 0 0 4px rgba(16,185,129,0.4); }}
+        .dot-red {{ background: #EF4444; box-shadow: 0 0 4px rgba(239,68,68,0.4); }}
+        .dot-yellow {{ background: #F59E0B; box-shadow: 0 0 4px rgba(245,158,11,0.4); }}
+        
+        /* --- CUSTOM REVIEW BUTTON --- */
+        .btn-review-outline {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: transparent;
+            color: {COLORS['brand']};
+            border: 1px solid {COLORS['brand']}50;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }}
+        .btn-review-outline:hover {{
+            background-color: #FFF1F2;
+            border-color: {COLORS['brand']};
+            box-shadow: 0 2px 4px rgba(209, 31, 65, 0.05);
+            transform: translateY(-1px);
+        }}
+        
+        /* Streamlit Button Overrides for Review Button */
+        div.stButton > button[data-testid="baseButton-secondary"].review-matches-btn {{
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            padding: 10px 20px !important;
+            background-color: transparent !important;
+            color: #D11F41 !important; /* brand color */
+            border: 1px solid rgba(209, 31, 65, 0.5) !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            line-height: normal !important;
+        }}
+        
+        div.stButton > button[data-testid="baseButton-secondary"].review-matches-btn:hover,
+        div.stButton > button[data-testid="baseButton-secondary"].review-matches-btn:active,
+        div.stButton > button[data-testid="baseButton-secondary"].review-matches-btn:focus {{
+            background-color: #FFF1F2 !important;
+            border-color: #D11F41 !important;
+            color: #D11F41 !important;
+            box-shadow: 0 2px 4px rgba(209, 31, 65, 0.05) !important;
+            transform: translateY(-1px) !important;
+        }}
+        
+        div.stButton > button[data-testid="baseButton-secondary"].review-matches-btn p {{
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #D11F41 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
     </style>
     """), unsafe_allow_html=True)
 
@@ -2815,15 +2967,24 @@ def render():
                                 })
                             
                             # Save to Backend via ConnectorService
+                            reset_connector_service()  # Clear cache to pick up the new method
                             svc = get_connector_service()
                             if svc.update_cleansing_configuration(connection_id, cleansing_config):
                                 count = len(selected_clean_tables)
                                 st.toast(f"Cleansing configuration saved for {count} tables!", icon="✅")
                                 
-                                # Proceed to next stage
-                                time.sleep(1) # Brief pause for toast
-                                st.session_state['inspector_active_stage'] = 3
-                                st.rerun()
+                                # Trigger Cleansing Notebook
+                                with st.spinner("Triggering cleansing in the background..."):
+                                    try:
+                                        result = svc.trigger_cleansing_notebook(connection_id)
+                                        st.success(f"Cleansing started! {result}")
+                                        
+                                        # Proceed to next stage ONLY if notebook triggers successfully
+                                        time.sleep(1) # Brief pause for toast
+                                        st.session_state['inspector_active_stage'] = 3
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Failed to start cleansing: {e}")
                             else:
                                 st.error("Failed to save cleansing configuration. Please check logs.")
                     
@@ -2831,63 +2992,350 @@ def render():
             # ================================================================
             # RESOLUTION STAGE - Entity Matching
             # ================================================================
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
-                Matching Algorithm
-            </div>
-            """, unsafe_allow_html=True)
             
-            algo = st.radio(
-                "Select matching strategy",
-                ["Exact Match", "Fuzzy Match (Jaro-Winkler)", "ML-Based Probabilistic"],
-                horizontal=True,
-                key="resolution_algorithm",
-                label_visibility="collapsed"
-            )
+            tab_rules, tab_ai = st.tabs(["Fixed Rules", "Mosaic AI"])
             
-            st.markdown("""
-            <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 10px; padding: 12px 16px; margin: 16px 0;">
-                <div style="font-size: 13px; color: #0369A1;">
-                    <strong>Selected:</strong> Fuzzy matching uses phonetic similarity and edit distance to identify potential duplicates even with typos or variations.
+            with tab_rules:
+                
+                st.markdown("""
+                <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 10px; padding: 12px 16px; margin: 16px 0;">
+                    <div style="font-size: 13px; color: #0369A1;">
+                        <strong>Selected:</strong> Fuzzy matching uses phonetic similarity and edit distance to identify potential duplicates even with typos or variations.
+                    </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+                
+                # --- FIXED RULES STATS PANEL ---
+                st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Total Candidates</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">14.2M</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['success']}; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">↑ 12% via Blocking</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Resolved Pairs</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">8,432</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['muted']}; margin-top: 4px;">Pending Survivorship</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Avg. Similarity</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">91.4%</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['success']}; margin-top: 4px;">> 85% Threshold</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col4:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Processing Time</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">42s</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['brand']}; margin-top: 4px;">Spark Optimized</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+                
+                # Select Target Tables for Resolution
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    Source Tables for Resolution
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Fetch tables from unity_catalog2.mdm_silver
+                target_catalog = "unity_catalog2"
+                target_schema = "mdm_silver"
+                cache_key = f"resolution_tables_{target_catalog}_{target_schema}"
+                
+                if cache_key not in st.session_state:
+                    try:
+                        svc = get_connector_service()
+                        tables = svc.fetch_system_databricks_tables(target_catalog, target_schema)
+                        st.session_state[cache_key] = sorted(tables) if tables else []
+                    except Exception as e:
+                        print(f"Error fetching resolution tables: {e}")
+                        st.session_state[cache_key] = []
+                
+                available_tables = st.session_state.get(cache_key, [])
+                
+                st.multiselect(
+                    "Select tables to resolve",
+                    options=available_tables,
+                    default=available_tables[:1] if available_tables else None, # Default to first if available
+                    key="resolution_selected_tables",
+                    help="Select the cleansed tables from Silver layer to perform entity resolution on",
+                    label_visibility="collapsed"
+                )
+                
+                st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+                # Blocking Keys
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    Blocking Keys
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.multiselect(
+                    "Select columns for blocking",
+                    ["zip_code", "last_name", "first_name", "city", "state", "phone_prefix", "email_domain"],
+                    default=["zip_code", "last_name"],
+                    key="resolution_blocking_keys",
+                    help="Blocking reduces comparison space by only comparing records that share blocking key values",
+                    label_visibility="collapsed"
+                )
+                
+                st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+                
+                # Similarity Threshold
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    Similarity Threshold
+                </div>
+                """, unsafe_allow_html=True)
+                
+                threshold = st.slider("Match Threshold", min_value=0.0, max_value=1.0, value=0.85, step=0.05, key="resolution_threshold", label_visibility="collapsed")
+                
+                th_col1, th_col2, th_col3 = st.columns(3)
+                th_col1.markdown(f"<div style='font-size:12px; color:#64748B;'>Low: 0.0</div>", unsafe_allow_html=True)
+                th_col2.markdown(f"<div style='font-size:12px; color:#0F172A; text-align:center; font-weight:600;'>Current: {threshold}</div>", unsafe_allow_html=True)
+                th_col3.markdown(f"<div style='font-size:12px; color:#64748B; text-align:right;'>High: 1.0</div>", unsafe_allow_html=True)
+                
+                st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+                
+                # --- MATCH RESULTS SUMMARY (FIXED RULES) ---
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    Match Results Summary
+                </div>
+                <table class="results-table">
+                    <tr>
+                        <th>Category</th>
+                        <th>Record Count</th>
+                        <th>Percentage</th>
+                        <th>Action Required</th>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-green"></div> <span style="font-weight: 600;">Auto Match</span></td>
+                        <td><strong>6,102</strong></td>
+                        <td>72.4%</td>
+                        <td><span style="color: #64748B;">None</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-yellow"></div> <span style="font-weight: 600;">Ambiguous Match</span></td>
+                        <td><strong>1,420</strong></td>
+                        <td>16.8%</td>
+                        <td><span style="color: #F59E0B; font-weight: 700;">Manual Review</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-red"></div> <span style="font-weight: 600;">No Match</span></td>
+                        <td><strong>910</strong></td>
+                        <td>10.8%</td>
+                        <td><span style="color: #64748B;">None</span></td>
+                    </tr>
+                </table>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+                
+                # Streamlit Native Button Alternative
+                st.markdown("""
+                    <style>
+                        /* Target the specific key for rules button */
+                        div[data-testid="stVerticalBlock"] > div > div > div > div.stButton > button:has(div:contains("Review Matches")) {
+                            border: 1px solid #D11F41 !important;
+                            color: #D11F41 !important;
+                            background-color: transparent !important;
+                            border-radius: 8px !important;
+                            padding: 8px 16px !important;
+                            font-weight: 600 !important;
+                            transition: all 0.2s ease !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                review_col1, _ = st.columns([1.5, 3])
+                with review_col1:
+                    if st.button("Review Matches", key="review_btn_rules", help="Navigate to Match Review", use_container_width=True):
+                        st.session_state['current_page'] = 'Match Review'
+                        st.rerun()
+                
+                st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
             
-            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            with tab_ai:
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-top: 8px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 16px; font-weight: 700; color: #0F172A; letter-spacing: -0.3px;">Mosaic AI Probabilistic Matching</div>
+                            <div style="font-size: 13px; color: #64748B;">Leveraging Databricks Mosaic AI for context-aware entity resolution.</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: #475569; line-height: 1.5;">
+                        The model utilizes deep learning embeddings to compare records across multiple dimensions, automatically detecting variations in names, addresses, and typos without fixed thresholding or manual blocking rules.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # --- AI STATS PANEL ---
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium" style="border-left: 3px solid #8B5CF6;">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Tokens Processed</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">1.5M</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['muted']}; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">Across 3 sources</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium" style="border-left: 3px solid #8B5CF6;">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">AI Matches Found</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">12,941</div>
+                        <div style="font-size: 12px; font-weight: 500; color: #6D28D9; margin-top: 4px;">Context-based</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium" style="border-left: 3px solid #8B5CF6;">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Avg. Confidence</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">94.2%</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['success']}; margin-top: 4px;">High precision</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col4:
+                    st.markdown(f"""
+                    <div class="stats-tile-premium" style="border-left: 3px solid #8B5CF6;">
+                        <div style="font-size: 12px; color: {COLORS['muted']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Entities Discovered</div>
+                        <div style="font-size: 28px; font-weight: 800; color: {COLORS['dark']}; letter-spacing: -1px; line-height: 1.2; margin-top: 4px;">4,102</div>
+                        <div style="font-size: 12px; font-weight: 500; color: {COLORS['muted']}; margin-top: 4px;">New unique IDs</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
+                    Recent AI Resolutions
+                </div>
+                """, unsafe_allow_html=True)
+
+                resolutions = [
+                    (
+                        "C-829", "Jonathan Doe", "123 Main St, Apt 4",
+                        "CRM-401", "Jonathon Doe", "123 Main Street, #4",
+                        "98.2%", "Match", "#10B981", "#ECFDF5", "#D1FAE5",
+                        "Strong phonetic similarity in first name. Secondary address unit matching (Apt 4 = #4)."
+                    ),
+                    (
+                        "C-552", "Michael Brown", "78 Pine Ln",
+                        "EXT-88", "Mike Brown", "90 Cedar Ct",
+                        "42.1%", "No Match", "#EF4444", "#FEF2F2", "#FEE2E2",
+                        "Name variation acceptable, but significant mismatch between addresses. Represents different entities."
+                    ),
+                    (
+                        "C-901", "Emily Chen", "880 Birch Dr",
+                        "CRM-211", "Emily Chan", "880 Birchen Dr",
+                        "81.4%", "Review", "#F59E0B", "#FFFBEB", "#FEF3C7",
+                        "Multiple minor variations in both name and street name. Flagged for manual steward review."
+                    )
+                ]
+
+                for s1_id, s1_name, s1_addr, s2_id, s2_name, s2_addr, conf, status, s_color, s_bg, s_border, remarks in resolutions:
+                    st.markdown(clean_html(f"""
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="font-size: 13px; font-weight: 700; color: #475569;">Confidence Score:</div>
+                                <div style="font-size: 14px; font-weight: 800; color: #0F172A;">{conf}</div>
+                            </div>
+                            <div style="font-size: 11px; font-weight: 700; color: {s_color}; background: {s_bg}; border: 1px solid {s_border}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                {status}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                            <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
+                                <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record A ({s1_id})</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s1_name}</div>
+                                <div style="font-size: 12px; color: #475569;">{s1_addr}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18L16 12L8 6"/></svg>
+                            </div>
+                            <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
+                                <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record B ({s2_id})</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s2_name}</div>
+                                <div style="font-size: 12px; color: #475569;">{s2_addr}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 8px; padding: 12px; display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="color: #10B981; margin-top: 2px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                            </div>
+                            <div style="font-size: 13px; color: #166534; line-height: 1.5;">
+                                <span style="font-weight: 700;">AI Remarks:</span> {remarks}
+                            </div>
+                        </div>
+                    </div>
+                    """), unsafe_allow_html=True)
             
-            # Blocking Keys
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Blocking Keys
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.multiselect(
-                "Select columns for blocking",
-                ["zip_code", "last_name", "first_name", "city", "state", "phone_prefix", "email_domain"],
-                default=["zip_code", "last_name"],
-                key="resolution_blocking_keys",
-                help="Blocking reduces comparison space by only comparing records that share blocking key values",
-                label_visibility="collapsed"
-            )
-            
-            st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
-            
-            # Similarity Threshold
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Similarity Threshold
-            </div>
-            """, unsafe_allow_html=True)
-            
-            threshold = st.slider("Match Threshold", min_value=0.0, max_value=1.0, value=0.85, step=0.05, key="resolution_threshold", label_visibility="collapsed")
-            
-            th_col1, th_col2, th_col3 = st.columns(3)
-            th_col1.markdown(f"<div style='font-size:12px; color:#64748B;'>Low: 0.0</div>", unsafe_allow_html=True)
-            th_col2.markdown(f"<div style='font-size:12px; color:#0F172A; text-align:center; font-weight:600;'>Current: {threshold}</div>", unsafe_allow_html=True)
-            th_col3.markdown(f"<div style='font-size:12px; color:#64748B; text-align:right;'>High: 1.0</div>", unsafe_allow_html=True)
-            
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+                
+                # --- MATCH RESULTS SUMMARY (MOSAIC AI) ---
+                st.markdown("""
+                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    Match Results Summary
+                </div>
+                <table class="results-table">
+                    <tr>
+                        <th>Category</th>
+                        <th>Record Count</th>
+                        <th>Percentage</th>
+                        <th>Action Required</th>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-green"></div> <span style="font-weight: 600;">Auto Match</span></td>
+                        <td><strong>10,540</strong></td>
+                        <td>81.4%</td>
+                        <td><span style="color: #64748B;">None</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-yellow"></div> <span style="font-weight: 600;">Ambiguous Match</span></td>
+                        <td><strong>1,821</strong></td>
+                        <td>14.1%</td>
+                        <td><span style="color: #F59E0B; font-weight: 700;">Manual Review</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="cat-dot dot-red"></div> <span style="font-weight: 600;">No Match</span></td>
+                        <td><strong>580</strong></td>
+                        <td>4.5%</td>
+                        <td><span style="color: #64748B;">None</span></td>
+                    </tr>
+                </table>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+                
+                review_col2, _ = st.columns([1.5, 3])
+                with review_col2:
+                    if st.button("Review Matches", key="review_btn_ai", help="Navigate to Match Review", use_container_width=True):
+                        st.session_state['current_page'] = 'Match Review'
+                        st.rerun()
+                
+                st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
             
             _, btn_col = st.columns([2.5, 1.5])
             with btn_col:
