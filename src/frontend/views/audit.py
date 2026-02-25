@@ -295,38 +295,45 @@ def render():
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- PRIMARY DATA TABLE ---
-    st.dataframe(
-        df,
-        width="stretch",
-        hide_index=True,
-        column_config={
-            "Timestamp": st.column_config.DatetimeColumn(
-                "Time",
-                format="MMM DD, HH:mm",
-                width="medium"
-            ),
-            "User": st.column_config.TextColumn(
-                "Integrator / User",
-                width="small"
-            ),
-            "Action": st.column_config.TextColumn(
-                "Activity",
-                width="medium"
-            ),
-            "Module": st.column_config.TextColumn(
-                "Subsystem",
-                width="small"
-            ),
-            "Status": st.column_config.TextColumn(
-                "Execution Status",
-                width="small"
-            ),
-            "Details": st.column_config.TextColumn(
-                "Technical Details",
-                width="large"
-            ),
-        }
-    )
+    try:
+        if not df.empty:
+            st.dataframe(
+                df,
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "Timestamp": st.column_config.DatetimeColumn(
+                        "Time",
+                        format="MMM DD, HH:mm",
+                        width="medium"
+                    ),
+                    "User": st.column_config.TextColumn(
+                        "Integrator / User",
+                        width="small"
+                    ),
+                    "Action": st.column_config.TextColumn(
+                        "Activity",
+                        width="medium"
+                    ),
+                    "Module": st.column_config.TextColumn(
+                        "Subsystem",
+                        width="small"
+                    ),
+                    "Status": st.column_config.TextColumn(
+                        "Execution Status",
+                        width="small"
+                    ),
+                    "Details": st.column_config.TextColumn(
+                        "Technical Details",
+                        width="large"
+                    ),
+                }
+            )
+        else:
+            st.info("No audit logs found matching the current filters.")
+    except Exception as e:
+        # Prevents the large red Streamlit exception block in the Databricks container
+        st.warning("Unable to render the Audit Logs table. The log data format may be unsupported in this environment.")
 
     # --- FOOTER ---
     st.markdown(f"""

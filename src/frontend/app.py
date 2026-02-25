@@ -16,7 +16,8 @@ from src.backend.auth.user_manager import UserManager
 audit_log = AuditLogger()
 
 # --- CONFIGURATION ---
-logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets")
+logo_path = os.path.join(ASSETS_DIR, "app_logo.png")
 # Force Reload Fix for CSS
 st.set_page_config(
     page_title="iCORE | iLink Digital",
@@ -1430,8 +1431,9 @@ def login_page():
     </style>
     """, unsafe_allow_html=True)
 
-    logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
-    ilink_logo_path = os.path.join(os.path.dirname(__file__), "../../assets/ilink_logo.png")
+    ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets")
+    logo_path = os.path.join(ASSETS_DIR, "app_logo.png")
+    ilink_logo_path = os.path.join(ASSETS_DIR, "ilink_logo.png")
     
     logo_b64 = get_img_as_base64(logo_path)
     ilink_logo_b64 = get_img_as_base64(ilink_logo_path)
@@ -1494,7 +1496,8 @@ def sidebar_nav():
     with st.sidebar:
         # 1. Logo Section
         try:
-            logo_path = os.path.join(os.path.dirname(__file__), "../../assets/app_logo.png")
+            ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets")
+            logo_path = os.path.join(ASSETS_DIR, "app_logo.png")
             logo_b64 = get_img_as_base64(logo_path)
         except:
             logo_b64 = ""
@@ -1530,7 +1533,8 @@ def sidebar_nav():
             
             icon_filename = page_icons.get(page)
             if icon_filename:
-                icon_path = os.path.join(os.path.dirname(__file__), f"../../assets/{icon_filename}")
+                ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets")
+                icon_path = os.path.join(ASSETS_DIR, f"{icon_filename}")
                 icon_b64 = get_img_as_base64(icon_path)
                 if icon_b64:
                     page_id = page.replace(' ', '-')

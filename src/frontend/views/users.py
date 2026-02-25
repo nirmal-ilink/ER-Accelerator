@@ -569,33 +569,39 @@ def render():
         # Color mapper for status and roles
         df_styled = df_users.copy()
         
-        edited_df = st.data_editor(
-            df_styled,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "username": st.column_config.TextColumn("Login ID", width="small", disabled=True),
-                "name": st.column_config.TextColumn("User Name", width="medium"),
-                "email": st.column_config.TextColumn("Email", width="medium"),
-                "role": st.column_config.SelectboxColumn(
-                    "Role",
-                    options=["Admin", "Executive", "Steward", "Developer"],
-                    required=True,
-                    width="small"
-                ),
-                "status": st.column_config.SelectboxColumn(
-                    "Access Status",
-                    options=["Active", "Inactive"],
-                    width="small"
-                ),
-                "last_login": st.column_config.TextColumn("Last Activity", width="small", disabled=True)
-            },
-            num_rows="dynamic",
-            key="user_editor_live"
-        )
+        try:
+            edited_df = st.data_editor(
+                df_styled,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "username": st.column_config.TextColumn("Login ID", width="small", disabled=True),
+                    "name": st.column_config.TextColumn("User Name", width="medium"),
+                    "email": st.column_config.TextColumn("Email", width="medium"),
+                    "role": st.column_config.SelectboxColumn(
+                        "Role",
+                        options=["Admin", "Executive", "Steward", "Developer"],
+                        required=True,
+                        width="small"
+                    ),
+                    "status": st.column_config.SelectboxColumn(
+                        "Access Status",
+                        options=["Active", "Inactive"],
+                        width="small"
+                    ),
+                    "last_login": st.column_config.TextColumn("Last Activity", width="small", disabled=True)
+                },
+                num_rows="dynamic",
+                key="user_editor_live"
+            )
+        except Exception as e:
+            st.warning("⚠️ The user table editor could not be rendered in this environment.")
+            edited_df = df_styled # Fallback to prevent downstream errors
+            
         st.markdown("</div>", unsafe_allow_html=True)
 
         # Sync back to PLATFORM_USERS if changes occurred
+        # Ensure we only sync if the editor rendered successfully (handled by testing if edited_df is the same as the original or not)
         if not edited_df.equals(df_styled):
             # Rebuild the dictionary from the edited dataframe
             new_registry = {}

@@ -35,8 +35,10 @@ def render():
     cluster_df = df[df['cluster_id'] == selected_cluster]
     
     st.write("### Cluster Details")
-    st.dataframe(cluster_df)
-    
+    try:
+        st.dataframe(cluster_df)
+    except Exception as e:
+        st.warning("⚠️ Could not render the table due to an environmental issue. Please verify your data schema.")    
     # Diff View
     st.write("---")
     st.subheader("Compare & Merge")

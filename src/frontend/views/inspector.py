@@ -334,12 +334,10 @@ def render():
         }}
         
         /* === MARKDOWN CONTAINER ALIGNMENT === */
-        /* Force markdown containers to align with widgets */
+        /* Relaxing markdown container alignment to fix stacked content (like slider labels) */
         div[data-testid="stMarkdown"] {{
             margin-top: 0 !important;
             margin-bottom: 0 !important;
-            display: flex !important;
-            align-items: center !important;
         }}
         
         /* === DISABLED TEXT INPUT STYLING === */
@@ -373,6 +371,22 @@ def render():
             color: #334155 !important;
             font-size: 13px !important;
             margin-bottom: 4px !important;
+        }}
+
+        /* === SLIDER STYLING FIX === */
+        div[data-testid="stSlider"] label p {{
+            font-weight: 600 !important;
+            color: #334155 !important;
+            font-size: 13px !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }}
+        
+        div[data-testid="stSlider"] {{
+            padding-top: 8px !important;
+            margin-bottom: 16px !important;
         }}
 
         /* --- PROFESSIONAL EXPANDER STYLING (Folder Icon + Badges) --- */
@@ -3348,73 +3362,413 @@ def render():
             # ================================================================
             # SURVIVORSHIP STAGE - Golden Record Creation
             # ================================================================
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
-                Trust Framework
+
+            # ── SECTION 1: TRUST FRAMEWORK ──────────────────────────────────
+            st.markdown(f"""
+            <div style="font-size: 15px; font-weight: 700; color: {COLORS['dark']}; letter-spacing: -0.2px; margin-bottom: 4px;">Source Confidence Tuning</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="font-size: 12px; color: {COLORS['muted']}; line-height: 1.5;">Adjust trust scores by source system. Higher-scored sources take precedence during conflict resolution.</div>
+                <div style="background: {COLORS['bg_main']}; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; color: {COLORS['muted']}; border: 1px solid {COLORS['border']}; white-space: nowrap; margin-left: 16px;">
+                    Simulation Mode
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Source Priority (simulated drag-and-drop)
-            st.markdown("""
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;">
-                <div style="font-size: 11px; color: #64748B; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Source Priority (highest to lowest)</div>
-            """, unsafe_allow_html=True)
+
+            trust_cols = st.columns(4)
             
             sources = [
-                ("Salesforce CRM", "#0369A1", "Primary customer source"),
-                ("Epic EMR", "#7C3AED", "Clinical records"),
-                ("Legacy Billing", "#F59E0B", "Historical data"),
-                ("External Feeds", "#64748B", "Third-party enrichment")
+                ("Salesforce CRM (Primary)", "trust_sfdc", 95, "#10B981"),
+                ("Epic EMR (Clinical)", "trust_epic", 85, "#34D399"),
+                ("Legacy Billing (ERP)", "trust_billing", 60, "#F59E0B"),
+                ("External Feeds (3rd Party)", "trust_external", 40, "#EF4444")
             ]
             
-            for i, (name, color, desc) in enumerate(sources):
-                st.markdown(f"""
-                <div style="display: flex; align-items: center; gap: 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;">
-                    <div style="font-size: 14px; font-weight: 700; color: #94A3B8; width: 20px;">{i+1}</div>
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: {color};"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #0F172A; font-size: 14px;">{name}</div>
-                        <div style="font-size: 12px; color: #64748B;">{desc}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-            
-            # Conflict Resolution Strategy
             st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Conflict Resolution Strategy
-            </div>
+            <style>
+                /* Premium styling specifically for the Trust Cards */
+                .trust-card {
+                    background: #FFFFFF;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 12px;
+                    padding: 16px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                    transition: all 0.2s ease;
+                    height: 100%;
+                }
+                .trust-card:hover {
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                    border-color: #CBD5E1;
+                    transform: translateY(-2px);
+                }
+                .trust-title {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #64748B;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 12px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                
+                /* Override Streamlit number input defaults for these cards */
+                div[data-testid="stNumberInput"] label {
+                    display: none !important;
+                }
+                div[data-testid="stNumberInput"] div[data-baseweb="input"] {
+                    background-color: #F8FAFC !important;
+                    border: 1px solid #E2E8F0 !important;
+                    border-radius: 8px !important;
+                }
+                div[data-testid="stNumberInput"] input {
+                    font-size: 20px !important;
+                    font-weight: 800 !important;
+                    color: #0F172A !important;
+                    text-align: center !important;
+                    padding: 4px !important;
+                }
+                div[data-testid="stNumberInput"] div[data-baseweb="input"]:focus-within {
+                    border-color: #CBD5E1 !important;
+                    background-color: #FFFFFF !important;
+                    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1) !important;
+                }
+                
+                /* Restyle +/- buttons for a highly intuitive, premium look */
+                div[data-testid="stNumberInput"] button {
+                    background: #F1F5F9 !important; /* Subtle gray background */
+                    color: #475569 !important; /* Slate icon color */
+                    border-radius: 6px !important;
+                    width: 32px !important;
+                    height: 32px !important;
+                    margin: 2px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    border: 1px solid transparent !important;
+                }
+                div[data-testid="stNumberInput"] button:hover {
+                    background: #FFFFFF !important;
+                    color: #D11F41 !important; /* Brand Red on hover */
+                    border-color: #E2E8F0 !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+                    transform: scale(1.05) !important;
+                }
+                div[data-testid="stNumberInput"] button:active {
+                    transform: scale(0.95) !important;
+                    background: #F8FAFC !important;
+                }
+                div[data-testid="stNumberInput"] button svg {
+                    fill: currentColor !important;
+                    width: 14px !important;
+                    height: 14px !important;
+                }
+            </style>
             """, unsafe_allow_html=True)
+
+            for col, (title, key, default_val, color) in zip(trust_cols, sources):
+                with col:
+                    st.markdown(f'<div class="trust-card"><div class="trust-title" title="{title}">{title}</div>', unsafe_allow_html=True)
+                    
+                    val = st.number_input(title, min_value=1, max_value=100, value=default_val, key=key, label_visibility="collapsed")
+                    
+                    # Dynamic color based on score if not explicitly set
+                    if val >= 80: bar_color = "#10B981" # Green
+                    elif val >= 50: bar_color = "#F59E0B" # Yellow
+                    else: bar_color = "#EF4444" # Red
+                    
+                    st.markdown(f"""
+                        <div style="margin-top: 12px; height: 6px; background: #F1F5F9; border-radius: 3px; overflow: hidden;">
+                            <div style="height: 100%; width: {val}%; background: {bar_color}; border-radius: 3px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: #94A3B8; font-weight: 600;">
+                            <span>Low Trust</span>
+                            <span>High Trust</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown(f"<div style='height: 12px; border-bottom: 1px solid {COLORS['border']}; margin-bottom: 24px;'></div>", unsafe_allow_html=True)
+
+            # ── SECTION 2: CONFLICT RESOLUTION STRATEGY ─────────────────────
+            col_strat, col_ai = st.columns([3, 1])
+            with col_strat:
+                st.markdown(f"""
+                <div style="font-size: 15px; font-weight: 700; color: {COLORS['dark']}; letter-spacing: -0.2px; margin-bottom: 4px;">Conflict Resolution Strategy</div>
+                <div style="font-size: 12px; color: {COLORS['muted']}; line-height: 1.5;">Define the main survivorship rule and a fallback rule for tie-breaking or null scenarios.</div>
+                """, unsafe_allow_html=True)
+            with col_ai:
+                if st.button("AI Auto-Suggest", help="Use AI to recommend optimal survivorship rules based on source metadata", use_container_width=True, key="ai_auto_suggest_btn"):
+                    st.toast("AI-recommended rules applied successfully.")
+                    st.session_state['ai_rules_applied'] = True
+
+            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+            strat_col1, strat_col2 = st.columns(2)
+            with strat_col1:
+                st.selectbox("PRIMARY RULE", ["Recency (LUD)", "Source Priority", "Completeness", "Min/Max Value"], index=0, key="global_primary_rule")
+            with strat_col2:
+                st.selectbox("FALLBACK RULE (IF TIE/NULL)", ["Source Priority", "Completeness", "Min/Max Value", "Manual Review"], index=0, key="global_fallback_rule")
+
+            st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+
+            # Feature-Level Overrides
+            with st.expander("Feature-Level Overrides (Advanced)", expanded=st.session_state.get('ai_rules_applied', False)):
+                st.markdown(f"""
+                <div style="font-size: 12px; color: {COLORS['muted']}; margin-bottom: 16px; line-height: 1.5;">Override the global strategy for specific high-value attributes. Useful when certain fields require source-specific trust rules.</div>
+                <style>
+                    /* Fix vertical alignment for selectboxes in this expander */
+                    div[data-testid="stExpander"] div[data-testid="stSelectbox"] {{
+                        margin-bottom: 0px !important;
+                    }}
+                    
+                    /* Make all buttons in this section perfectly align with inputs (38px height) */
+                    div[data-testid="stExpander"] button[kind="secondary"],
+                    div[data-testid="stExpander"] button[kind="primary"] {{
+                        height: 38px !important;
+                        min-height: 38px !important;
+                        max-height: 38px !important;
+                        padding: 0px 12px !important;
+                        border-radius: 8px !important;
+                        background-color: #FFFFFF !important;
+                        border: 1px solid #E2E8F0 !important;
+                        color: #475569 !important;
+                        font-size: 14px !important;
+                        font-weight: 600 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        transition: all 0.2s ease !important;
+                    }}
+                    div[data-testid="stExpander"] button[kind="secondary"]:hover,
+                    div[data-testid="stExpander"] button[kind="primary"]:hover {{
+                        background-color: #F8FAFC !important;
+                        border-color: #CBD5E1 !important;
+                        color: #0F172A !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+                    }}
+                    
+                    /* Specific hover effect for the remove (trash) buttons */
+                    div[data-testid="stExpander"] button[kind="secondary"]:has(div:contains("✕")):hover {{
+                        background-color: #FFF1F2 !important;
+                        border-color: #FECDD3 !important;
+                        color: #E11D48 !important;
+                    }}
+                    
+                    /* Ensure buttons don't have stray margins */
+                    div[data-testid="stExpander"] div[data-testid="stButton"] {{
+                        margin-bottom: 0px !important;
+                        margin-top: 0px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        height: 38px !important;
+                    }}
+                </style>
+                """, unsafe_allow_html=True)
+
+                # --- Initialize Dynamic State ---
+                if 'surv_dynamic_overrides' not in st.session_state:
+                    # Default state depending on if AI rules were auto-applied
+                    if st.session_state.get('ai_rules_applied', False):
+                        st.session_state['surv_dynamic_overrides'] = [
+                            {"id": 1, "attr": "first_name", "primary": "Source Priority", "fallback": "Completeness"},
+                            {"id": 2, "attr": "email_address", "primary": "Completeness", "fallback": "Source Priority"},
+                            {"id": 3, "attr": "phone_mobile", "primary": "Recency (LUD)", "fallback": "Completeness"},
+                        ]
+                    else:
+                        st.session_state['surv_dynamic_overrides'] = []
+                
+                if 'surv_next_override_id' not in st.session_state:
+                    st.session_state['surv_next_override_id'] = 4
+
+                override_opts = ["Follow Global", "Source Priority", "Recency (LUD)", "Completeness"]
+                available_attrs = ["first_name", "last_name", "email_address", "phone_mobile", "ssn", "dob", "address_line1", "city", "state", "zip_code"]
+
+                # --- Add New Override Row ---
+                st.markdown(f"<div style='font-size: 13px; font-weight: 600; color: {COLORS['dark']}; margin-bottom: 8px;'>Add New Override</div>", unsafe_allow_html=True)
+                
+                add_col1, add_col2, add_col3, add_btn_col = st.columns([3, 3, 3, 1])
+                
+                with add_col1:
+                    new_attr = st.selectbox("Attribute", available_attrs, key="add_ovr_attr", label_visibility="collapsed")
+                with add_col2:
+                    new_prim = st.selectbox("Primary Override", override_opts, key="add_ovr_prim", label_visibility="collapsed")
+                with add_col3:
+                    new_fall = st.selectbox("Fallback Override", override_opts, key="add_ovr_fall", label_visibility="collapsed")
+                with add_btn_col:
+                    if st.button("＋ Add", help="Add this override rule", use_container_width=True, key="add_ovr_btn"):
+                        # Check if attribute already exists
+                        exists = any(o["attr"] == new_attr for o in st.session_state['surv_dynamic_overrides'])
+                        if exists:
+                            st.warning(f"An override for '{new_attr}' already exists.")
+                        else:
+                            st.session_state['surv_dynamic_overrides'].append({
+                                "id": st.session_state['surv_next_override_id'],
+                                "attr": new_attr,
+                                "primary": new_prim,
+                                "fallback": new_fall
+                            })
+                            st.session_state['surv_next_override_id'] += 1
+                            st.rerun()
+
+                st.markdown(f"<div style='height: 1px; background: {COLORS['border']}; margin: 20px 0;'></div>", unsafe_allow_html=True)
+
+                # --- Render Active Overrides ---
+                if not st.session_state['surv_dynamic_overrides']:
+                    st.info("No feature-level overrides active. All attributes will follow the Global Strategy.")
+                else:
+                    head_col1, head_col2, head_col3, head_col4 = st.columns([3, 3, 3, 1])
+                    with head_col1: st.markdown(f"<div style='font-size: 11px; font-weight: 700; color: {COLORS['muted']}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;'>Attribute</div>", unsafe_allow_html=True)
+                    with head_col2: st.markdown(f"<div style='font-size: 11px; font-weight: 700; color: {COLORS['muted']}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;'>Primary Override</div>", unsafe_allow_html=True)
+                    with head_col3: st.markdown(f"<div style='font-size: 11px; font-weight: 700; color: {COLORS['muted']}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;'>Fallback Override</div>", unsafe_allow_html=True)
+
+                    for idx, ovr in enumerate(st.session_state['surv_dynamic_overrides']):
+                        r_col1, r_col2, r_col3, r_btn_col = st.columns([3, 3, 3, 1])
+                        
+                        with r_col1:
+                            # 38px exact height matching to align perfectly with selectboxes
+                            st.markdown(f"""
+                            <div style="padding: 0px 14px; background: {COLORS['bg_main']}; border: 1px solid {COLORS['border']}; border-radius: 8px; font-size: 13px; font-weight: 500; color: {COLORS['text']}; height: 38px; display: flex; align-items: center; font-family: 'Inter', sans-serif; box-sizing: border-box; margin-bottom: 12px;">
+                                {ovr['attr']}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with r_col2:
+                            st.markdown(f"""
+                            <div style="padding: 0px 14px; background: #F8FAFC; border: 1px solid {COLORS['border']}; border-radius: 8px; font-size: 13px; font-weight: 500; color: {COLORS['muted']}; height: 38px; display: flex; align-items: center; font-family: 'Inter', sans-serif; box-sizing: border-box; margin-bottom: 12px;">
+                                {ovr['primary']}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with r_col3:
+                            st.markdown(f"""
+                            <div style="padding: 0px 14px; background: #F8FAFC; border: 1px solid {COLORS['border']}; border-radius: 8px; font-size: 13px; font-weight: 500; color: {COLORS['muted']}; height: 38px; display: flex; align-items: center; font-family: 'Inter', sans-serif; box-sizing: border-box; margin-bottom: 12px;">
+                                {ovr['fallback']}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with r_btn_col:
+                            if st.button("✕", key=f"del_ovr_{ovr['id']}", help="Remove this override", use_container_width=True):
+                                st.session_state['surv_dynamic_overrides'] = [o for o in st.session_state['surv_dynamic_overrides'] if o['id'] != ovr['id']]
+                                st.rerun()
+
+            st.markdown(f"<div style='height: 12px; border-bottom: 1px solid {COLORS['border']}; margin-bottom: 24px;'></div>", unsafe_allow_html=True)
+
+            # ── SECTION 3: GOLDEN RECORD PREVIEW ────────────────────────────
+            st.markdown(f"""
+            <div style="font-size: 15px; font-weight: 700; color: {COLORS['dark']}; letter-spacing: -0.2px; margin-bottom: 4px;">Golden Record Preview</div>
+            <div style="font-size: 13px; color: {COLORS['muted']}; margin-bottom: 16px; line-height: 1.5;">Real-time simulation showing how current survivorship rules merge duplicate records into a single golden record.</div>
             
-            st.radio(
-                "When values conflict, use:",
-                ["Most recent value", "Most complete record", "Source priority", "Custom rules per attribute"],
-                key="survivorship_conflict_resolution",
-                label_visibility="collapsed"
-            )
+            <style>
+                .golden-table {{
+                    width: 100%;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    font-size: 13px;
+                }}
+                .golden-table th {{
+                    background-color: #F8FAFC;
+                    color: #475569;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    padding: 12px 16px;
+                    text-align: left;
+                    border-bottom: 1px solid #E2E8F0;
+                    font-size: 11px;
+                }}
+                .golden-table td {{
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #F1F5F9;
+                    color: #0F172A;
+                    font-weight: 500;
+                }}
+                .golden-table tr:last-child td {{
+                    border-bottom: none;
+                }}
+                .golden-table td.attr-col {{
+                    font-family: 'JetBrains Mono', monospace;
+                    color: #64748B;
+                    font-size: 12px;
+                }}
+                .golden-table td.golden-col {{
+                    background-color: #F0FDF4;
+                    color: #166534;
+                    font-weight: 700;
+                }}
+                .golden-table th.golden-col-header {{
+                    background-color: #DCFCE7;
+                    color: #166534;
+                }}
+            </style>
             
+            <table class="golden-table">
+                <thead>
+                    <tr>
+                        <th>Attribute</th>
+                        <th>Record A (Salesforce)</th>
+                        <th>Record B (Epic)</th>
+                        <th class="golden-col-header">Golden Record</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="attr-col">first_name</td>
+                        <td>John</td>
+                        <td>Jon</td>
+                        <td class="golden-col">John</td>
+                    </tr>
+                    <tr>
+                        <td class="attr-col">last_name</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td class="golden-col">Doe</td>
+                    </tr>
+                    <tr>
+                        <td class="attr-col">email_address</td>
+                        <td>john.d@acme.com</td>
+                        <td style="color: #94A3B8; font-style: italic;">None</td>
+                        <td class="golden-col">john.d@acme.com</td>
+                    </tr>
+                    <tr>
+                        <td class="attr-col">phone_mobile</td>
+                        <td>(555) 123-4567</td>
+                        <td>(555) 123-4567</td>
+                        <td class="golden-col">(555) 123-4567</td>
+                    </tr>
+                    <tr>
+                        <td class="attr-col">LUD (Last Updated)</td>
+                        <td>2023-10-01</td>
+                        <td>2023-11-15</td>
+                        <td class="golden-col">2023-11-15</td>
+                    </tr>
+                </tbody>
+            </table>
+            """, unsafe_allow_html=True)
+
+            # ── ACTION BUTTONS ──────────────────────────────────────────────
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
-            
-            # Per-attribute overrides
-            with st.expander("Attribute-Level Overrides", expanded=False):
-                attr_col1, attr_col2 = st.columns(2)
-                with attr_col1:
-                    st.selectbox("Email", ["Follow default", "Salesforce priority", "Most recent", "Most complete"], key="surv_email_rule")
-                    st.selectbox("Phone", ["Follow default", "Epic priority", "Most recent", "Most complete"], key="surv_phone_rule")
-                with attr_col2:
-                    st.selectbox("Address", ["Follow default", "Most recent", "Most complete"], key="surv_address_rule")
-                    st.selectbox("Name", ["Follow default", "Salesforce priority", "Most recent"], key="surv_name_rule")
-            
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-            
-            _, btn_col = st.columns([2.5, 1.5])
-            with btn_col:
+
+            btn_save, btn_reset, btn_gap, btn_create = st.columns([1, 1, 1.2, 1.8])
+            with btn_save:
+                if st.button("Save Rules", use_container_width=True, key="save_surv_rules_btn"):
+                    st.toast("Survivorship rules saved.")
+            with btn_reset:
+                if st.button("Reset to Defaults", use_container_width=True, key="reset_surv_rules_btn"):
+                    for k in ['trust_sfdc', 'trust_epic', 'trust_billing', 'trust_external',
+                              'global_primary_rule', 'global_fallback_rule', 'ai_rules_applied',
+                              'surv_name_prim', 'surv_email_prim', 'surv_phone_prim',
+                              'surv_name_fall', 'surv_email_fall', 'surv_phone_fall']:
+                        if k in st.session_state:
+                            del st.session_state[k]
+                    st.rerun()
+            with btn_create:
                 if st.button("Create Golden Records", type="primary", use_container_width=True, key="create_golden_btn"):
-                    st.toast("Golden records created!")
+                    st.toast("Golden records created successfully.")
                     st.session_state['inspector_active_stage'] = 5
                     st.rerun()
                     
@@ -3423,74 +3777,177 @@ def render():
             # PUBLISHING STAGE - Output Configuration
             # ================================================================
             st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
-                Output Destinations
+            <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-top: 8px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 16px; font-weight: 700; color: #0F172A; letter-spacing: -0.3px;">Data Publishing & Syndication</div>
+                        <div style="font-size: 13px; color: #64748B;">Configure downstream targets and deployment parameters for the golden records.</div>
+                    </div>
+                </div>
             </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown(f"""
+            <div style="font-size: 15px; font-weight: 700; color: {{COLORS['dark']}}; letter-spacing: -0.2px; margin-bottom: 4px;">Target Destinations</div>
+            <div style="font-size: 12px; color: {{COLORS['muted']}}; margin-bottom: 16px; line-height: 1.5;">Select and configure integrations for data export.</div>
             """, unsafe_allow_html=True)
             
             dest_col1, dest_col2 = st.columns(2)
             with dest_col1:
-                st.checkbox("Delta Lake (Databricks)", value=True, key="pub_delta")
-                st.checkbox("Snowflake Data Warehouse", value=False, key="pub_snowflake")
+                st.markdown(f"""
+                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: white; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 32px; height: 32px; background: #FFF1F2; color: #E11D48; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Databricks Delta Lake</div>
+                            <div style="font-size: 11px; color: #64748B;">Primary operational store</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                pub_delta = st.toggle("Enable Delta", value=True, key="pub_delta", label_visibility="collapsed")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: white; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 32px; height: 32px; background: #F0F9FF; color: #0284C7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="m4.93 19.07 14.14-14.14"/></svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Snowflake Data Warehouse</div>
+                            <div style="font-size: 11px; color: #64748B;">Analytics & reporting</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                pub_snowflake = st.toggle("Enable Snowflake", value=False, key="pub_snowflake", label_visibility="collapsed")
+                st.markdown("</div>", unsafe_allow_html=True)
+
             with dest_col2:
-                st.checkbox("API Webhook", value=False, key="pub_webhook")
-                st.checkbox("S3 Export (Parquet)", value=True, key="pub_s3")
+                st.markdown(f"""
+                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: white; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 32px; height: 32px; background: #F5F3FF; color: #7C3AED; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">S3 Export (Parquet)</div>
+                            <div style="font-size: 11px; color: #64748B;">Data lake storage</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                pub_s3 = st.toggle("Enable S3", value=True, key="pub_s3", label_visibility="collapsed")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: white; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 32px; height: 32px; background: #ECFEFF; color: #0891B2; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">API Webhook</div>
+                            <div style="font-size: 11px; color: #64748B;">Real-time event streaming</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                pub_webhook = st.toggle("Enable Webhook", value=False, key="pub_webhook", label_visibility="collapsed")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
             
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-            
-            # Format Configuration
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Format Configuration
-            </div>
-            """, unsafe_allow_html=True)
-            
-            fmt_col1, fmt_col2, fmt_col3 = st.columns(3)
-            with fmt_col1:
+            # Format Configuration & Sync Options
+            param_col1, param_col2 = st.columns(2)
+            with param_col1:
+                st.markdown(f"""
+                <div style="font-size: 14px; font-weight: 700; color: {{COLORS['dark']}}; letter-spacing: -0.2px; margin-bottom: 12px;">Format Configuration</div>
+                """, unsafe_allow_html=True)
+                
                 st.selectbox("Output Format", ["Parquet", "Delta", "CSV", "JSON"], key="pub_format")
-            with fmt_col2:
                 st.selectbox("Compression", ["Snappy", "GZIP", "LZ4", "None"], key="pub_compression")
-            with fmt_col3:
                 st.selectbox("Partitioning", ["None", "By date", "By region", "By source"], key="pub_partition")
-            
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-            
-            # Sync Options
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Sync Options
-            </div>
-            """, unsafe_allow_html=True)
-            
-            sync_mode = st.radio(
-                "Sync mode",
-                ["Incremental push (append only)", "Full replace (truncate and load)", "Merge (upsert)"],
-                key="pub_sync_mode",
-                label_visibility="collapsed"
-            )
-            
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+                
+            with param_col2:
+                st.markdown(f"""
+                <div style="font-size: 14px; font-weight: 700; color: {{COLORS['dark']}}; letter-spacing: -0.2px; margin-bottom: 12px;">Sync Strategy</div>
+                """, unsafe_allow_html=True)
+                
+                sync_mode = st.radio(
+                    "Sync Strategy",
+                    [
+                        "**Incremental Push** (Append only)",
+                        "**Full Replace** (Truncate target and load)", 
+                        "**Merge** (Upsert existing records, insert new)"
+                    ],
+                    key="pub_sync_mode",
+                    label_visibility="collapsed"
+                )
+                
+            st.markdown(f"<div style='height: 1px; background: {{COLORS['border']}}; margin: 20px 0;'></div>", unsafe_allow_html=True)
             
             # Compliance Options
-            st.markdown("""
-            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                Compliance
-            </div>
+            st.markdown(f"""
+            <div style="font-size: 14px; font-weight: 700; color: {{COLORS['dark']}}; letter-spacing: -0.2px; margin-bottom: 16px;">Compliance & Governance</div>
             """, unsafe_allow_html=True)
             
             comp_col1, comp_col2 = st.columns(2)
             with comp_col1:
-                st.checkbox("Enable GDPR masking", value=True, key="pub_gdpr")
-                st.checkbox("HIPAA compliance mode", value=False, key="pub_hipaa")
+                st.checkbox("**GDPR Data Masking** - Automatically redact PII fields before export.", value=True, key="pub_gdpr")
+                st.checkbox("**HIPAA Compliance Mode** - Enforce strict PHI redaction and logging rules.", value=False, key="pub_hipaa")
             with comp_col2:
-                st.checkbox("Generate audit trail", value=True, key="pub_audit")
-                st.checkbox("Data lineage tracking", value=True, key="pub_lineage")
+                st.checkbox("**Comprehensive Audit Trail** - Log all publishing actions to central vault.", value=True, key="pub_audit")
+                st.checkbox("**Extended Data Lineage** - Publish upstream transformations to Unity Catalog.", value=True, key="pub_lineage")
             
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
             
-            _, btn_col = st.columns([2.5, 1.5])
-            with btn_col:
-                if st.button("Publish Data", type="primary", use_container_width=True, key="publish_data_btn"):
+            # ACTION BUTTON STYLING (Premium without emoji)
+            st.markdown("""
+                <style>
+                    /* Custom highly styled primary button */
+                    div[data-testid="stVerticalBlock"] > div > div > div > div.stButton > button:has(div:contains("Publish Data")) {
+                        background: linear-gradient(135deg, #D11F41 0%, #9F1731 100%) !important;
+                        border: none !important;
+                        color: white !important;
+                        padding: 12px 24px !important;
+                        font-weight: 700 !important;
+                        font-size: 16px !important;
+                        border-radius: 10px !important;
+                        box-shadow: 0 4px 12px rgba(209, 31, 65, 0.3) !important;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        height: 54px !important;
+                    }
+                    div[data-testid="stVerticalBlock"] > div > div > div > div.stButton > button:has(div:contains("Publish Data")):hover {
+                        transform: translateY(-2px) !important;
+                        box-shadow: 0 6px 16px rgba(209, 31, 65, 0.4) !important;
+                        background: linear-gradient(135deg, #E3254A 0%, #B11A37 100%) !important;
+                    }
+                    div[data-testid="stVerticalBlock"] > div > div > div > div.stButton > button:has(div:contains("Publish Data")):active {
+                        transform: translateY(1px) !important;
+                        box-shadow: 0 2px 8px rgba(209, 31, 65, 0.3) !important;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            action_col1, action_col2 = st.columns([1.5, 2])
+            with action_col1:
+                st.markdown(f"""
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 16px; border-left: 4px solid #10B981;">
+                    <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;">Status</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Ready to Publish</div>
+                    <div style="font-size: 12px; color: #64748B; margin-top: 2px;">2 destinations configured</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+            with action_col2:
+                st.markdown("<div style='margin-top: 6px;'></div>", unsafe_allow_html=True)
+                if st.button("Publish Data", use_container_width=True, key="publish_data_btn_premium"):
                     st.toast("Data published successfully!")
                     st.balloons()
         
