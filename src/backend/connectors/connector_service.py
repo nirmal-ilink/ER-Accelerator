@@ -1580,6 +1580,77 @@ class ConnectorService:
             raise e
 
 
+    def trigger_gold_orchestration_notebook(self, connection_id: str) -> str:
+        """
+        Triggers the gold orchestration notebook for a specific connection.
+        
+        Args:
+            connection_id: The UUID of the connection configuration to process.
+            
+        Returns:
+            Output/Exit value of the notebook execution.
+            
+        Raises:
+            Exception: If notebook execution fails or SDK is unavailable.
+        """
+        print(f"INFO: Triggering gold orchestration notebook for ID: {connection_id}")
+        
+        notebook_path = "/Shared/ER_aligned/Nb_gold_orchestration"
+        
+        try:
+            from databricks.sdk import WorkspaceClient
+            from databricks.sdk.service.jobs import Task, NotebookTask
+
+            w = WorkspaceClient()
+            
+            print(f"INFO: Submitting one-time run for: {notebook_path}")
+            
+            cluster_id = st.secrets.get("DATABRICKS_CLUSTER_ID")
+            if not cluster_id:
+                raise ValueError("DATABRICKS_CLUSTER_ID not configured. Set it in .streamlit/secrets.toml or Databricks secret scope.")
+            
+            run = w.jobs.submit(
+                run_name=f"GoldOrchestration_Trigger_{str(connection_id)[:8]}",
+                tasks=[
+                    Task(
+                        task_key="gold_orchestration_task",
+                        existing_cluster_id=cluster_id,
+                        notebook_task=NotebookTask(
+                            notebook_path=notebook_path,
+                            base_parameters={"connection_id": connection_id}
+                        )
+                    )
+                ]
+            ).result() 
+            
+            print(f"INFO: Job execution completed. State: {run.state.life_cycle_state}")
+            
+            if run.state.result_state and run.state.result_state.name == "SUCCESS":
+                self.audit_logger.log_event(
+                    user=st.session_state.get("username", "System"),
+                    action="Triggered Gold Orchestration",
+                    module="Connectors",
+                    status="Success",
+                    details=f"Triggered {notebook_path} for ID {connection_id}. Run ID: {run.run_id}"
+                )
+                return f"Success (Run ID: {run.run_id})"
+                
+            else:
+                 raise Exception(f"Job failed with state: {run.state.result_state}")
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"ERROR: Failed to trigger gold orchestration notebook: {error_msg}")
+            
+            self.audit_logger.log_event(
+                user=st.session_state.get("username", "System"),
+                action="Triggered Gold Orchestration",
+                module="Connectors",
+                status="Failed",
+                details=f"Failed to trigger {notebook_path}: {error_msg}"
+            )
+            raise e
+
 
     def fetch_system_databricks_columns(self, catalog: str, table_name: str, schema: str = None) -> List[Dict[str, str]]:
         """

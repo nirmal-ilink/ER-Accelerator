@@ -61,101 +61,13 @@ is_auth = st.session_state.get('authenticated', False)
 
 # Dynamic CSS Variables
 if not is_auth:
-    # LOGIN MODE: Premium Red & Grey Dynamic Background
+    # LOGIN MODE: 2D Canvas Particle Network Background
     main_bg_css = """
-    /* Base liquid gradient background - premium deep slate & silver */
+    /* Make app background transparent so Canvas can be seen */
     .stApp {
-        background: linear-gradient(-45deg, #e2e8f0, #cbd5e1, #f8fafc, #ccd6e0);
-        background-size: 400% 400%;
-        animation: liquidFlow 8s ease infinite;
-        background-attachment: fixed;
+        background-color: transparent !important;
         position: relative;
-        overflow: hidden;
     }
-    
-    @keyframes liquidFlow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    
-    /* Primary background layer - Orbs, Enterprise Grid Pattern, and Vignette */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        pointer-events: none;
-        z-index: 0;
-        background: 
-            /* 1. Lush Ruby Red orbs */
-            radial-gradient(circle 650px at 80% 25%, rgba(209, 31, 65, 0.18) 0%, transparent 80%),
-            radial-gradient(circle 450px at 15% 35%, rgba(209, 31, 65, 0.12) 0%, transparent 70%),
-            /* 2. Deep Antarctic Slate orbs */
-            radial-gradient(circle 550px at 20% 85%, rgba(30, 41, 59, 0.15) 0%, transparent 75%),
-            /* 3. MILD PATTERN: Dotted Enterprise Grid */
-            radial-gradient(rgba(209, 31, 65, 0.05) 1px, transparent 1px),
-            radial-gradient(rgba(71, 85, 105, 0.05) 1px, transparent 1px),
-            /* 4. VIGNETTE for centering focus */
-            radial-gradient(circle at center, transparent 0%, rgba(15, 23, 42, 0.06) 100%);
-        background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px, 100% 100%;
-        background-position: 0 0, 0 0, 0 0, 0 0, 20px 20px, 0 0;
-        animation: lushFloat 12s ease-in-out infinite alternate;
-        filter: blur(1px); /* Soften the grid pattern for a premium feel */
-    }
-    
-    /* Secondary orb layer - Pulsing Deep Contrast */
-    .stApp::after {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 0;
-        background: 
-            /* Pulsing Garnet Center */
-            radial-gradient(circle 350px at 50% 50%, rgba(159, 18, 57, 0.1) 0%, transparent 60%),
-            /* Silver Chrome edge */
-            radial-gradient(circle 450px at 90% 90%, rgba(148, 163, 184, 0.12) 0%, transparent 70%);
-        animation: lushFloatAlt 14s ease-in-out infinite alternate-reverse;
-        filter: blur(60px);
-    }
-
-    @keyframes lushFloat {
-        0% { transform: translate(0, 0) scale(1.0); }
-        100% { transform: translate(50px, -50px) scale(1.1); }
-    }
-
-    @keyframes lushFloatAlt {
-        0% { transform: translate(0, 0) scale(1.1); }
-        100% { transform: translate(-40px, 40px) scale(0.9); }
-    }
-
-    /* Magical micro-particles */
-    [data-testid="stAppViewContainer"]::after {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: 
-            radial-gradient(circle 1.5px at 15% 25%, rgba(209, 31, 65, 0.4), transparent),
-            radial-gradient(circle 1px at 85% 65%, rgba(255, 255, 255, 0.6), transparent),
-            radial-gradient(circle 2px at 30% 85%, rgba(71, 85, 105, 0.3), transparent),
-            radial-gradient(circle 1.5px at 70% 15%, rgba(209, 31, 65, 0.3), transparent);
-        pointer-events: none;
-        z-index: 1;
-        animation: particleTwinkle 6s ease-in-out infinite;
-    }
-
-    @keyframes particleTwinkle {
-        0%, 100% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.5); }
-    }
-    
-    /* (Removed redundant stApp::before definition) */
 
     /* Entrance Animation for Login Card */
     div[data-testid="stColumn"]:nth-of-type(2) > div[data-testid="stVerticalBlock"] {
@@ -178,12 +90,6 @@ if not is_auth:
         50% { box-shadow: 0 0 0 4px rgba(209, 31, 65, 0.15), 0 10px 15px -3px rgba(209, 31, 65, 0.3); }
         100% { box-shadow: 0 4px 6px -1px rgba(209, 31, 65, 0.25); }
     }
-
-    /* Directional flow for background */
-    @keyframes floatOrbs {
-        0%, 100% { transform: translate(0, 0) scale(1.0); }
-        50% { transform: translate(15px, -15px) scale(1.05); }
-    }
     
     /* Ensure main content stays above background */
     .stApp > header,
@@ -192,21 +98,7 @@ if not is_auth:
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"] {
         position: relative;
-        z-index: 2;
-    }
-    
-    /* Subtle noise texture overlay for premium feel */
-    [data-testid="stAppViewContainer"]::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        opacity: 0.015;
-        pointer-events: none;
-        z-index: 0;
+        z-index: 20;
     }
     
     /* LOGIN BUTTON STYLES (SCOPED) */
@@ -241,6 +133,257 @@ if not is_auth:
     }
     """
     sidebar_bg = "#0f172a"  # Fallback (Login usually has no sidebar)
+    
+    import streamlit.components.v1 as components
+    components.html("""
+    <script>
+    (function() {
+        const parentDoc = window.parent.document;
+        const parentWin = window.parent;
+
+        // --- Cleanup helper ---
+        if (!parentWin._destroyParticleBg) {
+            parentWin._destroyParticleBg = function() {
+                if (parentWin._particleAnimId) {
+                    cancelAnimationFrame(parentWin._particleAnimId);
+                    parentWin._particleAnimId = null;
+                }
+                const el = parentDoc.getElementById('particle-bg-container');
+                if (el) el.remove();
+            };
+        }
+
+        // Avoid duplicates on Streamlit re-renders
+        if (parentDoc.getElementById('particle-bg-container')) return;
+
+        // --- Container + Canvas ---
+        const container = parentDoc.createElement('div');
+        container.id = 'particle-bg-container';
+        Object.assign(container.style, {
+            position: 'fixed', top: '0', left: '0',
+            width: '100vw', height: '100vh',
+            zIndex: '0', pointerEvents: 'none',
+            overflow: 'hidden'
+        });
+
+        const canvas = parentDoc.createElement('canvas');
+        canvas.style.display = 'block';
+        container.appendChild(canvas);
+
+        const appEl = parentDoc.querySelector('.stApp');
+        if (appEl) {
+            appEl.parentNode.insertBefore(container, appEl);
+            appEl.style.background = 'transparent';
+            appEl.style.backgroundColor = 'transparent';
+        } else {
+            parentDoc.body.prepend(container);
+        }
+        const vc = parentDoc.querySelector('[data-testid="stAppViewContainer"]');
+        if (vc) { vc.style.background = 'transparent'; vc.style.backgroundColor = 'transparent'; }
+        const hdr = parentDoc.querySelector('header');
+        if (hdr) { hdr.style.background = 'transparent'; hdr.style.backgroundColor = 'transparent'; }
+
+        // --- Setup ---
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        function resize() {
+            W = parentWin.innerWidth;
+            H = parentWin.innerHeight;
+            canvas.width = W;
+            canvas.height = H;
+        }
+        resize();
+        parentWin.addEventListener('resize', resize);
+
+        const NODE_COUNT     = 140;
+        const LINE_DIST      = 150;
+        const MOUSE_RADIUS   = 160;
+        const MOUSE_FORCE    = 3;
+        const BG_COLOR       = '#e8ecf1';
+
+        // Balanced palette: brand presence + elegant neutrals
+        const NODE_PRESETS = [
+            { color: '#d11f41', glow: 'rgba(209,31,65,',   weight: 3 },  // Brand red
+            { color: '#e8707e', glow: 'rgba(232,112,126,', weight: 3 },  // Soft red
+            { color: '#94a3b8', glow: 'rgba(148,163,184,', weight: 4 },  // Silver slate
+            { color: '#7b8ca1', glow: 'rgba(123,140,161,', weight: 3 },  // Medium slate
+            { color: '#cbd5e1', glow: 'rgba(203,213,225,', weight: 3 },  // Pale slate
+            { color: '#c9956a', glow: 'rgba(201,149,106,', weight: 1 },  // Warm gold
+        ];
+        const palette = [];
+        NODE_PRESETS.forEach(function(p) { for (let i = 0; i < p.weight; i++) palette.push(p); });
+
+        // --- Mouse ---
+        const mouse = { x: W * 0.5, y: H * 0.5, tx: W * 0.5, ty: H * 0.5 };
+        parentDoc.addEventListener('mousemove', function(e) {
+            mouse.tx = e.clientX;
+            mouse.ty = e.clientY;
+        });
+
+        // --- Nodes with Z-depth for 3D parallax ---
+        const nodes = [];
+        const cols = Math.ceil(Math.sqrt(NODE_COUNT * (W / H)));
+        const rows = Math.ceil(NODE_COUNT / cols);
+        const cellW = W / cols;
+        const cellH = H / rows;
+
+        for (let i = 0; i < NODE_COUNT; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const z = Math.random();  // 0 = far background, 1 = near foreground
+            const preset = palette[Math.floor(Math.random() * palette.length)];
+            nodes.push({
+                x: col * cellW + Math.random() * cellW,
+                y: row * cellH + Math.random() * cellH,
+                z: z,
+                vx: (Math.random() - 0.5) * (0.12 + z * 0.3),
+                vy: (Math.random() - 0.5) * (0.12 + z * 0.3),
+                baseR: 1.5 + z * 3.0,
+                color: preset.color,
+                glow: preset.glow,
+                phase: Math.random() * Math.PI * 2,
+                // Projected positions (updated each frame)
+                px: 0, py: 0, pr: 0
+            });
+        }
+
+        // Sort by z for back-to-front rendering
+        nodes.sort(function(a, b) { return a.z - b.z; });
+
+        // --- Pre-create off-screen glow textures for performance ---
+        function makeGlow(color, glowStr, radius) {
+            const size = Math.ceil(radius * 2 + 4);
+            const off = parentDoc.createElement('canvas');
+            off.width = size; off.height = size;
+            const oc = off.getContext('2d');
+            const cx = size / 2, cy = size / 2;
+            const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, radius);
+            grad.addColorStop(0, glowStr + '0.9)');
+            grad.addColorStop(0.3, glowStr + '0.4)');
+            grad.addColorStop(0.6, glowStr + '0.1)');
+            grad.addColorStop(1, glowStr + '0)');
+            oc.fillStyle = grad;
+            oc.fillRect(0, 0, size, size);
+            return off;
+        }
+
+        // --- Animation ---
+        let time = 0;
+        const centerX = W * 0.5;
+        const centerY = H * 0.5;
+
+        function animate() {
+            parentWin._particleAnimId = requestAnimationFrame(animate);
+            time += 0.008;
+
+            // Smooth mouse easing
+            mouse.x += (mouse.tx - mouse.x) * 0.05;
+            mouse.y += (mouse.ty - mouse.y) * 0.05;
+
+            // Mouse offset from center (for parallax)
+            const mx = (mouse.x - W * 0.5) / (W * 0.5);  // -1..1
+            const my = (mouse.y - H * 0.5) / (H * 0.5);
+
+            // Clear
+            ctx.fillStyle = BG_COLOR;
+            ctx.fillRect(0, 0, W, H);
+
+            // Update & project positions
+            for (let i = 0; i < NODE_COUNT; i++) {
+                const n = nodes[i];
+
+                // Gentle drift (speed scales with z)
+                const speed = 0.5 + n.z * 0.5;
+                n.x += n.vx + Math.sin(time * speed + n.phase) * 0.15 * speed;
+                n.y += n.vy + Math.cos(time * 0.7 * speed + n.phase) * 0.15 * speed;
+
+                // Mouse repulsion (stronger on near nodes)
+                const dx = n.x - mouse.tx;
+                const dy = n.y - mouse.ty;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < MOUSE_RADIUS && dist > 0) {
+                    const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS * MOUSE_FORCE * (0.3 + n.z * 0.7);
+                    n.x += (dx / dist) * force;
+                    n.y += (dy / dist) * force;
+                }
+
+                // Wrap at edges
+                const margin = LINE_DIST;
+                if (n.x < -margin) n.x = W + margin;
+                if (n.x > W + margin) n.x = -margin;
+                if (n.y < -margin) n.y = H + margin;
+                if (n.y > H + margin) n.y = -margin;
+
+                // 3D Parallax projection: deeper nodes shift less with mouse
+                const parallax = 0.2 + n.z * 0.8;
+                n.px = n.x + mx * 30 * parallax;
+                n.py = n.y + my * 22 * parallax;
+                n.pr = n.baseR + Math.sin(time * 1.8 + n.phase) * 0.4;
+            }
+
+            // --- Draw lines (back layer) ---
+            ctx.lineWidth = 0.8;
+            for (let i = 0; i < NODE_COUNT; i++) {
+                const a = nodes[i];
+                for (let j = i + 1; j < NODE_COUNT; j++) {
+                    const b = nodes[j];
+                    const dx = a.px - b.px;
+                    const dy = a.py - b.py;
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 < LINE_DIST * LINE_DIST) {
+                        const d = Math.sqrt(d2);
+                        const avgZ = (a.z + b.z) * 0.5;
+                        const alpha = (1 - d / LINE_DIST) * (0.06 + avgZ * 0.18);
+                        ctx.strokeStyle = 'rgba(148,163,184,' + alpha.toFixed(3) + ')';
+                        ctx.beginPath();
+                        ctx.moveTo(a.px, a.py);
+                        ctx.lineTo(b.px, b.py);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // --- Draw nodes back-to-front ---
+            for (let i = 0; i < NODE_COUNT; i++) {
+                const n = nodes[i];
+                const nodeAlpha = 0.25 + n.z * 0.5;
+
+                // 1. Very subtle ambient halo (small, not blobby)
+                const haloR = n.pr * 2.2;
+                ctx.beginPath();
+                ctx.arc(n.px, n.py, haloR, 0, Math.PI * 2);
+                ctx.fillStyle = n.glow + (nodeAlpha * 0.07).toFixed(3) + ')';
+                ctx.fill();
+
+                // 2. Crisp core circle (the main shape)
+                ctx.beginPath();
+                ctx.arc(n.px, n.py, n.pr, 0, Math.PI * 2);
+                ctx.fillStyle = n.color;
+                ctx.globalAlpha = nodeAlpha;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+
+                // 3. Thin ring outline on near nodes for definition
+                if (n.z > 0.4) {
+                    ctx.beginPath();
+                    ctx.arc(n.px, n.py, n.pr + 0.8, 0, Math.PI * 2);
+                    ctx.strokeStyle = n.glow + (nodeAlpha * 0.25).toFixed(2) + ')';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        animate();
+
+        // Cleanup on unmount (login -> dashboard)
+        window.addEventListener('beforeunload', function() {
+            parentWin._destroyParticleBg();
+        });
+    })();
+    </script>
+    """, height=0, width=0)
 else:
     # DASHBOARD MODE: Pure White Background & Light Elegant Sidebar
     main_bg_css = """

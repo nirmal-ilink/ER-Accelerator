@@ -701,3 +701,21 @@ org.apache.spark.sql.AnalysisException
 2026-02-25 16:48:47,Administrator,User Logout,Auth,Success,User signed out manually
 2026-02-25 16:49:43,admin,User Login,Auth,Success,Session started for admin
 2026-02-25 19:29:05,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 13:27:25,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 13:32:58,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 13:38:45,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-26 13:40:12,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 13:41:45,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-26 13:47:32,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 13:54:19,Administrator,Saved Configuration,Connectors,Success,Saved databricks configuration 'Databricks' (ID: 6a156c68-130e-4936-913c-5ccebc6a5e7d)
+2026-02-26 14:00:17,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 14:02:11,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1090533829439322
+2026-02-26 14:03:17,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1101216706256097
+2026-02-26 14:04:08,System,Triggered Cleansing,Connectors,Success,Triggered /Shared/ER_aligned/mdm_Silver_cleansing for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 489007649508744
+2026-02-26 15:31:17,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 15:49:35,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 15:52:01,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 18:12:24,System,Triggered Gold Orchestration,Connectors,Failed,Failed to trigger /Shared/ER_aligned/Nb_gold_orchestration: Job failed with state: RunResultState.CANCELED
+2026-02-26 20:41:19,admin,User Login,Auth,Success,Session started for admin
+2026-02-26 21:12:31,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 00:12:28,admin,User Login,Auth,Success,Session started for admin
