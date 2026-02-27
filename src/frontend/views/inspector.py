@@ -3020,15 +3020,13 @@ def render():
                 # Dynamic KPI Calculations based on user input
                 blocking_count = len(current_blocking_keys)
                 
-                # 1. Candidates
+                # 1. Candidates (hardcoded)
+                candidates_display = "11,543"
                 if blocking_count == 0:
-                    candidates_display = "124.5M"
                     blocking_text = "No Blocking (Cross Join)"
                     blocking_color = "#EF4444"
                 else:
                     reduction = 12 * blocking_count
-                    candidates_val = max(1.2, 14.2 - (blocking_count - 2) * 5.5)
-                    candidates_display = f"{candidates_val:.1f}M"
                     blocking_text = f"↓ {reduction}% via Blocking"
                     blocking_color = "#10B981"
                 
@@ -3169,39 +3167,53 @@ def render():
                     box-shadow: 0 0 0 1px #0F172A !important;
                 }
                 
-                /* Custom styles for Sliders */
-                div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
-                    background-color: #FFFFFF !important;
-                    border: 2px solid #0F172A !important;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+                /* ── Clean Slider ── */
+                .st-key-resolution_threshold div[data-baseweb="slider"] {
+                    margin-top: 4px !important;
+                    margin-bottom: 2px !important;
+                }
+                /* Container - MUST be transparent (this holds thumb + track) */
+                .st-key-resolution_threshold div[data-baseweb="slider"] > div {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                }
+                /* Track bar (the actual thin visual line) */
+                .st-key-resolution_threshold div[data-baseweb="slider"] > div > div > div + div {
+                    height: 6px !important;
+                    border-radius: 99px !important;
+                    background: #E2E8F0 !important;
+                }
+                /* Filled portion */
+                .st-key-resolution_threshold div[data-baseweb="slider"] > div > div:first-child > div:first-child {
+                    background: #D11F41 !important;
+                    border-radius: 99px !important;
+                }
+                /* Thumb */
+                .st-key-resolution_threshold div[data-baseweb="slider"] div[role="slider"] {
+                    background: #FFFFFF !important;
+                    border: 2px solid #D11F41 !important;
                     width: 18px !important;
                     height: 18px !important;
-                    transition: transform 0.1s ease, border-color 0.1s ease !important;
+                    border-radius: 50% !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+                    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+                    cursor: pointer !important;
                 }
-                div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"]:hover {
-                    transform: scale(1.15) !important;
-                    border-color: #D11F41 !important;
+                .st-key-resolution_threshold div[data-baseweb="slider"] div[role="slider"]:hover {
+                    border-color: #9f1239 !important;
+                    box-shadow: 0 1px 6px rgba(209,31,65,0.2) !important;
                 }
-                div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"]:active {
-                    transform: scale(0.9) !important;
+                .st-key-resolution_threshold div[data-baseweb="slider"] div[role="slider"]:active {
+                    border-color: #9f1239 !important;
+                    box-shadow: 0 0 0 3px rgba(209,31,65,0.1) !important;
                 }
-                div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] div {
-                    color: #0F172A !important;
-                    font-weight: 700 !important;
-                    font-size: 13px !important;
-                    background: transparent !important;
+                /* Hide floating thumb value */
+                .st-key-resolution_threshold div[data-baseweb="slider"] div[role="slider"] > div {
+                    display: none !important;
                 }
-                /* Slider track coloring */
-                div[data-testid="stSlider"] div[data-baseweb="slider"] > div {
-                    height: 4px !important;
-                    border-radius: 2px !important;
-                    background-color: #E2E8F0 !important; /* Unfilled track */
-                }
-                div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div:first-child > div:first-child {
-                    background-color: #0F172A !important; /* Filled track */
-                }
-                div[data-testid="stSlider"] > div[data-testid="stSliderTickBar"] > div {
-                    display: none !important; /* Hide default min/max tickbar */
+                /* Hide default tick bar */
+                .st-key-resolution_threshold div[data-testid="stSliderTickBar"] > div {
+                    display: none !important;
                 }
                 
                 /* Results Table Premium Styling */
@@ -3349,20 +3361,57 @@ def render():
                     
                     st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
                     
-                    st.markdown("<div style='font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 4px;'>Similarity Threshold</div>", unsafe_allow_html=True)
+                    st.markdown("<div style='font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px;'>Similarity Threshold</div>", unsafe_allow_html=True)
                     
                     threshold = st.slider("Match Threshold", min_value=0.0, max_value=1.0, value=0.85, step=0.05, key="resolution_threshold", label_visibility="collapsed")
                     
-                    th_col1, th_col2, th_col3 = st.columns(3)
-                    th_col1.markdown(f"<div style='font-size:11px; color:#94A3B8; font-weight:600;'>Lenient (0.0)</div>", unsafe_allow_html=True)
-                    th_col2.markdown(f"<div style='font-size:12px; color:#D11F41; text-align:center; font-weight:700;'>Current: {threshold:.2f}</div>", unsafe_allow_html=True)
-                    th_col3.markdown(f"<div style='font-size:11px; color:#94A3B8; text-align:right; font-weight:600;'>Strict (1.0)</div>", unsafe_allow_html=True)
+                    # Premium semantic labels below slider
+                    th_pct = int(threshold * 100)
+                    if threshold < 0.5:
+                        feel_label = "Lenient"
+                        feel_color = "#F59E0B"
+                    elif threshold < 0.8:
+                        feel_label = "Moderate"
+                        feel_color = "#3B82F6"
+                    else:
+                        feel_label = "Strict"
+                        feel_color = "#10B981"
+                    st.markdown(f"""
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                        <div style="font-size:11px; color:#94A3B8; font-weight:600; display:flex; align-items:center; gap:3px;">
+                            <span style="font-size:10px;">←</span> Lenient
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <div style="font-size:12px; font-weight:800; color:#0F172A; letter-spacing:-0.3px;">{th_pct}%</div>
+                            <div style="font-size:10px; font-weight:700; color:{feel_color}; background:{feel_color}18; padding:2px 8px; border-radius:99px; text-transform:uppercase; letter-spacing:0.5px;">{feel_label}</div>
+                        </div>
+                        <div style="font-size:11px; color:#94A3B8; font-weight:600; display:flex; align-items:center; gap:3px;">
+                            Strict <span style="font-size:10px;">→</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
                 st.markdown("<div style='height:32px; border-bottom: 1px solid #E2E8F0; margin-bottom: 32px;'></div>", unsafe_allow_html=True)
                 
                 # --- MATCH RESULTS SUMMARY (FIXED RULES) ---
                 st.markdown('<div class="res-section-title">Execution Preview</div>', unsafe_allow_html=True)
-                st.markdown("""
+                
+                # Hardcoded counts (must sum to 11,543 to match Total Candidates)
+                auto_match_count = 7235
+                ambiguous_count = 2891
+                no_match_count = 1417
+                total_records = auto_match_count + ambiguous_count + no_match_count
+                
+                auto_pct = f"{(auto_match_count / total_records * 100):.1f}%" if total_records else "0.0%"
+                ambiguous_pct = f"{(ambiguous_count / total_records * 100):.1f}%" if total_records else "0.0%"
+                no_match_pct = f"{(no_match_count / total_records * 100):.1f}%" if total_records else "0.0%"
+                
+                # Format counts with commas for readability
+                auto_str = f"{auto_match_count:,}"
+                ambiguous_str = f"{ambiguous_count:,}"
+                no_match_str = f"{no_match_count:,}"
+
+                st.markdown(f"""
                 <table class="results-table-premium">
                     <tr>
                         <th style="width: 30%;">Classification Grade</th>
@@ -3377,7 +3426,7 @@ def render():
                                 <span style="font-weight: 600;">High Confidence Auto-Match</span>
                             </div>
                         </td>
-                        <td><strong>6,102</strong> <span style="color: #64748B; font-size: 11px;">(72.4%)</span></td>
+                        <td><strong>{auto_str}</strong> <span style="color: #64748B; font-size: 11px;">({auto_pct})</span></td>
                         <td style="color: #475569; font-size: 12px; font-weight: 500;">95.0% - 100%</td>
                         <td>
                             <span style="display: inline-flex; align-items: center; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #475569;">
@@ -3392,7 +3441,7 @@ def render():
                                 <span style="font-weight: 600;">Ambiguous Match Zone</span>
                             </div>
                         </td>
-                        <td><strong>1,420</strong> <span style="color: #64748B; font-size: 11px;">(16.8%)</span></td>
+                        <td><strong>{ambiguous_str}</strong> <span style="color: #64748B; font-size: 11px;">({ambiguous_pct})</span></td>
                         <td style="color: #475569; font-size: 12px; font-weight: 500;">80.0% - 94.9%</td>
                         <td>
                             <span style="display: inline-flex; align-items: center; background: #FFF1F2; border: 1px solid #FECDD3; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #D11F41;">
@@ -3407,7 +3456,7 @@ def render():
                                 <span style="font-weight: 600;">No Match Discovered</span>
                             </div>
                         </td>
-                        <td><strong>910</strong> <span style="color: #64748B; font-size: 11px;">(10.8%)</span></td>
+                        <td><strong>{no_match_str}</strong> <span style="color: #64748B; font-size: 11px;">({no_match_pct})</span></td>
                         <td style="color: #475569; font-size: 12px; font-weight: 500;">< 80.0%</td>
                         <td>
                             <span style="display: inline-flex; align-items: center; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #475569;">
@@ -3499,72 +3548,100 @@ def render():
                 
                 st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-                st.markdown("""
-                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
-                    Recent AI Resolutions
+
+
+                # Hardcoded AI resolution records
+                resolutions = [
+                    (
+                        "ORA-1042", "Apollo Hospitals Enterprises Limited", "Plot 1A, AECS Layout, Bangalore",
+                        "SAP-3091", "Apollo Hospitals Enterprise Ltd", "Plot 1A, AECS Layout, Bengaluru",
+                        "97.8%", "Match", "#10B981", "#ECFDF5", "#D1FAE5",
+                        "Near-identical legal names with standard abbreviation (Limited → Ltd). City name variation (Bangalore ↔ Bengaluru) is a known alias. High-confidence auto-merge."
+                    ),
+                    (
+                        "ORA-2215", "Mckesson Corp", "6555 State Hwy 161, Irving TX",
+                        "SAP-4478", "McKesson Corporation", "6555 N State Hwy 161, Irving TX",
+                        "96.1%", "Match", "#10B981", "#ECFDF5", "#D1FAE5",
+                        "Legal name is an abbreviation match (Corp → Corporation). Address differs only by directional prefix (N). Capitalization normalized. Confident match."
+                    ),
+                    (
+                        "ORA-3380", "Tata Consultancy Services Ltd", "TCS House, Raveline St, Mumbai",
+                        "SAP-5512", "Tata Consulting Services Limited", "TCS House, Raveline Street, Mumbai 400001",
+                        "88.5%", "Review", "#F59E0B", "#FFFBEB", "#FEF3C7",
+                        "Name variation in middle word (Consultancy vs Consulting) exceeds simple abbreviation. Address is structurally similar but ZIP appended. Requires steward confirmation."
+                    ),
+                    (
+                        "ORA-4190", "Reliance Industries Pvt Ltd", "Maker Chambers IV, Nariman Point",
+                        "SAP-6623", "Reliance Industrial Services Ltd", "Dhirubhai Ambani Knowledge City, Navi Mumbai",
+                        "41.3%", "No Match", "#EF4444", "#FEF2F2", "#FEE2E2",
+                        "Despite shared 'Reliance' brand, legal entity names differ significantly (Industries vs Industrial Services). Addresses are in different cities. Likely separate subsidiaries."
+                    ),
+                    (
+                        "ORA-5044", "Infosys BPO Limited", "Electronics City Phase 1, Bangalore",
+                        "SAP-7281", "Infosys BPM Ltd", "Electronics City Phase I, Bengaluru 560100",
+                        "91.2%", "Review", "#F59E0B", "#FFFBEB", "#FEF3C7",
+                        "Rebranding detected: BPO was renamed to BPM in 2019. Address matches with minor formatting differences (Phase 1 ↔ Phase I). Flagged for steward to confirm entity continuity."
+                    ),
+                    (
+                        "ORA-6712", "Wipro Technologies Ltd", "Doddakannelli, Sarjapur Road, Bangalore",
+                        "SAP-8905", "Wipro Consumer Care Lighting", "Wipro House, Sarjapur Road, Bangalore",
+                        "38.7%", "No Match", "#EF4444", "#FEF2F2", "#FEE2E2",
+                        "Same parent brand but distinctly different business divisions (IT Services vs Consumer Care). Different registered office addresses on same road. Confirmed as separate legal entities."
+                    ),
+                ]
+
+                # Section header with record count badge
+                res_count = len(resolutions)
+                st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Recent AI Resolutions
+                    </div>
+                    <div style="font-size: 11px; font-weight: 700; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 10px; border-radius: 99px;">
+                        {res_count} record{'s' if res_count != 1 else ''}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                resolutions = [
-                    (
-                        "C-829", "Jonathan Doe", "123 Main St, Apt 4",
-                        "CRM-401", "Jonathon Doe", "123 Main Street, #4",
-                        "98.2%", "Match", "#10B981", "#ECFDF5", "#D1FAE5",
-                        "Strong phonetic similarity in first name. Secondary address unit matching (Apt 4 = #4)."
-                    ),
-                    (
-                        "C-552", "Michael Brown", "78 Pine Ln",
-                        "EXT-88", "Mike Brown", "90 Cedar Ct",
-                        "42.1%", "No Match", "#EF4444", "#FEF2F2", "#FEE2E2",
-                        "Name variation acceptable, but significant mismatch between addresses. Represents different entities."
-                    ),
-                    (
-                        "C-901", "Emily Chen", "880 Birch Dr",
-                        "CRM-211", "Emily Chan", "880 Birchen Dr",
-                        "81.4%", "Review", "#F59E0B", "#FFFBEB", "#FEF3C7",
-                        "Multiple minor variations in both name and street name. Flagged for manual steward review."
-                    )
-                ]
-
-                for s1_id, s1_name, s1_addr, s2_id, s2_name, s2_addr, conf, status, s_color, s_bg, s_border, remarks in resolutions:
-                    st.markdown(clean_html(f"""
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="font-size: 13px; font-weight: 700; color: #475569;">Confidence Score:</div>
-                                <div style="font-size: 14px; font-weight: 800; color: #0F172A;">{conf}</div>
+                # Render cards inside a Streamlit native scrollable container
+                with st.container(height=520):
+                    for s1_id, s1_name, s1_addr, s2_id, s2_name, s2_addr, conf, status, s_color, s_bg, s_border, remarks in resolutions:
+                        st.markdown(clean_html(f"""
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="font-size: 13px; font-weight: 700; color: #475569;">Confidence Score:</div>
+                                    <div style="font-size: 14px; font-weight: 800; color: #0F172A;">{conf}</div>
+                                </div>
+                                <div style="font-size: 11px; font-weight: 700; color: {s_color}; background: {s_bg}; border: 1px solid {s_border}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    {status}
+                                </div>
                             </div>
-                            <div style="font-size: 11px; font-weight: 700; color: {s_color}; background: {s_bg}; border: 1px solid {s_border}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                {status}
+                            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
+                                    <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record A ({s1_id})</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s1_name}</div>
+                                    <div style="font-size: 12px; color: #475569;">{s1_addr}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18L16 12L8 6"/></svg>
+                                </div>
+                                <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
+                                    <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record B ({s2_id})</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s2_name}</div>
+                                    <div style="font-size: 12px; color: #475569;">{s2_addr}</div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                            <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
-                                <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record A ({s1_id})</div>
-                                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s1_name}</div>
-                                <div style="font-size: 12px; color: #475569;">{s1_addr}</div>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18L16 12L8 6"/></svg>
-                            </div>
-                            <div style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; position: relative;">
-                                <div style="position: absolute; top: -8px; left: 12px; background: white; padding: 0 4px; font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Record B ({s2_id})</div>
-                                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 2px; margin-top: 4px;">{s2_name}</div>
-                                <div style="font-size: 12px; color: #475569;">{s2_addr}</div>
+                            <div style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 8px; padding: 12px; display: flex; align-items: flex-start; gap: 10px;">
+                                <div style="color: #10B981; margin-top: 2px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                </div>
+                                <div style="font-size: 13px; color: #166534; line-height: 1.5;">
+                                    <span style="font-weight: 700;">AI Remarks:</span> {remarks}
+                                </div>
                             </div>
                         </div>
-                        
-                        <div style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 8px; padding: 12px; display: flex; align-items: flex-start; gap: 10px;">
-                            <div style="color: #10B981; margin-top: 2px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                            </div>
-                            <div style="font-size: 13px; color: #166534; line-height: 1.5;">
-                                <span style="font-weight: 700;">AI Remarks:</span> {remarks}
-                            </div>
-                        </div>
-                    </div>
-                    """), unsafe_allow_html=True)
+                        """), unsafe_allow_html=True)
             
                 st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
                 

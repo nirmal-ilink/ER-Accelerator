@@ -719,3 +719,23 @@ org.apache.spark.sql.AnalysisException
 2026-02-26 20:41:19,admin,User Login,Auth,Success,Session started for admin
 2026-02-26 21:12:31,admin,User Login,Auth,Success,Session started for admin
 2026-02-27 00:12:28,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 10:45:05,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 10:46:41,Administrator,User Logout,Auth,Success,User signed out manually
+2026-02-27 10:47:50,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 10:55:51,System,Triggered Gold Orchestration,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/Nb_gold_orchestration: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task gold_orchestration_task failed with message: Workload failed, see run output for details."
+2026-02-27 11:05:20,System,Triggered Gold Orchestration,Connectors,Success,Triggered /Shared/ER_aligned/Nb_gold_orchestration for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 887906989217530
+2026-02-27 12:15:56,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 1122896018018028
+2026-02-27 12:50:39,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 13:50:52,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 13:51:33,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 14:33:07,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:03:28,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:09:32,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:10:09,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:13:04,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 20388900351366
+2026-02-27 20:24:09,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:25:59,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 531587128328244
+2026-02-27 20:31:46,admin,User Login,Auth,Success,Session started for admin
+2026-02-27 20:33:09,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 62063593972257
+2026-02-27 20:54:09,Administrator,Match Approved,Match Review,Success,Cluster CL009 resolved by Administrator
+2026-02-27 20:59:42,Administrator,User Logout,Auth,Success,User signed out manually
