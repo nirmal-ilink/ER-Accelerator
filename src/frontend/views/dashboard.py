@@ -1,38 +1,36 @@
 import streamlit as st
 import altair as alt
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# --- MOCK DATA GENERATOR ---
-def generate_enterprise_data():
-    """Generates realistic enterprise-scale mock data for the dashboard."""
-    np.random.seed(42)
-    
+# --- HARDCODED CURATED DATA ---
+def get_enterprise_data():
+    """Returns perfectly curated, realistic enterprise-scale data for live demonstrations."""
     # 1. Trend Data (Last 12 Months)
+    # Using specific dates to ensure chart looks identical and perfect every time
     dates = pd.date_range(end=datetime.today(), periods=12, freq='ME')
     
-    # Trust Index (Calculated composite score)
-    trust_base = np.linspace(72, 88, 12) + np.random.normal(0, 1, 12)
-    trust_df = pd.DataFrame({'Date': dates, 'TrustScore': trust_base})
+    # A beautiful upward trending trust curve with a slight realistic dip and strong recovery
+    trust_scores = [78.5, 79.2, 78.8, 81.5, 83.2, 82.9, 85.8, 88.4, 91.2, 92.8, 93.5, 96.4]
+    trust_df = pd.DataFrame({'Date': dates, 'TrustScore': trust_scores})
     
-    # Auto-Resolution vs Manual
-    auto_res = np.linspace(80000, 150000, 12).astype(int)
-    manual_res = np.linspace(15000, 5000, 12).astype(int)
+    # Auto-Resolution vs Manual - clean divergence showing platform improvement over time
+    auto_res = [65000, 72000, 76000, 84000, 91000, 98000, 105000, 112000, 119000, 128000, 136000, 142000]
+    manual_res = [25000, 24000, 22000, 19000, 16000, 14000, 12000, 10500, 9000, 7500, 6000, 4200]
     resolution_df = pd.DataFrame({
         'Date': dates,
         'Auto': auto_res,
         'Manual': manual_res
     }).melt('Date', var_name='Type', value_name='Records')
     
-    # 2. Risk Data
+    # 2. Risk Data (Hardcoded high-stakes vectors)
     risk_data = pd.DataFrame({
         'Category': ['Unresolved High Value', 'SLA Breach Risk', 'Policy Violations', 'Low Confidence Links'],
         'Count': [124, 45, 892, 3400],
         'Severity': ['High', 'High', 'Medium', 'Low']
     })
     
-    # 3. Source System Coverage
+    # 3. Source System Coverage (Realistic distribution)
     source_data = pd.DataFrame({
         'System': ['Epic EMR', 'Cerner', 'Salesforce CRM', 'Legacy Billing', 'Ext. Lab Feeds'],
         'Records': [4500000, 3200000, 1500000, 2100000, 800000],
@@ -43,15 +41,7 @@ def generate_enterprise_data():
         'trust_trend': trust_df,
         'resolution_trend': resolution_df,
         'risk_data': risk_data,
-        'source_data': source_data,
-        'kpis': {
-            'records_gov': "12.4M",
-            'golden_records': "8.1M",
-            'dup_exposure': "1.2%",
-            'auto_res_rate': "94.8%",
-            'intervention': "2.3%",
-            'trust_index': "88/100"
-        }
+        'source_data': source_data
     }
 
 def render():
@@ -61,7 +51,7 @@ def render():
     if 'dash_v2_horizon' not in st.session_state:
         st.session_state['dash_v2_horizon'] = "30 Days"
 
-    data = generate_enterprise_data()
+    data = get_enterprise_data()
     
     # --- 2. PREMIUM DESIGN SYSTEM (Glassmorphism v2) ---
     # Using HSL for more precise control over luminance and alpha
@@ -326,31 +316,49 @@ def render():
     g1, g2 = st.columns([2.2, 1])
 
     with g1:
-        # 1. Define the Chart
-        trust_chart = alt.Chart(data['trust_trend']).mark_area(
+        # 1. Base Layer & Scales
+        y_scale = alt.Scale(domain=[75, 100])
+        y_axis = alt.Axis(grid=True, gridColor=DESIGN['slate_100'], domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None, tickCount=5)
+        
+        base = alt.Chart(data['trust_trend']).transform_calculate(
+            baseline="75"
+        ).encode(
+            x=alt.X('Date:T', axis=alt.Axis(format='%b', grid=False, domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None, tickCount=12))
+        )
+
+        # 2. Area Chart (Anchored to 75 to avoid 0-baseline drop)
+        area = base.mark_area(
             color=alt.Gradient(
                 gradient='linear',
                 stops=[alt.GradientStop(color=DESIGN['accent'], offset=0),
                        alt.GradientStop(color='white', offset=1)],
             ),
-            opacity=0.12,
-            line={'color': DESIGN['accent'], 'strokeWidth': 2}
+            opacity=0.15
         ).encode(
-            x=alt.X('Date:T', axis=alt.Axis(format='%b', grid=False, domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None, tickCount=12)),
-            y=alt.Y('TrustScore:Q', scale=alt.Scale(domain=[60, 100]), axis=alt.Axis(grid=True, gridColor=DESIGN['slate_100'], domain=False, labelColor=DESIGN['slate_500'], labelFontSize=11, labelFont='Outfit', title=None)),
-            tooltip=['Date', 'TrustScore']
+            y=alt.Y('TrustScore:Q', scale=y_scale, axis=y_axis),
+            y2=alt.Y2('baseline:Q')
         )
         
-        # 2. Add Interactive Points
-        points = alt.Chart(data['trust_trend']).mark_point(
-            size=80, color=DESIGN['accent'], fill='white', strokeWidth=2
+        # 3. Line Chart
+        line = base.mark_line(color=DESIGN['accent'], strokeWidth=2).encode(
+            y=alt.Y('TrustScore:Q', scale=y_scale)
+        )
+        
+        # 4. Interactive Points
+        hover = alt.selection_point(on='mouseover', nearest=True, empty=False) if hasattr(alt, 'selection_point') else alt.selection_single(on='mouseover', nearest=True, empty=False)
+        points = base.mark_point(
+            size=90, color=DESIGN['accent'], fill='white', strokeWidth=2
         ).encode(
-            x='Date:T',
-            y='TrustScore:Q',
-            opacity=alt.condition(alt.selection_point(on='mouseover', nearest=True, empty=False), alt.value(1), alt.value(0))
-        ).add_selection(alt.selection_point(on='mouseover', nearest=True, empty=False))
+            y=alt.Y('TrustScore:Q', scale=y_scale),
+            opacity=alt.condition(hover, alt.value(1), alt.value(0)),
+            tooltip=[alt.Tooltip('Date:T', title='Date', format='%b %Y'), alt.Tooltip('TrustScore:Q', title='Trust Score', format='.1f')]
+        )
+        try:
+            points = points.add_params(hover)
+        except AttributeError:
+            points = points.add_selection(hover)
 
-        final_chart = (trust_chart + points).properties(height=300).configure_view(stroke="transparent").configure(background='white')
+        final_chart = (area + line + points).properties(height=300).configure_view(stroke="transparent").configure(background='white')
         
         # 3. Render Card Wrapper
         st.markdown(f"""
@@ -392,20 +400,20 @@ def render():
     c5, c6 = st.columns([1, 1.2])
     
     with c5:
-        st.markdown(f"""
-        <div class="v2-card">
-            <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN["slate_900"]}; margin: 0 0 4px 0;">Resolution Effectiveness</h3>
-            <p style="font-size: 12px; color: {DESIGN['slate_500']}; margin-bottom: 24px;">Automatic vs Manual performance</p>
-        """, unsafe_allow_html=True)
-        
-        chart_res = alt.Chart(data['resolution_trend']).mark_bar(size=14, cornerRadius=2).encode(
-            x=alt.X('Date', axis=alt.Axis(format='%b', title=None, grid=False, domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
-            y=alt.Y('Records', axis=alt.Axis(title=None, format='~s', grid=True, gridColor=DESIGN['slate_100'], domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
-            color=alt.Color('Type', scale=alt.Scale(domain=['Auto', 'Manual'], range=[DESIGN['slate_900'], DESIGN['accent']]), legend=alt.Legend(orient='top-right', title=None, symbolType='circle', labelFont='Outfit', labelColor=DESIGN['slate_500'])),
-        ).properties(height=180).configure_view(stroke="transparent").configure(background='white')
-        
-        st.altair_chart(chart_res, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Wrap in a native Streamlit container
+        with st.container(border=True):
+            st.markdown(f"""
+                <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN["slate_900"]}; margin: 0 0 4px 0;">Resolution Effectiveness</h3>
+                <p style="font-size: 12px; color: {DESIGN['slate_500']}; margin-bottom: 24px;">Automatic vs Manual performance</p>
+            """, unsafe_allow_html=True)
+            
+            chart_res = alt.Chart(data['resolution_trend']).mark_bar(size=14, cornerRadius=2).encode(
+                x=alt.X('Date:T', axis=alt.Axis(format='%b', title=None, grid=False, domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11, tickCount=12)),
+                y=alt.Y('Records:Q', axis=alt.Axis(title=None, format='~s', grid=True, gridColor=DESIGN['slate_100'], domain=False, labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
+                color=alt.Color('Type:N', scale=alt.Scale(domain=['Auto', 'Manual'], range=[DESIGN['slate_900'], DESIGN['accent']]), legend=alt.Legend(orient='top-right', title=None, symbolType='circle', labelFont='Outfit', labelColor=DESIGN['slate_500'])),
+            ).properties(height=180).configure_view(stroke="transparent").configure(background='white')
+            
+            st.altair_chart(chart_res, use_container_width=True)
             
     with c6:
         st.markdown(f"""
@@ -413,7 +421,7 @@ def render():
             <h3 style="font-size: 16px; font-weight: 500; color: {DESIGN["slate_900"]}; margin: 0 0 16px 0;">Platform Health Distribution</h3>
             <div style="display: flex; align-items: center; justify-content: center; flex: 1; padding: 10px 0;">
         """, unsafe_allow_html=True)
-        
+            
         chart_source = alt.Chart(data['source_data']).mark_arc(innerRadius=60, cornerRadius=4).encode(
             theta=alt.Theta(field="Records", type="quantitative"),
             color=alt.Color(field="System", scale=alt.Scale(range=[DESIGN['slate_900'], DESIGN['accent'], DESIGN['emerald'], '#3B82F6', '#F59E0B']), legend=alt.Legend(orient='right', labelFont='Outfit', labelColor=DESIGN['slate_500'], labelFontSize=11)),
@@ -424,9 +432,9 @@ def render():
         
         st.markdown(f"""
             </div>
-            <div style="text-align: center; border-top: 1px solid {DESIGN['slate_100']}; padding-top: 16px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid {DESIGN['slate_100']}; padding-top: 16px; margin-top: 10px;">
                 <div style="font-size: 11px; font-weight: 500; color: {DESIGN['slate_500']}; text-transform: uppercase;">Confidence Index</div>
-                <div style="font-size: 32px; font-weight: 600; color: {DESIGN['emerald']};">94<span style="font-size: 16px;">%</span></div>
+                <div style="font-size: 24px; font-weight: 600; color: {DESIGN['emerald']}; line-height: 1;">94<span style="font-size: 14px;">%</span></div>
             </div>
         </div>
         """, unsafe_allow_html=True)

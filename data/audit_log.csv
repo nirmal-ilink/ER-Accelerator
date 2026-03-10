@@ -739,3 +739,100 @@ org.apache.spark.sql.AnalysisException
 2026-02-27 20:33:09,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID 4f1b72e2-a5ce-4d64-ac9f-5a64425f2d9e. Run ID: 62063593972257
 2026-02-27 20:54:09,Administrator,Match Approved,Match Review,Success,Cluster CL009 resolved by Administrator
 2026-02-27 20:59:42,Administrator,User Logout,Auth,Success,User signed out manually
+2026-03-02 12:19:13,admin,User Login,Auth,Success,Session started for admin
+2026-03-02 14:51:09,admin,User Login,Auth,Success,Session started for admin
+2026-03-02 17:49:20,Administrator,User Logout,Auth,Success,User signed out manually
+2026-03-02 18:49:15,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 12:30:21,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 12:42:27,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 12:42:39,Administrator,User Logout,Auth,Success,User signed out manually
+2026-03-03 12:45:59,Administrator,User Logout,Auth,Success,User signed out manually
+2026-03-03 12:49:15,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 12:54:20,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 13:53:12,admin,User Login,Auth,Success,Session started for admin
+2026-03-03 13:56:16,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-03-03 13:56:44,System,Triggered Profiling,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_mdm_profiling: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task profiling_task failed with message: Workload failed, see run output for details."
+2026-03-04 11:44:06,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 11:47:11,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 11:51:07,Administrator,Saved Configuration,Connectors,Success,Saved sqlserver configuration 'SQL Server' (ID: 3ec26bd1-d3d3-47dc-9f5c-62c2ba0cf96d)
+2026-03-04 12:14:21,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 12:54:47,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:00:03,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:00:57,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:16:30,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:22:52,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:27:31,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:28:18,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:44:15,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:44:47,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 13:59:36,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 14:00:59,Administrator,Saved Configuration,Connectors,Success,Saved sqlserver configuration 'SQL Server' (ID: dd809c8c-feee-4016-acd1-6d9c8be51e9e)
+2026-03-04 16:28:34,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 16:39:20,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 16:39:56,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 16:42:38,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 16:42:59,admin,User Login,Auth,Success,Session started for admin
+2026-03-04 16:44:41,System,Triggered Ingestion,Connectors,Failed,"Failed to trigger /Shared/ER_aligned/nb_brz_ingestion: failed to reach TERMINATED or SKIPPED, got RunLifeCycleState.INTERNAL_ERROR: Task ingestion_task failed with message: Workload failed, see run output for details."
+2026-03-04 16:58:35,System,Triggered Ingestion,Connectors,Success,Triggered /Shared/ER_aligned/nb_brz_ingestion for ID dd809c8c-feee-4016-acd1-6d9c8be51e9e. Run ID: 306604709508398
+2026-03-04 17:13:13,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID dd809c8c-feee-4016-acd1-6d9c8be51e9e. Run ID: 125699820726800
+2026-03-05 08:21:15,admin,User Login,Auth,Success,Session started for admin
+2026-03-05 08:33:36,admin,User Login,Auth,Success,Session started for admin
+2026-03-05 17:37:23,admin,User Login,Auth,Success,Session started for admin
+2026-03-05 17:51:18,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID dd809c8c-feee-4016-acd1-6d9c8be51e9e. Run ID: 250108554726827
+2026-03-05 18:39:27,System,Triggered Profiling,Connectors,Success,Triggered /Shared/ER_aligned/nb_mdm_profiling for ID dd809c8c-feee-4016-acd1-6d9c8be51e9e. Run ID: 701727352282489
+2026-03-05 18:56:51,Administrator,User Logout,Auth,Success,User signed out manually
+2026-03-06 13:02:14,admin,User Login,Auth,Success,Session started for admin
+2026-03-07 12:03:27,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 15:25:22,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 15:26:25,Administrator,Match Rejected,Match Review,Success,Cluster CL010 rejected by Administrator
+2026-03-08 15:26:35,Administrator,Match Rejected,Match Review,Success,Cluster CL011 rejected by Administrator
+2026-03-08 15:26:41,Administrator,Match Approved,Match Review,Success,Cluster CL012 resolved by Administrator
+2026-03-08 15:26:57,Administrator,Match Approved,Match Review,Success,Cluster CL013 resolved by Administrator
+2026-03-08 15:27:10,Administrator,Match Rejected,Match Review,Success,Cluster CL014 rejected by Administrator
+2026-03-08 15:27:18,Administrator,Match Approved,Match Review,Success,Cluster CL015 resolved by Administrator
+2026-03-08 15:39:25,Administrator,Match Approved,Match Review,Success,Cluster CL016 resolved by Administrator
+2026-03-08 15:39:27,Administrator,Match Approved,Match Review,Success,Cluster CL017 resolved by Administrator
+2026-03-08 15:39:29,Administrator,Match Rejected,Match Review,Success,Cluster CL018 rejected by Administrator
+2026-03-08 15:39:33,Administrator,Match Rejected,Match Review,Success,Cluster CL019 rejected by Administrator
+2026-03-08 15:39:34,Administrator,Match Approved,Match Review,Success,Cluster CL020 resolved by Administrator
+2026-03-08 15:39:35,Administrator,Process Deferred,Match Review,Warning,Cluster CL021 skipped by Administrator
+2026-03-08 15:39:44,Administrator,Match Rejected,Match Review,Success,Cluster CL022 rejected by Administrator
+2026-03-08 15:44:52,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 15:44:58,Administrator,Match Rejected,Match Review,Success,Cluster CL021 rejected by Administrator
+2026-03-08 15:45:05,Administrator,Match Rejected,Match Review,Success,Cluster CL023 rejected by Administrator
+2026-03-08 15:45:07,Administrator,Match Rejected,Match Review,Success,Cluster CL024 rejected by Administrator
+2026-03-08 15:45:12,Administrator,Match Rejected,Match Review,Success,Cluster CL025 rejected by Administrator
+2026-03-08 15:45:15,Administrator,Match Rejected,Match Review,Success,Cluster CL026 rejected by Administrator
+2026-03-08 15:56:57,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 15:57:51,Administrator,Match Approved,Match Review,Success,Cluster CL027 resolved by Administrator
+2026-03-08 16:02:07,Administrator,Match Approved,Match Review,Success,Cluster CL028 resolved by Administrator
+2026-03-08 16:02:15,Administrator,Match Rejected,Match Review,Success,Cluster CL029 rejected by Administrator
+2026-03-08 16:02:29,Administrator,Match Rejected,Match Review,Success,Cluster CL030 rejected by Administrator
+2026-03-08 16:02:36,Administrator,Match Rejected,Match Review,Success,Cluster CL031 rejected by Administrator
+2026-03-08 16:02:39,Administrator,Match Rejected,Match Review,Success,Cluster CL032 rejected by Administrator
+2026-03-08 16:02:45,Administrator,Match Rejected,Match Review,Success,Cluster CL033 rejected by Administrator
+2026-03-08 16:02:48,Administrator,Match Rejected,Match Review,Success,Cluster CL034 rejected by Administrator
+2026-03-08 16:02:59,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:25:06,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:25:47,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:37:08,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:41:05,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:41:13,Administrator,Match Rejected,Match Review,Success,Cluster CL035 rejected by Administrator
+2026-03-08 16:41:15,Administrator,Match Rejected,Match Review,Success,Cluster CL036 rejected by Administrator
+2026-03-08 16:41:16,Administrator,Match Approved,Match Review,Success,Cluster CL037 resolved by Administrator
+2026-03-08 16:41:24,Administrator,Match Approved,Match Review,Success,Cluster CL038 resolved by Administrator
+2026-03-08 16:41:31,Administrator,Match Rejected,Match Review,Success,Cluster CL039 rejected by Administrator
+2026-03-08 16:41:41,Administrator,Match Rejected,Match Review,Success,Cluster CL040 rejected by Administrator
+2026-03-08 16:41:50,Administrator,Process Deferred,Match Review,Warning,Cluster CL041 skipped by Administrator
+2026-03-08 16:41:52,Administrator,Process Deferred,Match Review,Warning,Cluster CL042 skipped by Administrator
+2026-03-08 16:41:54,Administrator,Process Deferred,Match Review,Warning,Cluster CL043 skipped by Administrator
+2026-03-08 16:49:56,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 16:50:04,Administrator,Process Deferred,Match Review,Warning,Cluster CL041 skipped by Administrator
+2026-03-08 16:50:15,Administrator,Match Rejected,Match Review,Success,Cluster CL042 rejected by Administrator
+2026-03-08 16:52:53,Administrator,Match Rejected,Match Review,Success,Cluster CL043 rejected by Administrator
+2026-03-08 16:52:54,Administrator,Process Deferred,Match Review,Warning,Cluster CL044 skipped by Administrator
+2026-03-08 16:52:56,Administrator,Process Deferred,Match Review,Warning,Cluster CL045 skipped by Administrator
+2026-03-08 16:57:22,Administrator,Process Deferred,Match Review,Warning,Cluster CL046 skipped by Administrator
+2026-03-08 17:02:09,Administrator,Process Deferred,Match Review,Warning,Cluster CL047 skipped by Administrator
+2026-03-08 17:02:56,admin,User Login,Auth,Success,Session started for admin
+2026-03-08 17:05:18,Administrator,Match Approved,Match Review,Success,Cluster CL041 resolved by Administrator

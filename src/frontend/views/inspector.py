@@ -1393,11 +1393,11 @@ def render():
                                             "watermark_column": t_watermark
                                         }
                                         # Set checkbox state
-                                        st.session_state[f"insp_tbl_{schema}_{t_name}"] = True
+                                        st.session_state[f"insp_tbl_{schema}::{t_name}"] = True
                                     else:
                                         # Fallback for simple string list
                                         restored_selection[schema].append(tbl_obj)
-                                        st.session_state[f"insp_tbl_{schema}_{tbl_obj}"] = True
+                                        st.session_state[f"insp_tbl_{schema}::{tbl_obj}"] = True
 
                             st.session_state["inspector_selected_tables"] = restored_selection
                             st.session_state["inspector_table_configs"] = restored_configs
@@ -1658,13 +1658,13 @@ def render():
                                 if st.button("Select All", key=f"insp_sa_{schema_name}", use_container_width=True):
                                     st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = tables.copy()
                                     for t in tables:
-                                        st.session_state[f"insp_tbl_{schema_name}_{t}"] = True
+                                        st.session_state[f"insp_tbl_{schema_name}::{t}"] = True
                                     st.rerun()
                             with c_act2:
                                 if st.button("Clear Selection", key=f"insp_da_{schema_name}", use_container_width=True):
                                     st.session_state.setdefault("inspector_selected_tables", {})[schema_name] = []
                                     for t in tables:
-                                        st.session_state[f"insp_tbl_{schema_name}_{t}"] = False
+                                        st.session_state[f"insp_tbl_{schema_name}::{t}"] = False
                                     st.rerun()
                             
                             st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
@@ -1687,7 +1687,7 @@ def render():
                                 # Deduplicate tables (metadata may return duplicates)
                                 unique_tables = sorted(set(tables))
                                 for table_name in unique_tables:
-                                    chk_key = f"insp_tbl_{schema_name}_{table_name}"
+                                    chk_key = f"insp_tbl_{schema_name}::{table_name}"
                                     is_selected = table_name in sel_tables
                                     if chk_key not in st.session_state:
                                         st.session_state[chk_key] = is_selected
@@ -1739,7 +1739,7 @@ def render():
                                                 " ",  # Empty label to force alignment with Watermark
                                                 options=["Full Load", "Incremental Load"],
                                                 index=0 if existing_cfg.get("load_type", "full") == "full" else 1,
-                                                key=f"insp_lt_{schema_name}_{table_name}",
+                                                key=f"insp_lt_{schema_name}::{table_name}",
                                                 label_visibility="collapsed"
                                             )
                                         
@@ -1747,7 +1747,7 @@ def render():
                                         with row_cols[3]:
                                             if "Incremental" in lt:
                                                  # Fetch columns for this table (cached per table)
-                                                col_cache_key = f"insp_cols_{schema_name}_{table_name}"
+                                                col_cache_key = f"insp_cols_{schema_name}::{table_name}"
                                                 if col_cache_key not in st.session_state:
                                                     try:
                                                         # Use existing service import if available
@@ -1799,7 +1799,7 @@ def render():
                                                         " ",  # Empty to ensure no phantom label
                                                         options=wm_options,
                                                         index=default_idx,
-                                                        key=f"insp_wm_{schema_name}_{table_name}",
+                                                        key=f"insp_wm_{schema_name}::{table_name}",
                                                         label_visibility="collapsed",
                                                         placeholder="Watermark Column"
                                                     )
@@ -1809,7 +1809,7 @@ def render():
                                                         " ",  # Empty to ensure no phantom label
                                                         value=existing_cfg.get("watermark_column", ""),
                                                         placeholder="e.g. updated_at",
-                                                        key=f"insp_wm_{schema_name}_{table_name}",
+                                                        key=f"insp_wm_{schema_name}::{table_name}",
                                                         label_visibility="collapsed"
                                                     )
                                             else:
@@ -1818,7 +1818,7 @@ def render():
                                                     " ",
                                                     value="N/A - Full Load",
                                                     disabled=True,
-                                                    key=f"insp_wm_disabled_{schema_name}_{table_name}",
+                                                    key=f"insp_wm_disabled_{schema_name}::{table_name}",
                                                     label_visibility="collapsed"
                                                 )
 
@@ -3502,7 +3502,7 @@ def render():
                         </div>
                         <div>
                             <div style="font-size: 16px; font-weight: 700; color: #0F172A; letter-spacing: -0.3px;">LLM Probabilistic Matching</div>
-                            <div style="font-size: 13px; color: #64748B;">Leveraging Databricks LLMs for context-aware entity resolution.</div>
+                            <div style="font-size: 13px; color: #64748B;">Leveraging OpenAI LLMs for context-aware entity resolution.</div>
                         </div>
                     </div>
                     <div style="font-size: 13px; color: #475569; line-height: 1.5;">

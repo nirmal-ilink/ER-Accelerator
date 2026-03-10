@@ -67,8 +67,8 @@ def load_data():
     
     records = []
     
-    # Generate 55 clusters to satisfy the 50+ diverse samples requirement
-    for i in range(1, 56):
+    # Generate 105 clusters to satisfy the additional 50+ diverse samples requirement
+    for i in range(1, 106):
         cluster_id = f"MOCK_CL{i:03d}"
         
         # Base entity for the cluster
@@ -85,7 +85,31 @@ def load_data():
         num_records_in_cluster = random.choice([2, 3, 4])
         cluster_sources = random.sample(source_systems, k=num_records_in_cluster)
         
+        # Determine error rates for different sources to ensure significant variations in discrepancies
+        source_error_rates = {
+            "NPI_Registry": 0.02, # Highly reliable
+            "EMR": 0.05,          # Very reliable
+            "Snowflake": 0.15,    # Somewhat reliable
+            "Delta Lake": 0.15,   # Somewhat reliable
+            "Claims_DB": 0.40,    # Very messy
+            "SAP": 0.60           # legacy ERP, lots of data noise
+        }
+        
+        base_record = {
+            'npi': base_npi,
+            'first_name': base_first,
+            'last_name': base_last,
+            'address_line_1': base_addr,
+            'city': base_city,
+            'state': base_state,
+            'zip_code': base_zip,
+            'phone': base_phone,
+            'specialty': base_specialty
+        }
+        
         for j, src in enumerate(cluster_sources):
+            err_rate = source_error_rates.get(src, 0.20)
+            
             # Introduce variations/noise for realistic match conflict review
             r_first = base_first
             r_last = base_last
@@ -96,18 +120,16 @@ def load_data():
             r_npi = base_npi
             r_specialty = base_specialty
             
-            # Simulated Typos / Variations based on probability
-            if random.random() < 0.2: r_first = r_first[:-1] # Drop last letter
-            if random.random() < 0.15: r_last = r_last + ("s" if not r_last.endswith("s") else "") # Added 's'
-            if random.random() < 0.3: r_addr = r_addr.replace("St", "Street").replace("Rd", "Road").replace("Ave", "Avenue")
-            if random.random() < 0.1: r_zip = r_zip[:4] + str((int(r_zip[4]) + 1) % 10) # 1 digit zip typo
-            if random.random() < 0.2: r_phone = None # Missing phone
-            if random.random() < 0.15: r_specialty = r_specialty[:5] # Shortened specialty
-            if random.random() < 0.05: r_npi = None # Missing NPI from some sources
+            # Simulated Typos / Variations based on source system reliability
+            if random.random() < err_rate: r_first = r_first[:-1] # Drop last letter
+            if random.random() < err_rate * 0.8: r_last = r_last + ("s" if not r_last.endswith("s") else "") # Added 's'
+            if random.random() < err_rate * 1.5: r_addr = r_addr.replace("St", "Street").replace("Rd", "Road").replace("Ave", "Avenue")
+            if random.random() < err_rate * 0.5: r_zip = r_zip[:4] + str((int(r_zip[4]) + 1) % 10) # 1 digit zip typo
+            if random.random() < err_rate: r_phone = None # Missing phone
+            if random.random() < err_rate: r_specialty = r_specialty[:5] # Shortened specialty
+            if random.random() < err_rate * 0.2: r_npi = None # Missing NPI from some sources
             
-            confidence = round(random.uniform(0.65, 0.99), 2)
-            
-            records.append({
+            rec = {
                 "unique_id": f"{src[:4].upper()}_{i:03d}_{j}",
                 "npi": r_npi,
                 "first_name": r_first,
@@ -120,8 +142,20 @@ def load_data():
                 "specialty": r_specialty,
                 "_source_system": src,
                 "cluster_id": cluster_id,
-                "confidence_score": confidence
-            })
+            }
+            
+            fields_to_check = ['npi', 'first_name', 'last_name', 'address_line_1', 'city', 'state', 'zip_code', 'phone', 'specialty']
+            vendor_diffs = 0
+            for field in fields_to_check:
+                val = str(rec.get(field)).strip().lower()
+                truth = str(base_record.get(field)).strip().lower()
+                if val != truth and val != 'none' and truth != 'none':
+                    vendor_diffs += 1
+            
+            conf = max(0.50, 0.99 - (vendor_diffs * 0.08))
+            rec['confidence_score'] = round(float(conf), 2)
+            
+            records.append(rec)
             
     return pd.DataFrame(records)
 
@@ -792,7 +826,10 @@ def render():
         return
 
     curr_id = queue[st.session_state.match_index]
-    records = df[df['cluster_id'] == curr_id]
+    records = df[df['cluster_id'] == curr_id].copy()
+    
+    # Sort records so the one with the highest confidence is always the reference record (left side)
+    records = records.sort_values(by='confidence_score', ascending=False)
     
     # Calculate Score
     score = int(float(records.iloc[0].get('confidence_score', 0.90)) * 100)
@@ -812,9 +849,6 @@ def render():
         ref_rec = records.iloc[0]
         other_recs = records.iloc[1:]
         
-        # UI for Source Selector
-        st.write('<div class="source-selector-container"><span class="selector-label">Compare Reference Against:</span>', unsafe_allow_html=True)
-        
         # Build options with logos and vendor names
         source_options = []
         source_map = {}
@@ -826,6 +860,9 @@ def render():
             source_options.append(opt_label)
             source_map[opt_label] = r
             
+        # UI for Source Selector
+        st.write(f'<div class="source-selector-container"><span class="selector-label">Compare Reference ({ref_rec["_source_system"]} - {int(ref_rec["confidence_score"]*100)}%) Against:</span>', unsafe_allow_html=True)
+        
         # Use a pill-like selector with unique key for this cluster
         selected_option = st.radio(
             "Select Source",

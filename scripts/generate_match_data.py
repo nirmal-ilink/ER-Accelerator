@@ -52,8 +52,24 @@ def generate_match_data(num_clusters=15):
         # Base Phone
         base_phone = f"{random.randint(200, 999)}-555-{random.randint(1000, 9999)}"
         
+        # Base Address (to be consistent across genuine matches)
+        base_addr = f"{random.randint(100, 9999)} {random.choice(['Main', 'Oak', 'Pine', 'Cedar', 'Maple'])} {random.choice(['St', 'Ave', 'Rd', 'Blvd', 'Lane'])}"
+        
+        base_record = {
+            'npi': base_npi,
+            'first_name': person["first"],
+            'last_name': person["last"],
+            'address_line_1': base_addr,
+            'city': person["city"],
+            'state': person["state"],
+            'zip_code': person["zip"],
+            'phone': base_phone,
+            'specialty': person["spec"]
+        }
+        
         used_sources = random.sample(sources, num_records_for_person)
         
+        cluster_records = []
         for src in used_sources:
             # Introduce variations
             
@@ -73,17 +89,12 @@ def generate_match_data(num_clusters=15):
                  last_name += "s" if random.random() < 0.5 else ""
             
             # Address variation
-            addr = f"{random.randint(100, 9999)} {random.choice(['Main', 'Oak', 'Pine', 'Cedar', 'Maple'])} {random.choice(['St', 'Ave', 'Rd', 'Blvd', 'Lane'])}"
+            addr = base_addr
             if random.random() < 0.3:
-                 # Same street, different format maybe? (Simplified here as just random addr to show conflict)
-                 # Or keep it same for match
-                 pass 
+                 addr = addr.replace("St", "Street").replace("Rd", "Road").replace("Ave", "Avenue")
             
             # Values with potential None
             phone = base_phone if random.random() > 0.1 else None
-            
-            # Confidence score
-            conf = round(float(random.uniform(0.70, 0.99)), 2)
             
             rec = {
                 "unique_id": f"{str(src)[:3].upper()}{random.randint(100, 999)}",
@@ -98,8 +109,21 @@ def generate_match_data(num_clusters=15):
                 "specialty": person["spec"] if random.random() > 0.1 else "General Practice", # Occasional mismatch
                 "_source_system": src,
                 "cluster_id": cluster_id,
-                "confidence_score": conf
             }
+            
+            # Calculate differences from the source of truth for THIS specific record
+            fields_to_check = ['npi', 'first_name', 'last_name', 'address_line_1', 'city', 'state', 'zip_code', 'phone', 'specialty']
+            vendor_diffs = 0
+            for field in fields_to_check:
+                val = str(rec.get(field)).strip().lower()
+                truth = str(base_record.get(field)).strip().lower()
+                if val != truth and val != 'none' and truth != 'none':
+                    vendor_diffs += 1
+            
+            # Max confidence 0.99, decreasing by 0.08 per difference for the specific vendor, min 0.50
+            conf = max(0.50, 0.99 - (vendor_diffs * 0.08))
+            rec['confidence_score'] = round(float(conf), 2)
+            
             records.append(rec)
             
     # Create DataFrame
@@ -110,4 +134,4 @@ def generate_match_data(num_clusters=15):
     print(f"Generated {len(df)} records in {output_path}")
 
 if __name__ == "__main__":
-    generate_match_data(num_clusters=15) # Should generate around 40-60 records
+    generate_match_data(num_clusters=102) # Should generate around 250-300 records

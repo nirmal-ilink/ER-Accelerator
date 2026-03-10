@@ -8,3 +8,37 @@ timestamp,cluster_id,action,user,comments,golden_record
 2026-02-03 22:53:02,CL007,Match Approved,Administrator,,"{""npi"": ""5804490074"", ""first_name"": ""James"", ""last_name"": ""Johnson"", ""address_line_1"": ""6595 Pine Blvd"", ""city"": ""New York"", ""state"": ""NY"", ""zip_code"": ""10001"", ""phone"": null, ""specialty"": ""Neurology""}"
 2026-02-03 22:53:22,CL008,Match Approved,Administrator,,"{""npi"": ""6044241062"", ""first_name"": ""Emily"", ""last_name"": ""Davis"", ""address_line_1"": ""5746 Maple Blvd"", ""city"": ""Boston"", ""state"": ""MA"", ""zip_code"": ""2108"", ""phone"": ""706-555-8473"", ""specialty"": ""Dermatology""}"
 2026-02-27 20:54:09,CL009,Match Approved,Administrator,,"{""npi"": ""5597504080"", ""first_name"": ""William"", ""last_name"": ""Brown"", ""address_line_1"": ""7936 Oak Blvd"", ""city"": ""Denver"", ""state"": ""CO"", ""zip_code"": ""80202"", ""phone"": ""480-555-2371"", ""specialty"": ""Orthopedics""}"
+2026-03-08 15:26:25,CL010,Match Rejected,Administrator,,
+2026-03-08 15:26:35,CL011,Match Rejected,Administrator,,
+2026-03-08 15:26:41,CL012,Match Approved,Administrator,,"{""npi"": ""3489635342"", ""first_name"": ""Maria"", ""last_name"": ""Martinez"", ""address_line_1"": ""8621 Oak Blvd"", ""city"": ""Dallas"", ""state"": ""TX"", ""zip_code"": ""75201"", ""phone"": ""889-555-8320"", ""specialty"": ""Anesthesiology""}"
+2026-03-08 15:26:57,CL013,Match Approved,Administrator,,"{""npi"": ""3170014135"", ""first_name"": ""Richard"", ""last_name"": ""Hernandez"", ""address_line_1"": ""4711 Pine St"", ""city"": ""Austin"", ""state"": ""TX"", ""zip_code"": ""73301"", ""phone"": ""697-555-7979"", ""specialty"": ""Radiology""}"
+2026-03-08 15:27:10,CL014,Match Rejected,Administrator,,
+2026-03-08 15:27:18,CL015,Match Approved,Administrator,,"{""npi"": ""8345916744"", ""first_name"": ""Joseph"", ""last_name"": ""Gonzalez"", ""address_line_1"": ""8952 Cedar Lane"", ""city"": ""San Francisco"", ""state"": ""CA"", ""zip_code"": ""94102"", ""phone"": ""237-555-9298"", ""specialty"": ""Pathology""}"
+2026-03-08 15:39:25,CL016,Match Approved,Administrator,,"{""npi"": ""8387664437.0"", ""first_name"": ""James"", ""last_name"": ""Brown"", ""address_line_1"": ""9867 Ridge Rd"", ""city"": ""San Francisco"", ""state"": ""MA"", ""zip_code"": ""11330"", ""phone"": null, ""specialty"": ""Cardiology""}"
+2026-03-08 15:39:27,CL017,Match Approved,Administrator,,"{""npi"": ""9650701349.0"", ""first_name"": ""Charles"", ""last_name"": ""Gonzalez"", ""address_line_1"": ""9877 Park Ave"", ""city"": ""Seattle"", ""state"": ""CO"", ""zip_code"": ""48829"", ""phone"": null, ""specialty"": ""Pediatrics""}"
+2026-03-08 15:39:29,CL018,Match Rejected,Administrator,,
+2026-03-08 15:39:33,CL019,Match Rejected,Administrator,,
+2026-03-08 15:39:34,CL020,Match Approved,Administrator,,"{""npi"": ""9935429720.0"", ""first_name"": ""Richard"", ""last_name"": ""Chen"", ""address_line_1"": ""7779 Ridge Road"", ""city"": ""Boston"", ""state"": ""MN"", ""zip_code"": ""45683"", ""phone"": ""712-752-9090"", ""specialty"": ""Psychiatry""}"
+2026-03-08 15:39:44,CL022,Match Rejected,Administrator,,
+2026-03-08 15:44:58,CL021,Match Rejected,Administrator,,
+2026-03-08 15:45:05,CL023,Match Rejected,Administrator,,
+2026-03-08 15:45:07,CL024,Match Rejected,Administrator,,
+2026-03-08 15:45:12,CL025,Match Rejected,Administrator,,
+2026-03-08 15:45:15,CL026,Match Rejected,Administrator,,
+2026-03-08 15:57:51,CL027,Match Approved,Administrator,,"{""npi"": ""8064477344.0"", ""first_name"": ""Emily"", ""last_name"": ""Martinez"", ""address_line_1"": ""4683 Main St"", ""city"": ""Atlanta"", ""state"": ""CO"", ""zip_code"": ""68115"", ""phone"": ""655-441-6942"", ""specialty"": ""Internal Medicine""}"
+2026-03-08 16:02:07,CL028,Match Approved,Administrator,,"{""npi"": ""9776185998.0"", ""first_name"": ""Madiso"", ""last_name"": ""Pukazhen"", ""address_line_1"": ""7902 Spring St"", ""city"": ""Atlanta"", ""state"": ""VA"", ""zip_code"": ""87812"", ""phone"": ""311-662-9254"", ""specialty"": ""Cardiology""}"
+2026-03-08 16:02:15,CL029,Match Rejected,Administrator,,
+2026-03-08 16:02:29,CL030,Match Rejected,Administrator,,
+2026-03-08 16:02:36,CL031,Match Rejected,Administrator,,
+2026-03-08 16:02:39,CL032,Match Rejected,Administrator,,
+2026-03-08 16:02:45,CL033,Match Rejected,Administrator,,
+2026-03-08 16:02:48,CL034,Match Rejected,Administrator,,
+2026-03-08 16:41:13,CL035,Match Rejected,Administrator,,
+2026-03-08 16:41:15,CL036,Match Rejected,Administrator,,
+2026-03-08 16:41:16,CL037,Match Approved,Administrator,,"{""npi"": ""9403012103.0"", ""first_name"": ""Sophia"", ""last_name"": ""Rodriguez"", ""address_line_1"": ""3231 Maple Dr"", ""city"": ""Atlanta"", ""state"": ""TX"", ""zip_code"": ""95948"", ""phone"": ""539-479-3039"", ""specialty"": ""Radiology""}"
+2026-03-08 16:41:24,CL038,Match Approved,Administrator,,"{""npi"": ""1133747952.0"", ""first_name"": ""Michae"", ""last_name"": ""Clark"", ""address_line_1"": ""5876 River Rd"", ""city"": ""Phoenix"", ""state"": ""AZ"", ""zip_code"": ""93816"", ""phone"": null, ""specialty"": ""Radio""}"
+2026-03-08 16:41:31,CL039,Match Rejected,Administrator,,
+2026-03-08 16:41:41,CL040,Match Rejected,Administrator,,
+2026-03-08 16:50:15,CL042,Match Rejected,Administrator,,
+2026-03-08 16:52:53,CL043,Match Rejected,Administrator,,
+2026-03-08 17:05:18,CL041,Match Approved,Administrator,,"{""npi"": ""1220240310"", ""first_name"": ""David"", ""last_name"": ""Garcias"", ""address_line_1"": ""2404 Main St"", ""city"": ""San Diego"", ""state"": ""CA"", ""zip_code"": ""92101"", ""phone"": ""979-555-1818"", ""specialty"": ""Surgery""}"
